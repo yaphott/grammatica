@@ -1,0 +1,199 @@
+import inspect
+import os
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import TYPE_CHECKING
+from urllib.parse import quote
+
+from sphinx.builders.html import StandaloneHTMLBuilder
+
+if TYPE_CHECKING:
+    from typing import Any
+
+    from sphinx.application import Sphinx
+
+try:
+    from typing import override
+except ImportError:
+    from typing_extensions import override
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+
+import grammatica
+
+GRAMMATICA_CI: bool = os.environ.get("GRAMMATICA_CI", "0") == "1"
+URI_SUFFIX: str = "" if GRAMMATICA_CI else "index.html"
+REPO_URL: str = "https://github.com/yaphott/grammatica"
+
+
+class CustomHTMLBuilder(StandaloneHTMLBuilder):
+    name = "html"
+
+    @override
+    def get_target_uri(self, docname: str, typ: str | None = None) -> str:
+        if docname == "index":
+            return "/" + URI_SUFFIX
+        if docname.endswith("/index"):
+            docname = docname.removesuffix("/index")
+        return quote(docname) + "/" + URI_SUFFIX
+
+    @override
+    def get_output_path(self, page_name: str, /) -> Path:
+        if page_name == "index":
+            return Path(self.outdir, "index.html")
+        if page_name.endswith("/index"):
+            page_name = page_name.removesuffix("/index")
+        return Path(self.outdir, page_name, "index.html")
+
+
+def setup(app: Sphinx) -> dict[str, Any]:
+    app.setup_extension("sphinx.builders.html")
+    app.add_builder(CustomHTMLBuilder, override=True)
+    return {
+        "version": grammatica.__version__,
+        "parallel_read_safe": True,
+        "parallel_write_safe": True,
+    }
+
+
+def linkcode_resolve(domain, info):
+    if domain != "py":
+        return None
+
+    submodule = sys.modules.get(info["module"])
+    if submodule is None:
+        return None
+
+    obj = submodule
+    for part in info["fullname"].split("."):
+        try:
+            obj = getattr(obj, part)
+        except AttributeError:
+            return None
+
+    try:
+        func_path = inspect.getsourcefile(obj)
+    except TypeError:
+        return None
+    else:
+        func_path = Path(func_path).relative_to(Path(grammatica.__file__).parent)
+
+    # Strip decorators
+    obj = inspect.unwrap(obj)
+
+    # Ignore re-exports
+    module = inspect.getmodule(obj)
+    if (module is not None) and not module.__name__.startswith(
+        f"{grammatica.__name__}."
+    ):
+        return None
+
+    source, line_n = inspect.getsourcelines(obj)
+    if line_n:
+        line_spec = f"#L{line_n}-L{line_n + len(source) - 1}"
+    else:
+        line_spec = ""
+
+    if ".dev" in grammatica.__version__:
+        return f"{REPO_URL}/blob/main/src/grammatica/{func_path}{line_spec}"
+    else:
+        version = ".".join(grammatica.__version__.split(".")[:3])
+        return f"{REPO_URL}/blob/v{version}/src/grammatica/{func_path}{line_spec}"
+
+
+# Configuration file for the Sphinx documentation builder.
+#
+# For the full list of built-in configuration values, see the documentation:
+# https://www.sphinx-doc.org/en/master/usage/configuration.html
+
+# -- Project information ----------------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+
+start_year = 2025
+end_year = datetime.now(tz=timezone.utc).year
+
+project = "Grammatica"
+author = "Nicholas Londowski"
+copyright = (
+    f"{start_year}-{end_year}, {author}"
+    if end_year > start_year
+    else f"{start_year}, {author}"
+)
+version = re.sub(r"(\d+\.\d+)\.\d+(?:(\.dev\d+).*)?", r"\1\2", grammatica.__version__)
+release = grammatica.__version__
+
+# -- General configuration ----------------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
+
+needs_sphinx = "8.2.3"
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.linkcode",
+    "sphinx.ext.napoleon",
+    "sphinx_autodoc_typehints",
+]
+
+source_encoding = "utf-8"
+master_doc = "index"
+templates_path = ["_templates"]
+exclude_patterns = ["build", "**/.git", "Thumbs.db", ".DS_Store"]
+
+# -- Options for HTML output ----------------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
+
+html_theme = "pydata_sphinx_theme"
+html_static_path = ["_static"]
+html_theme_options = {
+    "logo": {
+        "image_light": "_static/grammatica_logo.svg",
+        "image_dark": "_static/grammatica_logo_dark.svg",
+    },
+    "github_url": REPO_URL,
+    "collapse_navigation": True,
+    "external_links": [
+        {"name": "Londowski", "url": "https://londowski.com/"},
+    ],
+    "header_links_before_dropdown": 6,
+    "navbar_align": "left",
+    "navbar_end": [
+        "search-button",
+        "theme-switcher",
+        "version-switcher",
+        "navbar-icon-links",
+    ],
+    "navbar_persistent": [],
+    "switcher": {
+        "version_match": version,
+        "json_url": "https://londowski.com/docs/grammatica/versions.json",
+    },
+    "show_version_warning_banner": True,
+}
+
+html_title = f"{project} v{grammatica.__version__} Manual"
+html_last_updated_fmt = "%b %d, %Y"
+html_css_files = ["grammatica.css"]
+html_context = {"default_mode": "light"}
+html_favicon = "_static/favicon.ico"
+html_copy_source = False
+
+# -- Options for Autodoc ---------------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#configuration
+
+autodoc_member_order = "bysource"
+autodoc_typehints = "description"
+autodoc_typehints_description_target = "documented"
+
+# -- Options for Autosummary -------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html#configuration
+
+autosummary_generate = True
+
+# -- Options for Napoleon settings ------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html#configuration
+
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+napoleon_include_init_with_doc = True

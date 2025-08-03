@@ -1,0 +1,37 @@
+name: Test and report coverage
+description: Test and report coverage
+inputs:
+  suffix:
+    description: Suffix to include when formatting result names.
+    default: ""
+  # codecov-token:
+  #   description: Codecov token for repository.
+  #   required: true
+  #   default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Run tests
+      run: ci/run_tests.sh
+      shell: bash -el {0}
+
+    - name: Upload test results
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: ${{ inputs.suffix != '' && format('test-results-{0}', inputs.suffix) || 'test-results' }}
+        path: test-data.xml
+
+    - name: Collect coverage
+      run: coverage report -m
+      shell: bash -el {0}
+
+    # TODO: Determine if a formatted name would be better
+    # - name: Upload coverage report to Codecov
+    #   uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
+    #   with:
+    #     token: ${{ inputs.codecov-token }}
+    #     files: ./coverage.xml
+    #     flags: unittests
+    #     name: grammatica
+    #     fail_ci_if_error: false

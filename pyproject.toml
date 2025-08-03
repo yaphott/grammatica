@@ -1,0 +1,191 @@
+[build-system]
+requires = ["hatchling>=1.27.0", "hatch-vcs>=0.4.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "grammatica"
+description = "Grammatica is a GBNF (GGML BNF) grammar builder that exposes the full richness of the GBNF notation system using a syntax that reflects the resulting grammar."
+readme = "README.md"
+requires-python = ">=3.10,<4"
+license = { file = "LICENSE" }
+keywords = [
+    "grammatica",
+    "gbnf",
+    "bnf",
+    "ggml",
+    "regex",
+    "grammar",
+    "system",
+    "prompt",
+    "llm",
+]
+authors = [{ name = "Nicholas Londowski", email = "londowski@proton.me" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "License :: OSI Approved :: Apache Software License",
+    "Topic :: Utilities",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = ["typing_extensions>=4.5.0; python_version<'3.12'"]
+dynamic = ["version"]
+
+[project.urls]
+homepage = "https://pypi.org/project/grammatica/"
+documentation = "https://yaphott.github.io/grammatica/"
+repository = "https://github.com/yaphott/grammatica"
+changelog = "https://github.com/yaphott/grammatica/blob/main/CHANGELOG.md"
+issues = "https://github.com/yaphott/grammatica/issues"
+
+[project.optional-dependencies]
+doc = [
+    "sphinx==8.2.3",
+    "pydata-sphinx-theme==0.16.1",
+    "sphinx-autodoc-typehints==3.1.0",
+]
+dev = [
+    "black>=22.10.0",
+    "pylint>=3.0.0",
+    "isort>=5.2.1",
+    "mypy>=1.0",
+]
+test = ["pytest>=7.0.0", "pytest-cov>=6.0.0"]
+
+[tool.hatch.build]
+sources = ["src"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+version_scheme = "guess-next-dev"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/grammatica/_version.py"
+
+[tool.hatch.build.targets.wheel]
+only-packages = true
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.paths]
+source = ["src"]
+
+[tool.coverage.report]
+ignore_errors = false
+show_missing = true
+omit = []
+exclude_lines = [
+    # Have to re-enable the standard pragma:
+    "pragma: no cover",
+    # Don't complain about missing debug-only code:
+    "def __repr__",
+    "if self.debug",
+    # Don't complain if tests don't hit defensive assertion code:
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "AbstractMethodError",
+    # Don't complain if non-runnable code isn't run:
+    "if 0:",
+    "if False:",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.pylint.messages_control]
+max-line-length = 95
+disable = []
+
+[tool.black]
+target-version = ["py310", "py311", "py312"]
+exclude = '''
+(
+    asv_bench/env
+  | \.egg
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.nox
+  | \.tox
+  | \.venv
+  | _build/
+  | build/
+  | dist/
+  | setup.py
+)
+'''
+
+[tool.mypy]
+python_version = "3.10"
+files = ["src"]
+show_error_codes = true
+pretty = true
+# strict = true
+allow_redefinition = true
+disallow_subclassing_any = false
+no_implicit_optional = true
+local_partial_types = true
+# no_implicit_reexport = true
+strict_equality = true
+warn_redundant_casts = true
+warn_unused_configs = true
+warn_unused_ignores = true
+warn_unreachable = true
+
+[tool.isort]
+profile = "black"
+src_paths = ["src", "tests"]
+multi_line_output = 3
+atomic = false
+include_trailing_comma = true
+force_grid_wrap = 3
+use_parentheses = true
+balanced_wrapping = false
+ensure_newline_before_comments = true
+group_by_package = true
+remove_redundant_aliases = false
+combine_as_imports = false
+honor_case_in_force_sorted_sections = true
+combine_star = false
+star_first = true
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+# skip_glob = []
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "--strict-config --strict-markers --capture=no --junitxml=test-data.xml"
+empty_parameter_set_mark = "fail_at_collect"
+# Must fail if any test is marked as xfail but passes
+xfail_strict = true
+testpaths = ["tests"]
+doctest_optionflags = [
+    # Ignores whitespace differences, useful for spanning multiple lines
+    "NORMALIZE_WHITESPACE",
+    # Ignores differences in exception messages
+    "IGNORE_EXCEPTION_DETAIL",
+    # Allows you to use ... in place of a value in an expected output string
+    "ELLIPSIS",
+]
+filterwarnings = []
+junit_family = "xunit2"
+markers = []
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version_provider = "scm"
+tag_format = "v${version}"
+annotated_tag = true
+update_changelog_on_bump = true
