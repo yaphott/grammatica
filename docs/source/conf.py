@@ -146,35 +146,52 @@ exclude_patterns = ["build", "**/.git", "Thumbs.db", ".DS_Store"]
 
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
+html_css_files = ["grammatica.css"]
+html_js_files = [
+    ("custom-icons.js", {"defer": "defer"}),
+]
 html_theme_options = {
     "logo": {
-        "image_light": "_static/grammatica_logo.svg",
-        "image_dark": "_static/grammatica_logo_dark.svg",
+        "image_light": "_static/logo.svg",
+        "image_dark": "_static/logo-dark.svg",
     },
-    "github_url": REPO_URL,
     "collapse_navigation": True,
     "external_links": [
         {"name": "Londowski", "url": "https://londowski.com/"},
     ],
-    "header_links_before_dropdown": 6,
+    "header_links_before_dropdown": 4,
     "navbar_align": "left",
-    "navbar_end": [
-        "search-button",
-        "theme-switcher",
-        "version-switcher",
-        "navbar-icon-links",
-    ],
-    "navbar_persistent": [],
+    "navbar_start": ["navbar-logo"],
+    "navbar_center": ["version-switcher", "navbar-nav"],
+    "navbar_end": ["theme-switcher", "navbar-icon-links"],
+    "navbar_persistent": ["search-field"],
+    "footer_start": ["copyright"],
+    "footer_center": ["sphinx-version"],
     "switcher": {
         "version_match": version,
         "json_url": "https://londowski.com/docs/grammatica/versions.json",
     },
     "show_version_warning_banner": True,
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": REPO_URL,
+            "icon": "fa-brands fa-github",
+        },
+        {
+            "name": "PyPI",
+            "url": "https://pypi.org/project/grammatica/",
+            "icon": "fa-custom fa-pypi",
+        },
+        {
+            "name": "Londowski",
+            "url": "https://londowski.com/",
+            "icon": "fa-solid fa-l",
+        },
+    ],
 }
-
 html_title = f"{project} v{grammatica.__version__} Manual"
 html_last_updated_fmt = "%b %d, %Y"
-html_css_files = ["grammatica.css"]
 html_context = {"default_mode": "light"}
 html_favicon = "_static/favicon.ico"
 html_copy_source = False
