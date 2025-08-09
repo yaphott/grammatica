@@ -79,7 +79,7 @@ runs:
         echo "previous_revision=${PREVIOUS_REVISION}"
         echo "previous_revision_short=${PREVIOUS_REVISION_SHORT}"
         echo "revision=${REVISION}"
-        echo "revision_short${REVISION_SHORT}"
+        echo "revision_short=${REVISION_SHORT}"
         echo "changelog_md=${CHANGELOG_MD}"
         echo "release_sha=${RELEASE_SHA}"
       shell: bash -el {0}
