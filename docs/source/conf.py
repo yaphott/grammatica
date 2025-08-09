@@ -77,8 +77,9 @@ def linkcode_resolve(domain, info):
         func_path = inspect.getsourcefile(obj)
     except TypeError:
         return None
-    else:
-        func_path = Path(func_path).relative_to(Path(grammatica.__file__).parent)
+    if func_path is None:
+        return None
+    func_path = Path(func_path).relative_to(Path(grammatica.__file__).parent)
 
     # Strip decorators
     obj = inspect.unwrap(obj)
@@ -90,17 +91,27 @@ def linkcode_resolve(domain, info):
     ):
         return None
 
+    if ".dev" in grammatica.__version__:
+        ref = "main"
+    else:
+        ref = "v" + ".".join(grammatica.__version__.split(".")[:3])
+
     source, line_n = inspect.getsourcelines(obj)
     if line_n:
         line_spec = f"#L{line_n}-L{line_n + len(source) - 1}"
     else:
         line_spec = ""
 
-    if ".dev" in grammatica.__version__:
-        return f"{REPO_URL}/blob/main/src/grammatica/{func_path}{line_spec}"
-    else:
-        version = ".".join(grammatica.__version__.split(".")[:3])
-        return f"{REPO_URL}/blob/v{version}/src/grammatica/{func_path}{line_spec}"
+    return "/".join(
+        (
+            REPO_URL,
+            "blob",
+            ref,
+            "src",
+            "grammatica",
+            func_path.as_posix() + line_spec,
+        ),
+    )
 
 
 # Configuration file for the Sphinx documentation builder.
