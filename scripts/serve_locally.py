@@ -25,9 +25,9 @@ def parse_args() -> Args:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "html_dir",
+        "--html",
         type=Path,
-        default=PROJECT_DIR / "html",
+        default=PROJECT_DIR / "docs" / "build" / "html",
         metavar="HTML_DIR",
         help="Directory containing HTML files to serve.",
     )
@@ -55,7 +55,7 @@ def parse_args() -> Args:
     )
     args = parser.parse_args()
     return Args(
-        html_dir=args.html_dir.resolve(),
+        html_dir=args.html.resolve(),
         host=args.host,
         port=args.port,
         verbosity=args.verbosity,
