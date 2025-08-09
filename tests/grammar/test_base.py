@@ -30,7 +30,7 @@ class StubGroupGrammar(BaseGroupGrammar):
     [
         ((1, 1), None),
         ((0, 1), "?"),
-        ((0, 2), "{,2}"),
+        ((0, 2), "{0,2}"),
         ((1, None), "+"),
         ((2, None), "{2,}"),
         ((2, 2), "{2}"),
