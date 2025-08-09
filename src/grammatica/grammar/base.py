@@ -214,7 +214,8 @@ class BaseGroupGrammar(BaseGrammar, ABC):
                 return "*"
             if upper == 1:
                 return "?"
-            return "{," + str(upper) + "}"
+            # NOTE: Not supported by llama.cpp
+            # return "{," + str(upper) + "}"
         if upper is None:
             if lower == 1:
                 return "+"
