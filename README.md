@@ -1,6 +1,6 @@
 <picture align="center">
-  <source media="(prefers-color-scheme: dark)" srcset="https://yaphott.github.io/grammatica/_static/grammatica_logo_dark.svg">
-  <img alt="Grammatica Logo" src="https://yaphott.github.io/grammatica/_static/grammatica_logo.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="https://londowski.com/docs/grammatica/_static/grammatica_logo_dark.svg">
+  <img alt="Grammatica Logo" src="https://londowski.com/docs/grammatica/_static/grammatica_logo.svg">
 </picture>
 
 # Grammatica: GBNF grammar building toolkit
@@ -82,7 +82,7 @@ print(pattern)  # "Hello " ("World" | "Universe") [0-9]
 
 ## Useful Links
 
-- [Grammatica Documentation](https://yaphott.github.io/grammatica/)
+- [Grammatica Documentation](https://londowski.com/docs/grammatica/)
 - [Introduction to GGML](https://huggingface.co/blog/introduction-to-ggml) (Hugging Face)
 - [GBNF Guide](https://github.com/ggml-org/llama.cpp/blob/master/grammars/README.md) (llama.cpp)
 

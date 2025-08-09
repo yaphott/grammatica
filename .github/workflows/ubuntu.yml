@@ -301,7 +301,7 @@ jobs:
           app-id: ${{ vars.SITE_APP_ID }}
           private-key: ${{ secrets.SITE_PRIVATE_KEY }}
           owner: yaphott
-          repositories: yaphott.github.io
+          repositories: londowski.com
 
       - name: Trigger docs update
         env:
