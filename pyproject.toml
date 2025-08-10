@@ -43,7 +43,7 @@ dynamic = ["version"]
 
 [project.urls]
 homepage = "https://pypi.org/project/grammatica/"
-documentation = "https://londowski.com/docs/grammatica/"
+documentation = "https://londowski.com/docs/grammatica/stable/"
 repository = "https://github.com/yaphott/grammatica"
 changelog = "https://github.com/yaphott/grammatica/blob/main/CHANGELOG.md"
 issues = "https://github.com/yaphott/grammatica/issues"
