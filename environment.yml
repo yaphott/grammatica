@@ -1,0 +1,27 @@
+# Local development dependencies including docs building, website upload, ASV benchmark
+name: grammatica
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - hatchling>=1.27.0
+  - hatch-vcs>=0.4.0
+  - editables>=0.3
+
+  # Code checks
+  - black>=22.10.0
+  - pylint>=3.0.0
+  - isort>=5.2.1
+  - mypy>=1.0
+
+  # Test dependencies
+  - pytest>=7.0.0
+  - pytest-cov>=6.0.0
+
+  # Documentation dependencies
+  - sphinx=8.2.3
+  - pydata-sphinx-theme=0.16.1
+  - sphinx-autodoc-typehints=3.1.0
+
+  # Versioning, tagging, and changelogs
+  - commitizen>=4.6.0

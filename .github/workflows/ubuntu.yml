@@ -1,0 +1,321 @@
+name: Ubuntu
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+    paths-ignore: ["docs/**"]
+
+env:
+  RUNNING_CI: 1
+
+permissions:
+  contents: read
+
+jobs:
+  run-tests:
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -el {0}
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        os: ["ubuntu-latest"]
+        python_version: ["310", "311", "312", "313"]
+      fail-fast: false
+    name: ${{ format('Test Python {0}', matrix.python_version) }}
+    concurrency:
+      # https://github.community/t/concurrecy-not-work-for-push/183068/7
+      group: run-tests-${{ github.event_name == 'push' && github.run_number || github.ref }}-${{ matrix.os }}-${{ matrix.python_version }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Set up Conda
+        uses: ./.github/actions/setup-conda
+        with:
+          environment-name: ${{ matrix.os }}-${{ matrix.python_version }}-env
+          environment-file: ci/deps/actions-${{ matrix.python_version }}.yml
+          condarc-file: ci/condarc.yml
+
+      - name: Install Grammatica
+        run: python3 -m pip install -e . --no-build-isolation --no-index
+        shell: bash -el {0}
+
+      - name: Test and report coverage
+        uses: ./.github/actions/run-tests
+        with:
+          suffix: python-${{ matrix.python_version }}
+          # codecov-token: ${{ secrets.CODECOV_TOKEN }}
+
+  build-docs:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+    timeout-minutes: 60
+    name: Test Docs
+    concurrency:
+      # https://github.community/t/concurrecy-not-work-for-push/183068/7
+      group: build-docs-${{ github.event_name == 'push' && github.run_number || github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Set up Conda
+        uses: ./.github/actions/setup-conda
+        with:
+          environment-name: build-docs-env
+          environment-file: ci/deps/actions-doc.yml
+          condarc-file: ci/condarc.yml
+
+      - name: Install Grammatica
+        run: python3 -m pip install . --no-build-isolation --no-index
+        shell: bash -el {0}
+
+      - name: Build docs
+        run: make html
+        working-directory: ./docs
+        shell: bash -el {0}
+
+  bump-version:
+    needs: [run-tests, build-docs]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && !startsWith(github.event.head_commit.message, 'bump:') }}
+    environment: bump-version
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+    timeout-minutes: 10
+    name: Bump Version
+    concurrency:
+      group: bump-version-${{ github.run_number }}
+      cancel-in-progress: false
+    outputs:
+      destination_ref: ${{ steps.bump.outputs.destination-ref }}
+      previous_revision: ${{ steps.bump.outputs.previous-revision }}
+      previous_revision_short: ${{ steps.bump.outputs.previous-revision-short }}
+      revision: ${{ steps.bump.outputs.revision }}
+      revision_short: ${{ steps.bump.outputs.revision-short }}
+      changelog_md: ${{ steps.bump.outputs.changelog-md }}
+      release_sha: ${{ steps.bump.outputs.release-sha }}
+    steps:
+      - id: app-token
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+          owner: yaphott
+          repositories: grammatica
+
+      - id: identify-app
+        name: Identify Github App user
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          GIT_USERNAME="${APP_SLUG}[bot]"
+          echo "username=${GIT_USERNAME}" >> "$GITHUB_OUTPUT"
+          USER_ID="$(gh api "/users/${GIT_USERNAME}" | jq -r '.id')"
+          if [[ "$USER_ID" == 'null' ]]; then
+            echo "Failed to get bot ID for ${GIT_USERNAME}"
+            exit 1
+          fi
+          echo "user_id=${USER_ID}" >> "$GITHUB_OUTPUT"
+          GIT_EMAIL="${USER_ID}+${GIT_USERNAME}@users.noreply.github.com"
+          echo "email=${GIT_EMAIL}" >> "$GITHUB_OUTPUT"
+        shell: bash -el {0}
+
+      - name: Github App user details
+        env:
+          GIT_USERNAME: ${{ steps.identify-app.outputs.username }}
+          GIT_EMAIL: ${{ steps.identify-app.outputs.email }}
+          USER_ID: ${{ steps.identify-app.outputs.user_id }}
+        run: |
+          echo "username=${GIT_USERNAME}"
+          echo "email=${GIT_EMAIL}"
+          echo "user_id=${USER_ID}"
+        shell: bash -el {0}
+
+      - name: Configure Git
+        env:
+          CI_BOT_USERNAME: ${{ steps.identify-app.outputs.username }}
+          CI_BOT_EMAIL: ${{ steps.identify-app.outputs.email }}
+        run: |
+          git config --global user.name "$CI_BOT_USERNAME"
+          git config --global user.email "$CI_BOT_EMAIL"
+        shell: bash -el {0}
+
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Set up Conda
+        uses: ./.github/actions/setup-conda
+        with:
+          environment-name: bump-env
+          environment-file: ci/deps/actions-bump.yml
+          condarc-file: ci/condarc.yml
+
+      - id: bump
+        name: Bump version, update changelog, and tag
+        uses: ./.github/actions/bump-version
+        with:
+          destination-ref: ${{ github.ref }}
+          token: ${{ steps.app-token.outputs.token }}
+
+  github-release:
+    needs: [bump-version]
+    if: needs.bump-version.outputs.revision != needs.bump-version.outputs.previous_revision
+    environment: github-release
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+    timeout-minutes: 10
+    name: Github Release
+    concurrency:
+      group: github-release-${{ github.run_number }}
+      cancel-in-progress: false
+    steps:
+      - id: app-token
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.PRIVATE_KEY }}
+          owner: yaphott
+          repositories: grammatica
+
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ needs.bump-version.outputs.release_sha }}
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Set up Conda
+        uses: ./.github/actions/setup-conda
+        with:
+          environment-name: release-env
+          environment-file: ci/deps/actions-release.yml
+          condarc-file: ci/condarc.yml
+
+      - name: Build Grammatica
+        run: hatchling build --target sdist
+        shell: bash -el {0}
+
+      - name: Publish Github Release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REV: ${{ needs.bump-version.outputs.revision }}
+          DEST_REF: ${{ needs.bump-version.outputs.destination_ref }}
+          CHANGELOG_MD: ${{ needs.bump-version.outputs.changelog_md }}
+        run: |
+          gh release create "v${REV}" \
+            --latest \
+            --target "$DEST_REF" \
+            --title "Grammatica ${REV}" \
+            --notes "$CHANGELOG_MD" \
+            --verify-tag \
+            --fail-on-no-commits \
+            ./dist/*.tar.gz
+        shell: bash -el {0}
+
+#   pypi-release:
+#     needs: [bump-version]
+#     if: needs.bump-version.outputs.revision != needs.bump-version.outputs.previous_revision
+#     environment: pypi-release
+#     runs-on: ubuntu-latest
+#     defaults:
+#       run:
+#         shell: bash -el {0}
+#     timeout-minutes: 10
+#     name: PyPi Release
+#     concurrency:
+#       group: pypi-release-${{ github.run_number }}
+#       cancel-in-progress: false
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+#         with:
+#           ref: ${{ needs.bump-version.outputs.release_sha }}
+#           fetch-depth: 0
+#           persist-credentials: false
+# 
+#       - name: Set up Conda
+#         uses: ./.github/actions/setup-conda
+#         with:
+#           environment-name: pypi-env
+#           environment-file: ci/deps/actions-pypi.yml
+#           condarc-file: ci/condarc.yml
+# 
+#       - name: Build Grammatica
+#         run: hatchling build --target sdist --target wheel
+#         shell: bash -el {0}
+# 
+#       - name: Publish PyPi Release
+#         env:
+#           TWINE_NON_INTERACTIVE: 1
+#           TWINE_USERNAME: __token__
+#           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+#           REV: ${{ needs.bump-version.outputs.revision }}
+#         run: twine upload --skip-existing ./dist/*.tar.gz ./dist/*.whl
+#         shell: bash -el {0}
+
+  docs-release:
+    needs: [bump-version]
+    if: needs.bump-version.outputs.revision != needs.bump-version.outputs.previous_revision
+    environment: docs-release
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+    timeout-minutes: 10
+    name: Docs Release
+    concurrency:
+      group: docs-release-${{ github.run_number }}
+      cancel-in-progress: false
+    steps:
+      - id: readonly-app-token
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e
+        with:
+          app-id: ${{ vars.READONLY_APP_ID }}
+          private-key: ${{ secrets.READONLY_PRIVATE_KEY }}
+          owner: yaphott
+          repositories: grammatica
+          skip-token-revoke: true
+
+      - id: site-app-token
+        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e
+        with:
+          app-id: ${{ vars.SITE_APP_ID }}
+          private-key: ${{ secrets.SITE_PRIVATE_KEY }}
+          owner: yaphott
+          repositories: londowski.com
+
+      - name: Trigger docs update
+        env:
+          GH_TOKEN: ${{ steps.site-app-token.outputs.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PACKAGE_NAME: grammatica
+          RELEASE_SHA: ${{ needs.bump-version.outputs.release_sha }}
+          READONLY_TOKEN: ${{ steps.readonly-app-token.outputs.token }}
+        run: |
+          gh workflow run update-docs.yml \
+            --repo yaphott/londowski.com \
+            --ref refs/heads/main \
+            -f repository="$GITHUB_REPOSITORY" \
+            -f package-name="$PACKAGE_NAME" \
+            -f ref="$RELEASE_SHA" \
+            -f token="$READONLY_TOKEN"
+        shell: bash -el {0}

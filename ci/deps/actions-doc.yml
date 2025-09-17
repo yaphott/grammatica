@@ -1,0 +1,13 @@
+name: grammatica
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - hatchling>=1.27.0
+  - hatch-vcs>=0.4.0
+  - editables>=0.3
+
+  # Documentation dependencies
+  - sphinx=8.2.3
+  - pydata-sphinx-theme=0.16.1
+  - sphinx-autodoc-typehints=3.1.0
