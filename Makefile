@@ -1,5 +1,6 @@
 PYTHON=python3
 APP_NAME=grammatica
+MAX_LINE_LENGTH=140
 
 install:
 	${PYTHON} -m pip install .
@@ -20,8 +21,10 @@ lint:
 
 format:
 	@echo 'Formatting code'
-	${PYTHON} -m isort --sp pyproject.toml src tests docs scripts
-	${PYTHON} -m black --config pyproject.toml src tests docs scripts
+	${PYTHON} -m isort --sp pyproject.toml src
+	${PYTHON} -m isort --sp pyproject.toml -l ${MAX_LINE_LENGTH} tests docs scripts
+	${PYTHON} -m black --config pyproject.toml src
+	${PYTHON} -m black --config pyproject.toml -l ${MAX_LINE_LENGTH} tests docs scripts
 	@echo 'Done'
 
 build:

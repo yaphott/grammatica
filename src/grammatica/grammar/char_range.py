@@ -16,9 +16,9 @@ from grammatica.grammar.base import BaseGrammar
 from grammatica.grammar.string import String
 from grammatica.utils import char_to_hex
 
-if sys.version_info >= (3, 12):
+if sys.version_info >= (3, 12):  # pragma: no cover
     from typing import override
-else:
+else:  # pragma: no cover
     from typing_extensions import override
 
 if TYPE_CHECKING:
@@ -63,7 +63,10 @@ class CharRange(BaseGrammar):
         )
         self.negate: bool = negate
 
-    def render(self, full: bool = True, wrap: bool = True) -> str:
+    def render(self, full: bool = True, wrap: bool = True) -> str | None:
+        if len(self.char_ranges) == 0:
+            return None
+        # TODO: Should character ranges be validated before rendering? They're currently only validated upon construction.
         ords: set[int] = set()
         for cstart, cend in self.char_ranges:
             ords.update(range(ord(cstart), ord(cend) + 1))
@@ -101,12 +104,12 @@ class CharRange(BaseGrammar):
         Returns:
             str: Escaped character.
         """
+        if char in RANGE_ESCAPE_CHARS:
+            return "\\" + char
         if char in ALWAYS_SAFE_CHARS:
             return char
         if char in CHAR_ESCAPE_MAP:
             return CHAR_ESCAPE_MAP[char]
-        if char in RANGE_ESCAPE_CHARS:
-            return "\\" + char
         return char_to_hex(char)
 
     @classmethod

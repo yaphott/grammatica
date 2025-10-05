@@ -10,9 +10,9 @@ import sys
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-if sys.version_info >= (3, 12):
+if sys.version_info >= (3, 12):  # pragma: no cover
     from typing import override
-else:
+else:  # pragma: no cover
     from typing_extensions import override
 
 if TYPE_CHECKING:
@@ -37,6 +37,7 @@ class BaseGrammar(ABC):
         Returns:
             str | None: Rendered expression, or None if resolved to empty.
         """
+        return None
 
     @abstractmethod
     def simplify(self) -> BaseGrammar | None:
@@ -59,10 +60,7 @@ class BaseGrammar(ABC):
         """
         return {}
 
-    def as_string(
-        self,
-        indent: int | None = None,
-    ) -> str:
+    def as_string(self, indent: int | None = None) -> str:
         """Return a string representation of the grammar.
 
         Args:
@@ -164,21 +162,18 @@ class BaseGroupGrammar(BaseGrammar, ABC):
         upper: int | None
         if isinstance(length_range, int):
             lower = upper = length_range
-        else:
+        else:  # tuple
             lower, upper = length_range
         if lower < 0:
-            raise ValueError(f"Range start must be non-negative: {length_range}")
+            raise ValueError(f"Range lower bound must be non-negative: {length_range}")
         if upper is not None:
             if upper < 1:
                 raise ValueError(
-                    f"Range end must be positive or None (infinity): {length_range}"
+                    f"Range upper bound must be positive or None (infinity): {length_range}"
                 )
             if lower > upper:
-                raise ValueError(f"Range start must be <= range end: {length_range}")
-        else:
-            if lower < 0:
                 raise ValueError(
-                    f"Range start must be non-negative or None if end is None: {length_range}"
+                    f"Range lower bound must be <= range upper bound: {length_range}"
                 )
         self.length_range: tuple[int, int | None] = (lower, upper)
         """Minimum and maximum repetitions the expression must match."""
@@ -225,10 +220,7 @@ class BaseGroupGrammar(BaseGrammar, ABC):
                 return "+"
             return "{" + str(lower) + ",}"
         if lower == upper:
-            length = lower
-            if length == 1:
-                return ""
-            return "{" + str(length) + "}"
+            return "{" + str(lower) + "}"
         return "{" + str(lower) + "," + str(upper) + "}"
 
     def simplify(self) -> BaseGrammar | None:
@@ -311,14 +303,22 @@ def value_to_string(value: Any, indent: int | None) -> str:
     if isinstance(value, BaseGrammar):
         return value.as_string(indent=indent)
 
-    if isinstance(value, (tuple, list, set)):
+    if isinstance(value, (tuple, list, set, frozenset)):
+        prefix: str
+        suffix: str
         if isinstance(value, tuple):
-            braces = "(", ")"
+            prefix, suffix = "(", ")"
         elif isinstance(value, list):
-            braces = "[", "]"
-        else:  # set
-            braces = "{", "}"
-        msg = braces[0]
+            prefix, suffix = "[", "]"
+        elif isinstance(value, set):
+            if not value:
+                return "set()"
+            prefix, suffix = "{", "}"
+        else:  # frozenset
+            if not value:
+                return "frozenset()"
+            prefix, suffix = "frozenset({", "})"
+        msg = prefix
         if all(map(value_is_simple, value)):
             for j, subvalue in enumerate(value):
                 if j > 0:
@@ -341,7 +341,7 @@ def value_to_string(value: Any, indent: int | None) -> str:
                     )
                     if j == value_n - 1:
                         msg += "\n"
-        msg += braces[1]
+        msg += suffix
         return msg
 
     if isinstance(value, dict):
@@ -354,7 +354,7 @@ def value_to_string(value: Any, indent: int | None) -> str:
                 if j > 0:
                     msg += ","
                 msg += "\n" + (" " * indent)
-            msg += f"{subkey}: "
+            msg += value_to_string(subkey, indent=indent) + ": "
             if indent is None:
                 msg += value_to_string(subvalue, indent=indent)
             else:
@@ -367,4 +367,4 @@ def value_to_string(value: Any, indent: int | None) -> str:
         msg += "}"
         return msg
 
-    raise ValueError(f"Unsupported value type: {type(value)}")
+    raise ValueError(f"Unsupported value type: {type(value).__name__}")

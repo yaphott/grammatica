@@ -11,10 +11,9 @@ def char_to_cpoint(char: str) -> str:
 
 
 def ord_to_cpoint(ordinal: int) -> str:
-    cpoint = format(ordinal, "X")
-    if len(cpoint) < 5:
-        return f"\\u{cpoint.zfill(4)}"
-    return f"\\U{cpoint.zfill(8)}"
+    if ordinal < 0x10000:
+        return f"\\u{ordinal:04X}"
+    return f"\\U{ordinal:08X}"
 
 
 def char_to_hex(char: str) -> str:

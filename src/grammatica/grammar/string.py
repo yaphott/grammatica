@@ -5,7 +5,7 @@ Classes and utilities for string literal expressions.
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from grammatica.constants import (
     ALWAYS_SAFE_CHARS,
@@ -15,9 +15,9 @@ from grammatica.constants import (
 from grammatica.grammar.base import BaseGrammar
 from grammatica.utils import char_to_hex
 
-if sys.version_info >= (3, 12):
+if sys.version_info >= (3, 12):  # pragma: no cover
     from typing import override
-else:
+else:  # pragma: no cover
     from typing_extensions import override
 
 if TYPE_CHECKING:
@@ -48,13 +48,17 @@ def merge_adjacent_strings(subexprs: list[BaseGrammar], n: int) -> int:
         else:
             if last_idx > 0:
                 subexprs[i + 1] = String(
-                    "".join(s.value for s in subexprs[i + 1 : last_idx + 1])
+                    "".join(
+                        cast(String, s).value for s in subexprs[i + 1 : last_idx + 1]
+                    )
                 )
                 del subexprs[i + 2 : last_idx + 1]
             last_idx = -1
 
     if last_idx > 0:
-        subexprs[0] = String("".join(s.value for s in subexprs[0 : last_idx + 1]))
+        subexprs[0] = String(
+            "".join(cast(String, s).value for s in subexprs[0 : last_idx + 1])
+        )
         del subexprs[1 : last_idx + 1]
 
     return n

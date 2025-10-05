@@ -5,7 +5,7 @@ Classes and utilities for logical AND and OR operations.
 from __future__ import annotations
 
 from collections import namedtuple
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from grammatica.grammar.base import BaseGrammar, BaseGroupGrammar
 from grammatica.grammar.string import merge_adjacent_strings
@@ -73,6 +73,7 @@ def group_repeating_subexprs(
         for offset in range(max_offset + 1):
             count = 0
             cmp_slice = []
+            start = 0  # Prevent unbounded warning
             for start, end in _iter_group_spans(n, chunk_size, offset):
                 assert end - start == chunk_size
                 # Record initial slice to compare against
@@ -147,7 +148,9 @@ def merge_adjacent_default_or(subexprs: list[BaseGrammar], n: int) -> int:
 
     last_idx = -1
     for i in range(n - 1, -1, -1):
-        if isinstance(subexprs[i], Or) and (subexprs[i].length_range == (1, 1)):
+        if isinstance(subexprs[i], Or) and (
+            cast(Or, subexprs[i]).length_range == (1, 1)
+        ):
             if last_idx < 1:
                 last_idx = i
             else:
@@ -155,18 +158,22 @@ def merge_adjacent_default_or(subexprs: list[BaseGrammar], n: int) -> int:
         else:
             if last_idx > 0:
                 subexprs[i + 1] = Or(
-                    [
+                    (
                         s
                         for subexpr in subexprs[i + 1 : last_idx + 1]
-                        for s in subexpr.subexprs
-                    ]
+                        for s in cast(Or, subexpr).subexprs
+                    )
                 )
                 del subexprs[i + 2 : last_idx + 1]
             last_idx = -1
 
     if last_idx > 0:
         subexprs[0] = Or(
-            [s for subexpr in subexprs[0 : last_idx + 1] for s in subexpr.subexprs]
+            (
+                s
+                for subexpr in subexprs[0 : last_idx + 1]
+                for s in cast(Or, subexpr).subexprs
+            )
         )
         del subexprs[1 : last_idx + 1]
 
@@ -188,7 +195,9 @@ def merge_adjacent_default_grammar(subexprs: list[BaseGrammar], n: int) -> int:
 
     last_idx = -1
     for i in range(n - 1, -1, -1):
-        if isinstance(subexprs[i], Grammar) and (subexprs[i].length_range == (1, 1)):
+        if isinstance(subexprs[i], Grammar) and (
+            cast(Grammar, subexprs[i]).length_range == (1, 1)
+        ):
             if last_idx < 1:
                 last_idx = i
             else:
@@ -196,18 +205,22 @@ def merge_adjacent_default_grammar(subexprs: list[BaseGrammar], n: int) -> int:
         else:
             if last_idx > 0:
                 subexprs[i + 1] = Grammar(
-                    [
+                    (
                         s
                         for subexpr in subexprs[i + 1 : last_idx + 1]
-                        for s in subexpr.subexprs
-                    ]
+                        for s in cast(Grammar, subexpr).subexprs
+                    )
                 )
                 del subexprs[i + 2 : last_idx + 1]
             last_idx = -1
 
     if last_idx > 0:
         subexprs[0] = Grammar(
-            [s for subexpr in subexprs[0 : last_idx + 1] for s in subexpr.subexprs]
+            (
+                s
+                for subexpr in subexprs[0 : last_idx + 1]
+                for s in cast(Grammar, subexpr).subexprs
+            )
         )
         del subexprs[1 : last_idx + 1]
 
@@ -248,10 +261,10 @@ class Grammar(BaseGroupGrammar):
             wrap = isinstance(subexpr, BaseGroupGrammar)
             while (
                 wrap
-                and (subexpr.length_range == (1, 1))
-                and (len(subexpr.subexprs) == 1)
+                and (cast(BaseGroupGrammar, subexpr).length_range == (1, 1))
+                and (len(cast(BaseGroupGrammar, subexpr).subexprs) == 1)
             ):
-                subexpr = subexpr.subexprs[0]
+                subexpr = cast(BaseGroupGrammar, subexpr).subexprs[0]
                 wrap = isinstance(subexpr, BaseGroupGrammar)
             return wrap
         return self.length_range != (1, 1)
@@ -290,23 +303,21 @@ class Grammar(BaseGroupGrammar):
                 for i in range(n - 1)
             )
         ):
-            upper_bound = (
-                sum(map(lambda x: x.length_range[1], subexprs)) * length_range[1]
-            )
-            if isinstance(subexprs[0], BaseGroupGrammar):
-                return subexprs[0].simplify_subexprs(
-                    subexprs[0].subexprs, (0, upper_bound)
+            upper_bound = sum(
+                map(
+                    lambda x: cast(int, cast(BaseGroupGrammar, x).length_range[1]),
+                    subexprs,
                 )
-            return Grammar.simplify_subexprs(
-                [Grammar([subexprs[0]], length_range=(0, upper_bound))],
-                length_range,
+            ) * cast(int, length_range[1])
+            return cast(BaseGroupGrammar, subexprs[0]).simplify_subexprs(
+                cast(BaseGroupGrammar, subexprs[0]).subexprs,
+                (0, upper_bound),
             )
 
         if n == 1:
             # Unwrap a single default (1, 1) subexpression
             if length_range == (1, 1):
                 return subexprs[0]
-
             # Grammar that is optional (0, 1) can recursively unwrap to the first simple or non-single, non-default (1, 1), and non-optional (0, 1) grouped grammar.
             if (
                 (length_range == (0, 1))
@@ -373,10 +384,10 @@ class Or(BaseGroupGrammar):
             wrap = isinstance(subexpr, BaseGroupGrammar)
             while (
                 wrap
-                and (subexpr.length_range == (1, 1))
-                and (len(subexpr.subexprs) == 1)
+                and (cast(BaseGroupGrammar, subexpr).length_range == (1, 1))
+                and (len(cast(BaseGroupGrammar, subexpr).subexprs) == 1)
             ):
-                subexpr = subexpr.subexprs[0]
+                subexpr = cast(BaseGroupGrammar, subexpr).subexprs[0]
                 wrap = isinstance(subexpr, BaseGroupGrammar)
             return wrap
         return True
@@ -405,7 +416,6 @@ class Or(BaseGroupGrammar):
             # Unwrap a single default (1, 1) subexpression
             if length_range == (1, 1):
                 return subexprs[0]
-
             # Or that is optional (0, 1) can recursively unwrap to the first simple or non-single, non-default (1, 1), and non-optional (0, 1) grouped grammar.
             if (
                 (length_range == (0, 1))
@@ -413,7 +423,6 @@ class Or(BaseGroupGrammar):
                 and (subexprs[0].length_range in ((0, 1), (1, 1)))
             ):
                 return Grammar.simplify_subexprs(subexprs[0].subexprs, length_range)
-
             # Or with a single subexpression is the same as Grammar with a single subexpression
             return Grammar.simplify_subexprs(subexprs, length_range)
 

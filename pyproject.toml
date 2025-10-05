@@ -80,6 +80,7 @@ only-packages = true
 [tool.coverage.run]
 branch = true
 source = ["src"]
+omit = ["src/grammatica/_version.py"]
 
 [tool.coverage.paths]
 source = ["src"]

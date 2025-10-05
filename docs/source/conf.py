@@ -21,7 +21,7 @@ except ImportError:
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-import grammatica
+import grammatica  # pylint: disable=C0413
 
 RUNNING_CI: bool = os.environ.get("RUNNING_CI", "0") == "1"
 URL_PATH_PREFIX: str = os.environ.get("URL_PATH_PREFIX", "")
@@ -90,9 +90,7 @@ def linkcode_resolve(domain, info):
 
     # Ignore re-exports
     module = inspect.getmodule(obj)
-    if (module is not None) and not module.__name__.startswith(
-        f"{grammatica.__name__}."
-    ):
+    if (module is not None) and not module.__name__.startswith(f"{grammatica.__name__}."):
         return None
 
     if ".dev" in grammatica.__version__:
@@ -131,11 +129,7 @@ end_year = datetime.now(tz=timezone.utc).year
 
 project = "Grammatica"
 author = "Nicholas Londowski"
-copyright = (
-    f"{start_year}-{end_year}, {author}"
-    if end_year > start_year
-    else f"{start_year}, {author}"
-)
+copyright = f"{start_year}-{end_year}, {author}" if end_year > start_year else f"{start_year}, {author}"
 version = re.sub(r"(\d+\.\d+)\.\d+(?:(\.dev\d+).*)?", r"\1\2", grammatica.__version__)
 release = grammatica.__version__
 
@@ -155,6 +149,7 @@ source_encoding = "utf-8"
 master_doc = "index"
 templates_path = ["_templates"]
 exclude_patterns = ["build", "**/.git", "Thumbs.db", ".DS_Store"]
+# nitpicky = True
 
 # -- Options for HTML output ----------------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
