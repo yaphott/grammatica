@@ -94,7 +94,7 @@ def group_repeating_subexprs(
                     if weight > best_weight:
                         grouped_grammar = Grammar(
                             subexprs[start : start + chunk_size],
-                            length_range=(count, count),
+                            quantifier=(count, count),
                         )
                         best_subexprs = (
                             subexprs[:start]
@@ -114,7 +114,7 @@ def group_repeating_subexprs(
                 if weight > best_weight:
                     grouped_grammar = Grammar(
                         subexprs[start : start + chunk_size],
-                        length_range=(count, count),
+                        quantifier=(count, count),
                     )
                     best_subexprs = (
                         subexprs[:start]
@@ -148,9 +148,7 @@ def merge_adjacent_default_or(subexprs: list[BaseGrammar], n: int) -> int:
 
     last_idx = -1
     for i in range(n - 1, -1, -1):
-        if isinstance(subexprs[i], Or) and (
-            cast(Or, subexprs[i]).length_range == (1, 1)
-        ):
+        if isinstance(subexprs[i], Or) and (cast(Or, subexprs[i]).quantifier == (1, 1)):
             if last_idx < 1:
                 last_idx = i
             else:
@@ -196,7 +194,7 @@ def merge_adjacent_default_grammar(subexprs: list[BaseGrammar], n: int) -> int:
     last_idx = -1
     for i in range(n - 1, -1, -1):
         if isinstance(subexprs[i], Grammar) and (
-            cast(Grammar, subexprs[i]).length_range == (1, 1)
+            cast(Grammar, subexprs[i]).quantifier == (1, 1)
         ):
             if last_idx < 1:
                 last_idx = i
@@ -236,17 +234,17 @@ class Grammar(BaseGroupGrammar):
     def __init__(
         self,
         subexprs: Iterable[BaseGrammar],
-        length_range: int | tuple[int, int | None] = (1, 1),
+        quantifier: int | tuple[int, int | None] = (1, 1),
     ) -> None:
         """Grouped grammar that represents a logical AND operation between grammars.
 
         Args:
             subexprs (Iterable[BaseGrammar]): Grammars to group with AND logic.
-            length_range (int | tuple[int, int | None]): Minimum and maximum repetitions the expression must match. Defaults to (1, 1).
+            quantifier (int | tuple[int, int | None]): Minimum and maximum repetitions the expression must match. Defaults to (1, 1).
         """
         super().__init__(
             subexprs=subexprs,
-            length_range=length_range,
+            quantifier=quantifier,
         )
 
     def needs_wrapped(self) -> bool:
@@ -254,25 +252,25 @@ class Grammar(BaseGroupGrammar):
         if n < 1:
             return False
         if n == 1:
-            if self.length_range == (1, 1):
+            if self.quantifier == (1, 1):
                 return False
             # Recursively look for the first non-default (1, 1) subexpression
             subexpr = self.subexprs[0]
             wrap = isinstance(subexpr, BaseGroupGrammar)
             while (
                 wrap
-                and (cast(BaseGroupGrammar, subexpr).length_range == (1, 1))
+                and (cast(BaseGroupGrammar, subexpr).quantifier == (1, 1))
                 and (len(cast(BaseGroupGrammar, subexpr).subexprs) == 1)
             ):
                 subexpr = cast(BaseGroupGrammar, subexpr).subexprs[0]
                 wrap = isinstance(subexpr, BaseGroupGrammar)
             return wrap
-        return self.length_range != (1, 1)
+        return self.quantifier != (1, 1)
 
     @staticmethod
     def simplify_subexprs(
         original_subexprs: list[BaseGrammar],
-        length_range: tuple[int, int | None],
+        quantifier: tuple[int, int | None],
     ) -> BaseGrammar | None:
         subexprs: list[BaseGrammar] = []
         n = 0
@@ -287,28 +285,27 @@ class Grammar(BaseGroupGrammar):
         if n < 1:
             return None
 
-        # Grammar that is (1, n) or optional (0, n) containing subexpressions that are all optional (0, n) and are equivalent to each other (excluding length range) can be simplified to a single subexpression with a quantifier
-        # The upper bound of the length range is calculated by taking the sum of the upper bounds of the subexpressions and multiplying it by the upper bound of the outer expression
+        # Grammar that is (1, n) or optional (0, n) containing subexpressions that are all optional (0, n) and are equivalent to each other (excluding quantifier) can be simplified to a single subexpression with a quantifier
+        # The upper bound of the quantifier is calculated by taking the sum of the upper bounds of the subexpressions and multiplying it by the upper bound of the outer expression
         if (
-            length_range[0] in (0, 1)
+            quantifier[0] in (0, 1)
             and all(
                 map(
-                    lambda x: isinstance(x, BaseGroupGrammar)
-                    and x.length_range[0] == 0,
+                    lambda x: isinstance(x, BaseGroupGrammar) and x.quantifier[0] == 0,
                     subexprs,
                 )
             )
             and all(
-                subexprs[i].equals(subexprs[i + 1], check_length_range=False)
+                subexprs[i].equals(subexprs[i + 1], check_quantifier=False)
                 for i in range(n - 1)
             )
         ):
             upper_bound = sum(
                 map(
-                    lambda x: cast(int, cast(BaseGroupGrammar, x).length_range[1]),
+                    lambda x: cast(int, cast(BaseGroupGrammar, x).quantifier[1]),
                     subexprs,
                 )
-            ) * cast(int, length_range[1])
+            ) * cast(int, quantifier[1])
             return cast(BaseGroupGrammar, subexprs[0]).simplify_subexprs(
                 cast(BaseGroupGrammar, subexprs[0]).subexprs,
                 (0, upper_bound),
@@ -316,38 +313,38 @@ class Grammar(BaseGroupGrammar):
 
         if n == 1:
             # Unwrap a single default (1, 1) subexpression
-            if length_range == (1, 1):
+            if quantifier == (1, 1):
                 return subexprs[0]
             # Grammar that is optional (0, 1) can recursively unwrap to the first simple or non-single, non-default (1, 1), and non-optional (0, 1) grouped grammar.
             if (
-                (length_range == (0, 1))
+                (quantifier == (0, 1))
                 and isinstance(subexprs[0], BaseGroupGrammar)
-                and (subexprs[0].length_range in ((0, 1), (1, 1)))
+                and (subexprs[0].quantifier in ((0, 1), (1, 1)))
             ):
-                return Grammar.simplify_subexprs(subexprs[0].subexprs, length_range)
+                return Grammar.simplify_subexprs(subexprs[0].subexprs, quantifier)
 
         merged_n = merge_adjacent_default_grammar(subexprs, n)
         if merged_n < n:
-            return Grammar.simplify_subexprs(subexprs, length_range)
+            return Grammar.simplify_subexprs(subexprs, quantifier)
 
         merged_n = merge_adjacent_strings(subexprs, n)
         if merged_n < n:
-            return Grammar.simplify_subexprs(subexprs, length_range)
+            return Grammar.simplify_subexprs(subexprs, quantifier)
 
         grouped, grouped_n = group_repeating_subexprs(subexprs, n)
         if grouped_n < n:
-            return Grammar.simplify_subexprs(grouped, length_range)
+            return Grammar.simplify_subexprs(grouped, quantifier)
 
         # Grammar that is optional (0, n) containing subexpressions that are all optional (0, n) does not need to then be optional itself
-        if (length_range[0] == 0) and all(
+        if (quantifier[0] == 0) and all(
             map(
-                lambda x: isinstance(x, BaseGroupGrammar) and (x.length_range[0] == 0),
+                lambda x: isinstance(x, BaseGroupGrammar) and (x.quantifier[0] == 0),
                 subexprs,
             )
         ):
-            return Grammar.simplify_subexprs(subexprs, (1, length_range[1]))
+            return Grammar.simplify_subexprs(subexprs, (1, quantifier[1]))
 
-        return Grammar(subexprs, length_range=length_range)
+        return Grammar(subexprs, quantifier=quantifier)
 
 
 class Or(BaseGroupGrammar):
@@ -359,17 +356,17 @@ class Or(BaseGroupGrammar):
     def __init__(
         self,
         subexprs: Iterable[BaseGrammar],
-        length_range: int | tuple[int, int | None] = (1, 1),
+        quantifier: int | tuple[int, int | None] = (1, 1),
     ) -> None:
         """Grouped grammar that represents a logical OR operation between grammars.
 
         Args:
             subexprs (Iterable[BaseGrammar]): Grammars to group with OR logic.
-            length_range (int | tuple[int, int | None]): Minimum and maximum repetitions the expression must match. Defaults to (1, 1).
+            quantifier (int | tuple[int, int | None]): Minimum and maximum repetitions the expression must match. Defaults to (1, 1).
         """
         super().__init__(
             subexprs=subexprs,
-            length_range=length_range,
+            quantifier=quantifier,
         )
 
     def needs_wrapped(self) -> bool:
@@ -377,14 +374,14 @@ class Or(BaseGroupGrammar):
         if n < 1:
             return False
         if n == 1:
-            if self.length_range == (1, 1):
+            if self.quantifier == (1, 1):
                 return False
             # Recursively look for the first non-default (1, 1) subexpression
             subexpr = self.subexprs[0]
             wrap = isinstance(subexpr, BaseGroupGrammar)
             while (
                 wrap
-                and (cast(BaseGroupGrammar, subexpr).length_range == (1, 1))
+                and (cast(BaseGroupGrammar, subexpr).quantifier == (1, 1))
                 and (len(cast(BaseGroupGrammar, subexpr).subexprs) == 1)
             ):
                 subexpr = cast(BaseGroupGrammar, subexpr).subexprs[0]
@@ -395,7 +392,7 @@ class Or(BaseGroupGrammar):
     @staticmethod
     def simplify_subexprs(
         original_subexprs: list[BaseGrammar],
-        length_range: tuple[int, int | None],
+        quantifier: tuple[int, int | None],
     ) -> BaseGrammar | None:
         subexprs: list[BaseGrammar] = []
         n = 0
@@ -414,29 +411,29 @@ class Or(BaseGroupGrammar):
 
         if n == 1:
             # Unwrap a single default (1, 1) subexpression
-            if length_range == (1, 1):
+            if quantifier == (1, 1):
                 return subexprs[0]
             # Or that is optional (0, 1) can recursively unwrap to the first simple or non-single, non-default (1, 1), and non-optional (0, 1) grouped grammar.
             if (
-                (length_range == (0, 1))
+                (quantifier == (0, 1))
                 and isinstance(subexprs[0], BaseGroupGrammar)
-                and (subexprs[0].length_range in ((0, 1), (1, 1)))
+                and (subexprs[0].quantifier in ((0, 1), (1, 1)))
             ):
-                return Grammar.simplify_subexprs(subexprs[0].subexprs, length_range)
+                return Grammar.simplify_subexprs(subexprs[0].subexprs, quantifier)
             # Or with a single subexpression is the same as Grammar with a single subexpression
-            return Grammar.simplify_subexprs(subexprs, length_range)
+            return Grammar.simplify_subexprs(subexprs, quantifier)
 
         merged_n = merge_adjacent_default_or(subexprs, n)
         if merged_n < n:
-            return Or.simplify_subexprs(subexprs, length_range)
+            return Or.simplify_subexprs(subexprs, quantifier)
 
         # Or that is optional (0, n) containing subexpressions that are all optional (0, n) does not need to then be optional itself
-        if (length_range[0] == 0) and all(
+        if (quantifier[0] == 0) and all(
             map(
-                lambda x: isinstance(x, BaseGroupGrammar) and (x.length_range[0] == 0),
+                lambda x: isinstance(x, BaseGroupGrammar) and (x.quantifier[0] == 0),
                 subexprs,
             )
         ):
-            return Or.simplify_subexprs(subexprs, (1, length_range[1]))
+            return Or.simplify_subexprs(subexprs, (1, quantifier[1]))
 
-        return Or(subexprs, length_range=length_range)
+        return Or(subexprs, quantifier=quantifier)

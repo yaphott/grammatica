@@ -20,7 +20,7 @@ Attributes
 
    Grammar.separator
    Grammar.subexprs
-   Grammar.length_range
+   Grammar.quantifier
 
 Rendering
 ---------

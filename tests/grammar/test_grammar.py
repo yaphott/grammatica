@@ -29,7 +29,7 @@ except ImportError:
         },
         {
             "description": "Empty Grammar with (0, 1) quantifier",
-            "grammar": Grammar([], length_range=(0, 1)),
+            "grammar": Grammar([], quantifier=(0, 1)),
             "expected": None,
         },
         {
@@ -61,8 +61,8 @@ except ImportError:
         },
         {
             "description": "Grammar with single subexpression and (0, 1) quantifier",
-            "grammar": Grammar([String("a")], length_range=(0, 1)),
-            "expected": Grammar([String("a")], length_range=(0, 1)),
+            "grammar": Grammar([String("a")], quantifier=(0, 1)),
+            "expected": Grammar([String("a")], quantifier=(0, 1)),
         },
         {
             "description": "Grammar with consecutive String subexpressions",
@@ -71,8 +71,8 @@ except ImportError:
         },
         {
             "description": "Grammar with consecutive String subexpressions and (0, 1) quantifier",
-            "grammar": Grammar([String("a"), String("b")], length_range=(0, 1)),
-            "expected": Grammar([String("ab")], length_range=(0, 1)),
+            "grammar": Grammar([String("a"), String("b")], quantifier=(0, 1)),
+            "expected": Grammar([String("ab")], quantifier=(0, 1)),
         },
         {
             "description": "Nested Grammar with consecutive String subexpressions",
@@ -88,61 +88,61 @@ except ImportError:
             "description": "Nested Grammar with (0, 1) quantifiers",
             "grammar": Grammar(
                 [
-                    Grammar([String("a")], length_range=(0, 1)),
+                    Grammar([String("a")], quantifier=(0, 1)),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
-            "expected": Grammar([String("a")], length_range=(0, 1)),
+            "expected": Grammar([String("a")], quantifier=(0, 1)),
         },
         {
             "description": "Nested Grammar with consecutive String subexpressions and (0, 1) quantifiers",
             "grammar": Grammar(
                 [
-                    Grammar([String("a"), String("b")], length_range=(0, 1)),
-                    Grammar([String("c"), String("d")], length_range=(0, 1)),
+                    Grammar([String("a"), String("b")], quantifier=(0, 1)),
+                    Grammar([String("c"), String("d")], quantifier=(0, 1)),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
             "expected": Grammar(
                 [
-                    Grammar([String("ab")], length_range=(0, 1)),
-                    Grammar([String("cd")], length_range=(0, 1)),
+                    Grammar([String("ab")], quantifier=(0, 1)),
+                    Grammar([String("cd")], quantifier=(0, 1)),
                 ],
-                length_range=(1, 1),
+                quantifier=(1, 1),
             ),
         },
         {
             "description": "Nested Grammar with consecutive String subexpressions and (0, 5) quantifiers",
             "grammar": Grammar(
                 [
-                    Grammar([String("a"), String("b")], length_range=(0, 5)),
-                    Grammar([String("c"), String("d")], length_range=(0, 5)),
+                    Grammar([String("a"), String("b")], quantifier=(0, 5)),
+                    Grammar([String("c"), String("d")], quantifier=(0, 5)),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
             "expected": Grammar(
                 [
-                    Grammar([String("ab")], length_range=(0, 5)),
-                    Grammar([String("cd")], length_range=(0, 5)),
+                    Grammar([String("ab")], quantifier=(0, 5)),
+                    Grammar([String("cd")], quantifier=(0, 5)),
                 ],
-                length_range=(1, 1),
+                quantifier=(1, 1),
             ),
         },
         {
             "description": "Nested Grammar with consecutive String subexpressions and (0, 5) quantifiers",
             "grammar": Grammar(
                 [
-                    Grammar([String("a"), String("b")], length_range=(0, 5)),
-                    Grammar([String("c"), String("d")], length_range=(0, 5)),
+                    Grammar([String("a"), String("b")], quantifier=(0, 5)),
+                    Grammar([String("c"), String("d")], quantifier=(0, 5)),
                 ],
-                length_range=(0, 5),
+                quantifier=(0, 5),
             ),
             "expected": Grammar(
                 [
-                    Grammar([String("ab")], length_range=(0, 5)),
-                    Grammar([String("cd")], length_range=(0, 5)),
+                    Grammar([String("ab")], quantifier=(0, 5)),
+                    Grammar([String("cd")], quantifier=(0, 5)),
                 ],
-                length_range=(1, 5),
+                quantifier=(1, 5),
             ),
         },
         {
@@ -154,7 +154,7 @@ except ImportError:
                     Or([String("a"), String("b")]),
                 ],
             ),
-            "expected": Grammar([Or([String("a"), String("b")])], length_range=(3, 3)),
+            "expected": Grammar([Or([String("a"), String("b")])], quantifier=(3, 3)),
         },
         {
             "description": "Grammar with simple repeating subexpression and (0, 1) quantifier",
@@ -164,29 +164,29 @@ except ImportError:
                     Or([String("a"), String("b")]),
                     Or([String("a"), String("b")]),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
             "expected": Grammar(
                 [
                     Grammar(
                         [Or([String("a"), String("b")])],
-                        length_range=(3, 3),
+                        quantifier=(3, 3),
                     ),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
         },
         {
             "description": "Grammar with simple repeating subexpression and (0, 1) quantifiers",
             "grammar": Grammar(
                 [
-                    Or([String("a"), String("b")], length_range=(0, 1)),
-                    Or([String("a"), String("b")], length_range=(0, 1)),
-                    Or([String("a"), String("b")], length_range=(0, 1)),
+                    Or([String("a"), String("b")], quantifier=(0, 1)),
+                    Or([String("a"), String("b")], quantifier=(0, 1)),
+                    Or([String("a"), String("b")], quantifier=(0, 1)),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
-            "expected": Or([String("a"), String("b")], length_range=(0, 3)),
+            "expected": Or([String("a"), String("b")], quantifier=(0, 3)),
         },
         {
             "description": "Grammar with complex repeating subexpression",
@@ -203,25 +203,25 @@ except ImportError:
             "description": "Grammar with complex repeating subexpression and (0, 1) quantifiers",
             "grammar": Grammar(
                 [
-                    Grammar([String("a"), String("b")], length_range=(0, 1)),
-                    Grammar([String("a"), String("b")], length_range=(0, 1)),
-                    Grammar([String("a"), String("b")], length_range=(0, 1)),
+                    Grammar([String("a"), String("b")], quantifier=(0, 1)),
+                    Grammar([String("a"), String("b")], quantifier=(0, 1)),
+                    Grammar([String("a"), String("b")], quantifier=(0, 1)),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
-            "expected": Grammar([String("ab")], length_range=(0, 3)),
+            "expected": Grammar([String("ab")], quantifier=(0, 3)),
         },
         {
             "description": "Grammar with complex repeating subexpression and 0-n quantifiers",
             "grammar": Grammar(
                 [
-                    Grammar([String("a"), String("b")], length_range=(0, 3)),
-                    Grammar([String("a"), String("b")], length_range=(0, 4)),
-                    Grammar([String("a"), String("b")], length_range=(0, 5)),
+                    Grammar([String("a"), String("b")], quantifier=(0, 3)),
+                    Grammar([String("a"), String("b")], quantifier=(0, 4)),
+                    Grammar([String("a"), String("b")], quantifier=(0, 5)),
                 ],
-                length_range=(0, 2),
+                quantifier=(0, 2),
             ),
-            "expected": Grammar([String("ab")], length_range=(0, 2 * (3 + 4 + 5))),
+            "expected": Grammar([String("ab")], quantifier=(0, 2 * (3 + 4 + 5))),
         },
         {
             "description": "Grammar with complex repeating subexpressions",
@@ -229,34 +229,34 @@ except ImportError:
                 [
                     # Group 1
                     #   Group 1, Subgroup 1
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
                     #   Group 1, Subgroup 2
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
-                    Grammar([String("baz")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
+                    Grammar([String("baz")], quantifier=(0, 1)),
                     # Group 2
                     #   Group 2, Subgroup 1
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
                     #   Group 2, Subgroup 2
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
-                    Grammar([String("baz")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
+                    Grammar([String("baz")], quantifier=(0, 1)),
                 ],
             ),
             "expected": Grammar(
                 [
                     Grammar(
                         [
-                            Grammar([String("foo")], length_range=(0, 1)),
-                            Grammar([String("bar")], length_range=(0, 1)),
+                            Grammar([String("foo")], quantifier=(0, 1)),
+                            Grammar([String("bar")], quantifier=(0, 1)),
                         ],
-                        length_range=(2, 2),
+                        quantifier=(2, 2),
                     ),
-                    Grammar([String("baz")], length_range=(0, 1)),
+                    Grammar([String("baz")], quantifier=(0, 1)),
                 ],
-                length_range=(2, 2),
+                quantifier=(2, 2),
             ),
         },
         {
@@ -264,44 +264,44 @@ except ImportError:
             "grammar": Grammar(
                 [
                     # Leading subexpression
-                    Grammar([String("qux")], length_range=(0, 1)),
+                    Grammar([String("qux")], quantifier=(0, 1)),
                     # Group 1
                     #   Group 1, Subgroup 1
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
                     #   Group 1, Subgroup 2
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
-                    Grammar([String("baz")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
+                    Grammar([String("baz")], quantifier=(0, 1)),
                     # Group 2
                     #   Group 2, Subgroup 1
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
                     #   Group 2, Subgroup 2
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
-                    Grammar([String("baz")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
+                    Grammar([String("baz")], quantifier=(0, 1)),
                     # Trailing subexpression
-                    Grammar([String("quux")], length_range=(0, 1)),
+                    Grammar([String("quux")], quantifier=(0, 1)),
                 ],
             ),
             "expected": Grammar(
                 [
-                    Grammar([String("qux")], length_range=(0, 1)),
+                    Grammar([String("qux")], quantifier=(0, 1)),
                     Grammar(
                         [
                             Grammar(
                                 [
-                                    Grammar([String("foo")], length_range=(0, 1)),
-                                    Grammar([String("bar")], length_range=(0, 1)),
+                                    Grammar([String("foo")], quantifier=(0, 1)),
+                                    Grammar([String("bar")], quantifier=(0, 1)),
                                 ],
-                                length_range=(2, 2),
+                                quantifier=(2, 2),
                             ),
-                            Grammar([String("baz")], length_range=(0, 1)),
+                            Grammar([String("baz")], quantifier=(0, 1)),
                         ],
-                        length_range=(2, 2),
+                        quantifier=(2, 2),
                     ),
-                    Grammar([String("quux")], length_range=(0, 1)),
+                    Grammar([String("quux")], quantifier=(0, 1)),
                 ],
             ),
         },
@@ -311,22 +311,22 @@ except ImportError:
                 [
                     # Group 1
                     #   Group 1, Subgroup 1
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
                     #   Group 1, Subgroup 2
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
-                    Grammar([String("baz")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
+                    Grammar([String("baz")], quantifier=(0, 1)),
                     # Group 2
                     #   Group 2, Subgroup 1
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
                     #   Group 2, Subgroup 2
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
-                    Grammar([String("baz")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
+                    Grammar([String("baz")], quantifier=(0, 1)),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
             "expected": Grammar(
                 [
@@ -334,17 +334,17 @@ except ImportError:
                         [
                             Grammar(
                                 [
-                                    Grammar([String("foo")], length_range=(0, 1)),
-                                    Grammar([String("bar")], length_range=(0, 1)),
+                                    Grammar([String("foo")], quantifier=(0, 1)),
+                                    Grammar([String("bar")], quantifier=(0, 1)),
                                 ],
-                                length_range=(2, 2),
+                                quantifier=(2, 2),
                             ),
-                            Grammar([String("baz")], length_range=(0, 1)),
+                            Grammar([String("baz")], quantifier=(0, 1)),
                         ],
-                        length_range=(2, 2),
+                        quantifier=(2, 2),
                     ),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
         },
         {
@@ -352,47 +352,47 @@ except ImportError:
             "grammar": Grammar(
                 [
                     # Leading subexpression
-                    Grammar([String("qux")], length_range=(0, 1)),
+                    Grammar([String("qux")], quantifier=(0, 1)),
                     # Group 1
                     #   Group 1, Subgroup 1
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
                     #   Group 1, Subgroup 2
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
-                    Grammar([String("baz")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
+                    Grammar([String("baz")], quantifier=(0, 1)),
                     # Group 2
                     #   Group 2, Subgroup 1
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
                     #   Group 2, Subgroup 2
-                    Grammar([String("foo")], length_range=(0, 1)),
-                    Grammar([String("bar")], length_range=(0, 1)),
-                    Grammar([String("baz")], length_range=(0, 1)),
+                    Grammar([String("foo")], quantifier=(0, 1)),
+                    Grammar([String("bar")], quantifier=(0, 1)),
+                    Grammar([String("baz")], quantifier=(0, 1)),
                     # Trailing subexpression
-                    Grammar([String("quux")], length_range=(0, 1)),
+                    Grammar([String("quux")], quantifier=(0, 1)),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
             "expected": Grammar(
                 [
-                    Grammar([String("qux")], length_range=(0, 1)),
+                    Grammar([String("qux")], quantifier=(0, 1)),
                     Grammar(
                         [
                             Grammar(
                                 [
-                                    Grammar([String("foo")], length_range=(0, 1)),
-                                    Grammar([String("bar")], length_range=(0, 1)),
+                                    Grammar([String("foo")], quantifier=(0, 1)),
+                                    Grammar([String("bar")], quantifier=(0, 1)),
                                 ],
-                                length_range=(2, 2),
+                                quantifier=(2, 2),
                             ),
-                            Grammar([String("baz")], length_range=(0, 1)),
+                            Grammar([String("baz")], quantifier=(0, 1)),
                         ],
-                        length_range=(2, 2),
+                        quantifier=(2, 2),
                     ),
-                    Grammar([String("quux")], length_range=(0, 1)),
+                    Grammar([String("quux")], quantifier=(0, 1)),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
         },
         # {
@@ -426,7 +426,7 @@ def test_grammar_simplify(test_case):
         },
         {
             "description": "Empty Or with (0, 1) quantifier",
-            "grammar": Or([], length_range=(0, 1)),
+            "grammar": Or([], quantifier=(0, 1)),
             "expected": None,
         },
         {
@@ -441,8 +441,8 @@ def test_grammar_simplify(test_case):
         },
         {
             "description": "Or with single subexpression and (0, 1) quantifier",
-            "grammar": Or([String("a")], length_range=(0, 1)),
-            "expected": Grammar([String("a")], length_range=(0, 1)),
+            "grammar": Or([String("a")], quantifier=(0, 1)),
+            "expected": Grammar([String("a")], quantifier=(0, 1)),
         },
         {
             "description": "Or with consecutive String subexpressions",
@@ -451,8 +451,8 @@ def test_grammar_simplify(test_case):
         },
         {
             "description": "Or with consecutive String subexpressions and (0, 1) quantifier",
-            "grammar": Or([String("a"), String("b")], length_range=(0, 1)),
-            "expected": Or([String("a"), String("b")], length_range=(0, 1)),
+            "grammar": Or([String("a"), String("b")], quantifier=(0, 1)),
+            "expected": Or([String("a"), String("b")], quantifier=(0, 1)),
         },
         {
             "description": "Nested Or with consecutive String subexpressions",
@@ -468,44 +468,44 @@ def test_grammar_simplify(test_case):
             "description": "Nested Or with (0, 1) quantifiers",
             "grammar": Or(
                 [
-                    Or([String("a")], length_range=(0, 1)),
+                    Or([String("a")], quantifier=(0, 1)),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
-            "expected": Grammar([String("a")], length_range=(0, 1)),
+            "expected": Grammar([String("a")], quantifier=(0, 1)),
         },
         {
             "description": "Nested Or with consecutive String subexpressions and (0, 1) quantifiers",
             "grammar": Or(
                 [
-                    Or([String("a"), String("b")], length_range=(0, 1)),
-                    Or([String("c"), String("d")], length_range=(0, 1)),
+                    Or([String("a"), String("b")], quantifier=(0, 1)),
+                    Or([String("c"), String("d")], quantifier=(0, 1)),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
             "expected": Or(
                 [
-                    Or([String("a"), String("b")], length_range=(0, 1)),
-                    Or([String("c"), String("d")], length_range=(0, 1)),
+                    Or([String("a"), String("b")], quantifier=(0, 1)),
+                    Or([String("c"), String("d")], quantifier=(0, 1)),
                 ],
-                length_range=(1, 1),
+                quantifier=(1, 1),
             ),
         },
         {
             "description": "Nested Or with consecutive String subexpressions and (0, 5) quantifiers",
             "grammar": Or(
                 [
-                    Or([String("a"), String("b")], length_range=(0, 5)),
-                    Or([String("c"), String("d")], length_range=(0, 5)),
+                    Or([String("a"), String("b")], quantifier=(0, 5)),
+                    Or([String("c"), String("d")], quantifier=(0, 5)),
                 ],
-                length_range=(0, 5),
+                quantifier=(0, 5),
             ),
             "expected": Or(
                 [
-                    Or([String("a"), String("b")], length_range=(0, 5)),
-                    Or([String("c"), String("d")], length_range=(0, 5)),
+                    Or([String("a"), String("b")], quantifier=(0, 5)),
+                    Or([String("c"), String("d")], quantifier=(0, 5)),
                 ],
-                length_range=(1, 5),
+                quantifier=(1, 5),
             ),
         },
         {
@@ -515,8 +515,8 @@ def test_grammar_simplify(test_case):
         },
         {
             "description": "Or with simple repeating subexpression and (0, 1) quantifier",
-            "grammar": Or([String("a"), String("a"), String("a")], length_range=(0, 1)),
-            "expected": Grammar([String("a")], length_range=(0, 1)),
+            "grammar": Or([String("a"), String("a"), String("a")], quantifier=(0, 1)),
+            "expected": Grammar([String("a")], quantifier=(0, 1)),
         },
         {
             "description": "Or with complex repeating subexpression",
@@ -533,13 +533,13 @@ def test_grammar_simplify(test_case):
             "description": "Or with complex repeating subexpression and (0, 1) quantifiers",
             "grammar": Or(
                 [
-                    Grammar([String("a"), String("b")], length_range=(0, 1)),
-                    Grammar([String("a"), String("b")], length_range=(0, 1)),
-                    Grammar([String("a"), String("b")], length_range=(0, 1)),
+                    Grammar([String("a"), String("b")], quantifier=(0, 1)),
+                    Grammar([String("a"), String("b")], quantifier=(0, 1)),
+                    Grammar([String("a"), String("b")], quantifier=(0, 1)),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
-            "expected": Grammar([String("ab")], length_range=(0, 1)),
+            "expected": Grammar([String("ab")], quantifier=(0, 1)),
         },
     ],
 )
@@ -567,25 +567,25 @@ def test_complex_simplify():
                             Grammar([String("a"), String("b")]),
                             Grammar([String("c"), String("d")]),
                         ],
-                        length_range=(0, 1),
+                        quantifier=(0, 1),
                     ),
                     Or(
                         [
                             Grammar([String("e"), String("f")]),
                             Grammar([String("g"), String("h")]),
                         ],
-                        length_range=(0, 1),
+                        quantifier=(0, 1),
                     ),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
         ],
-        length_range=(0, 1),
+        quantifier=(0, 1),
     )
     expected = Or(
         [
-            Or([String("ab"), String("cd")], length_range=(0, 1)),
-            Or([String("ef"), String("gh")], length_range=(0, 1)),
+            Or([String("ab"), String("cd")], quantifier=(0, 1)),
+            Or([String("ef"), String("gh")], quantifier=(0, 1)),
         ],
     )
     actual = grammar.simplify()
@@ -608,25 +608,25 @@ def test_complex_simplify2():
                             Grammar([String("a"), String("b")]),
                             Grammar([String("c"), String("d")]),
                         ],
-                        length_range=(0, 1),
+                        quantifier=(0, 1),
                     ),
                     Grammar(
                         [
                             Grammar([String("e"), String("f")]),
                             Grammar([String("g"), String("h")]),
                         ],
-                        length_range=(0, 1),
+                        quantifier=(0, 1),
                     ),
                 ],
-                length_range=(0, 1),
+                quantifier=(0, 1),
             ),
         ],
-        length_range=(0, 1),
+        quantifier=(0, 1),
     )
     expected = Grammar(
         [
-            Grammar([String("abcd")], length_range=(0, 1)),
-            Grammar([String("efgh")], length_range=(0, 1)),
+            Grammar([String("abcd")], quantifier=(0, 1)),
+            Grammar([String("efgh")], quantifier=(0, 1)),
         ],
     )
     actual = grammar.simplify()
@@ -649,7 +649,7 @@ def test_complex_simplify2():
         },
         {
             "description": "Empty Grammar with (0, 1) quantifier",
-            "grammar": Grammar([], length_range=(0, 1)),
+            "grammar": Grammar([], quantifier=(0, 1)),
             "expected": None,
         },
         {
@@ -659,7 +659,7 @@ def test_complex_simplify2():
         },
         {
             "description": "Grammar with single subexpression and (0, 1) quantifier",
-            "grammar": Grammar([String("a")], length_range=(0, 1)),
+            "grammar": Grammar([String("a")], quantifier=(0, 1)),
             "expected": '"a"?',
         },
         {
@@ -669,7 +669,7 @@ def test_complex_simplify2():
         },
         {
             "description": "Grammar with multiple subexpressions and (0, 1) quantifier",
-            "grammar": Grammar([String("a"), String("b")], length_range=(0, 1)),
+            "grammar": Grammar([String("a"), String("b")], quantifier=(0, 1)),
             "expected": '("a" "b")?',
         },
     ],
@@ -703,7 +703,7 @@ def test_grammar_render(test_case):
         },
         {
             "description": "Grammar with single subexpression and non-default quantifier",
-            "grammar": Grammar([String("a")], length_range=(0, 1)),
+            "grammar": Grammar([String("a")], quantifier=(0, 1)),
             "expected": False,
         },
         {
@@ -713,7 +713,7 @@ def test_grammar_render(test_case):
         },
         {
             "description": "Grammar with multiple subexpressions and non-default quantifier",
-            "grammar": Grammar([String("a"), String("b")], length_range=(0, 1)),
+            "grammar": Grammar([String("a"), String("b")], quantifier=(0, 1)),
             "expected": True,
         },
         {
@@ -723,7 +723,7 @@ def test_grammar_render(test_case):
         },
         {
             "description": "Nested Grammar with single subexpression and non-default quantifier",
-            "grammar": Grammar([Grammar([String("a")])], length_range=(0, 1)),
+            "grammar": Grammar([Grammar([String("a")])], quantifier=(0, 1)),
             "expected": False,
         },
     ],
@@ -750,7 +750,7 @@ def test_grammar_needs_wrapped(test_case):
         },
         {
             "description": "Empty Or with (0, 1) quantifier",
-            "grammar": Or([], length_range=(0, 1)),
+            "grammar": Or([], quantifier=(0, 1)),
             "expected": None,
         },
         {
@@ -760,22 +760,22 @@ def test_grammar_needs_wrapped(test_case):
         },
         {
             "description": "Or with multiple subexpressions and (0, 1) quantifier",
-            "grammar": Or([String("a"), String("b")], length_range=(0, 1)),
+            "grammar": Or([String("a"), String("b")], quantifier=(0, 1)),
             "expected": '("a" | "b")?',
         },
         {
             "description": "Or with multiple subexpressions and (0, None) quantifier",
-            "grammar": Or([String("a"), String("b")], length_range=(0, None)),
+            "grammar": Or([String("a"), String("b")], quantifier=(0, None)),
             "expected": '("a" | "b")*',
         },
         {
             "description": "Or with multiple subexpressions and (1, None) quantifier",
-            "grammar": Or([String("a"), String("b")], length_range=(1, None)),
+            "grammar": Or([String("a"), String("b")], quantifier=(1, None)),
             "expected": '("a" | "b")+',
         },
         {
             "description": "Or with multiple subexpressions and (1, 3) quantifier",
-            "grammar": Or([String("a"), String("b")], length_range=(1, 3)),
+            "grammar": Or([String("a"), String("b")], quantifier=(1, 3)),
             "expected": '("a" | "b"){1,3}',
         },
         {
@@ -785,7 +785,7 @@ def test_grammar_needs_wrapped(test_case):
         },
         {
             "description": "Or with single subexpression and (0, 1) quantifier",
-            "grammar": Or([String("a")], length_range=(0, 1)),
+            "grammar": Or([String("a")], quantifier=(0, 1)),
             "expected": '"a"?',
         },
     ],
@@ -807,10 +807,10 @@ def test_or_render(test_case):
 def test_grammar_attrs_dict():
     string_a = String("a")
     string_b = String("b")
-    grammar = Grammar([string_a, string_b], length_range=(1, 2))
+    grammar = Grammar([string_a, string_b], quantifier=(1, 2))
     expected = {
         "subexprs": [string_a, string_b],
-        "length_range": (1, 2),
+        "quantifier": (1, 2),
     }
     actual = grammar.attrs_dict()
     assert actual == expected
@@ -833,7 +833,7 @@ def test_grammar_attrs_dict():
         },
         {
             "description": "Or with single subexpression and non-default quantifier",
-            "grammar": Or([String("a")], length_range=(0, 1)),
+            "grammar": Or([String("a")], quantifier=(0, 1)),
             "expected": False,
         },
         {
@@ -843,7 +843,7 @@ def test_grammar_attrs_dict():
         },
         {
             "description": "Or with multiple subexpressions and non-default quantifier",
-            "grammar": Or([String("a"), String("b")], length_range=(0, 1)),
+            "grammar": Or([String("a"), String("b")], quantifier=(0, 1)),
             "expected": True,
         },
         {
@@ -853,7 +853,7 @@ def test_grammar_attrs_dict():
         },
         {
             "description": "Nested Or with single subexpression and non-default quantifier",
-            "grammar": Or([Or([String("a")])], length_range=(0, 1)),
+            "grammar": Or([Or([String("a")])], quantifier=(0, 1)),
             "expected": False,
         },
     ],
@@ -873,10 +873,10 @@ def test_or_needs_wrapped(test_case):
 def test_or_attrs_dict():
     string_a = String("a")
     string_b = String("b")
-    or_expr = Or([string_a, string_b], length_range=(1, 2))
+    or_expr = Or([string_a, string_b], quantifier=(1, 2))
     expected = {
         "subexprs": [string_a, string_b],
-        "length_range": (1, 2),
+        "quantifier": (1, 2),
     }
     actual = or_expr.attrs_dict()
     assert actual == expected

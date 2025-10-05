@@ -102,12 +102,12 @@ class BaseGrammar(ABC):
     def __str__(self) -> str:
         return self.as_string(indent=None)
 
-    def equals(self, other: Any, check_length_range: bool = True) -> bool:
+    def equals(self, other: Any, check_quantifier: bool = True) -> bool:
         """Check equality with another value.
 
         Args:
             other (Any): Value to compare against.
-            check_length_range (bool, optional): Include the length range in the comparison. Defaults to True.
+            check_quantifier (bool, optional): Include the quantifier in the comparison. Defaults to True.
 
         Returns:
             bool: True if the values are equal, False otherwise.
@@ -121,11 +121,11 @@ class BaseGrammar(ABC):
         return {
             k: attrs[k]
             for k in sorted(attrs)
-            if (k != "length_range") or check_length_range
+            if (k != "quantifier") or check_quantifier
         } == {
             k: other_attrs[k]
             for k in sorted(other_attrs)
-            if (k != "length_range") or check_length_range
+            if (k != "quantifier") or check_quantifier
         }
 
     def __eq__(self, other: Any) -> bool:
@@ -151,7 +151,7 @@ class BaseGroupGrammar(BaseGrammar, ABC):
         self,
         *,
         subexprs: Iterable[BaseGrammar],
-        length_range: int | tuple[int, int | None],
+        quantifier: int | tuple[int, int | None],
     ) -> None:
         super().__init__()
 
@@ -160,22 +160,22 @@ class BaseGroupGrammar(BaseGrammar, ABC):
 
         lower: int
         upper: int | None
-        if isinstance(length_range, int):
-            lower = upper = length_range
+        if isinstance(quantifier, int):
+            lower = upper = quantifier
         else:  # tuple
-            lower, upper = length_range
+            lower, upper = quantifier
         if lower < 0:
-            raise ValueError(f"Range lower bound must be non-negative: {length_range}")
+            raise ValueError(f"Range lower bound must be non-negative: {quantifier}")
         if upper is not None:
             if upper < 1:
                 raise ValueError(
-                    f"Range upper bound must be positive or None (infinity): {length_range}"
+                    f"Range upper bound must be positive or None (infinity): {quantifier}"
                 )
             if lower > upper:
                 raise ValueError(
-                    f"Range lower bound must be <= range upper bound: {length_range}"
+                    f"Range lower bound must be <= range upper bound: {quantifier}"
                 )
-        self.length_range: tuple[int, int | None] = (lower, upper)
+        self.quantifier: tuple[int, int | None] = (lower, upper)
         """Minimum and maximum repetitions the expression must match."""
 
     def render(self, full: bool = True, wrap: bool = True) -> str | None:
@@ -200,12 +200,12 @@ class BaseGroupGrammar(BaseGrammar, ABC):
         return expr
 
     def render_quantifier(self) -> str | None:
-        """Render the quantifier based on the length range.
+        """Render the quantifier.
 
         Returns:
             str | None: A quantifier string or None if not applicable.
         """
-        lower, upper = self.length_range
+        lower, upper = self.quantifier
         if lower == upper == 1:
             return None
         if lower == 0:
@@ -224,19 +224,19 @@ class BaseGroupGrammar(BaseGrammar, ABC):
         return "{" + str(lower) + "," + str(upper) + "}"
 
     def simplify(self) -> BaseGrammar | None:
-        return self.simplify_subexprs(self.subexprs, self.length_range)
+        return self.simplify_subexprs(self.subexprs, self.quantifier)
 
     @staticmethod
     @abstractmethod
     def simplify_subexprs(
         original_subexprs: list[BaseGrammar],
-        length_range: tuple[int, int | None],
+        quantifier: tuple[int, int | None],
     ) -> BaseGrammar | None:
         """Simplify the provided subexpressions.
 
         Args:
             original_subexprs (list[BaseGrammar]): Subexpressions to simplify.
-            length_range (tuple[int, int | None]): Length range of the expression.
+            quantifier (tuple[int, int | None]): Quantifier for the expression.
 
         Returns:
             BaseGrammar | None: Simplified expression. If the expression is empty, return None.
@@ -256,7 +256,7 @@ class BaseGroupGrammar(BaseGrammar, ABC):
     def attrs_dict(self) -> dict[str, Any]:
         return {
             "subexprs": self.subexprs,
-            "length_range": self.length_range,
+            "quantifier": self.quantifier,
         } | super().attrs_dict()
 
 

@@ -20,7 +20,7 @@ Attributes
 
    Or.separator
    Or.subexprs
-   Or.length_range
+   Or.quantifier
 
 Rendering
 ---------
