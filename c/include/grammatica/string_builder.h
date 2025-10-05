@@ -40,7 +40,7 @@ void grammaticaStringBuilderDestroy(GrammaticaStringBuilder* sb);
  * @param str String to append
  * @return GRAMMATICA_OK on success, error code otherwise
  */
-GrammaticaError grammaticaStringBuilderAppend(GrammaticaStringBuilder* sb, const char* str);
+GrammaticaError_t grammaticaStringBuilderAppend(GrammaticaStringBuilder* sb, const char* str);
 
 /**
  * @brief Append a character to the string builder
@@ -48,7 +48,7 @@ GrammaticaError grammaticaStringBuilderAppend(GrammaticaStringBuilder* sb, const
  * @param ch Character to append
  * @return GRAMMATICA_OK on success, error code otherwise
  */
-GrammaticaError grammaticaStringBuilderAppend_char(GrammaticaStringBuilder* sb, char ch);
+GrammaticaError_t grammaticaStringBuilderAppend_char(GrammaticaStringBuilder* sb, char ch);
 
 /**
  * @brief Append a formatted string to the string builder
@@ -57,7 +57,7 @@ GrammaticaError grammaticaStringBuilderAppend_char(GrammaticaStringBuilder* sb, 
  * @param ... Format arguments
  * @return GRAMMATICA_OK on success, error code otherwise
  */
-GrammaticaError grammaticaStringBuilderAppend_format(GrammaticaStringBuilder* sb, const char* format, ...);
+GrammaticaError_t grammaticaStringBuilderAppend_format(GrammaticaStringBuilder* sb, const char* format, ...);
 
 /**
  * @brief Get the current string from the string builder

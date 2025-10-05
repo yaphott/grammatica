@@ -32,14 +32,14 @@ typedef enum {
     GRAMMATICA_ERROR_OUT_OF_MEMORY = -3,
     GRAMMATICA_ERROR_INVALID_STATE = -4,
     GRAMMATICA_ERROR_BUFFER_TOO_SMALL = -5,
-} GrammaticaError;
+} GrammaticaError_t;
 
 /**
  * @brief Get error message for an error code
  * @param error Error code
  * @return Error message string (static, do not free)
  */
-const char* Grammatica_errorString(GrammaticaError error);
+const char* Grammatica_errorString(GrammaticaError_t error);
 
 #ifdef __cplusplus
 }

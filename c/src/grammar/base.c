@@ -70,7 +70,7 @@ bool grammaticaGrammarEquals(const GrammaticaGrammar* grammar, const GrammaticaG
     return grammar->vtable->equals(grammar, other, check_quantifier);
 }
 
-GrammaticaError grammaticaValidateQuantifier(GrammaticaQuantifier quantifier) {
+GrammaticaError_t grammaticaValidateQuantifier(GrammaticaQuantifier quantifier) {
     // Check if max is valid (0 means infinity, otherwise must be >= 1)
     if (quantifier.max != 0 && quantifier.max < 1) {
         return GRAMMATICA_ERROR_INVALID_ARGUMENT;
@@ -145,7 +145,7 @@ void grammaticaGrammarArrayDestroy(GrammaticaGrammarArray* array) {
     free(array);
 }
 
-GrammaticaError grammaticaGrammarArrayAppend(GrammaticaGrammarArray* array, GrammaticaGrammar* grammar) {
+GrammaticaError_t grammaticaGrammarArrayAppend(GrammaticaGrammarArray* array, GrammaticaGrammar* grammar) {
     if (array == NULL || grammar == NULL) {
         return GRAMMATICA_ERROR_NULL_POINTER;
     }

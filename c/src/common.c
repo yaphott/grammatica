@@ -1,6 +1,6 @@
 #include "grammatica/common.h"
 
-const char* Grammatica_errorString(GrammaticaError error) {
+const char* Grammatica_errorString(GrammaticaError_t error) {
     switch (error) {
         case GRAMMATICA_OK:
             return "Success";

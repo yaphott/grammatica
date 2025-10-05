@@ -144,7 +144,7 @@ static bool string_equals(const GrammaticaGrammar* grammar, const GrammaticaGram
     return strcmp(g1->value, g2->value) == 0;
 }
 
-GrammaticaError grammaticaMergeAdjacentStrings(GrammaticaGrammarArray* array) {
+GrammaticaError_t grammaticaMergeAdjacentStrings(GrammaticaGrammarArray* array) {
     if (array == NULL) {
         return GRAMMATICA_ERROR_NULL_POINTER;
     }

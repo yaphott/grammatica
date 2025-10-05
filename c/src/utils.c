@@ -2,11 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 
-GrammaticaError Grammatica_charToCpoint(uint32_t ch, char* buffer, size_t bufferSize) {
+GrammaticaError_t Grammatica_charToCpoint(uint32_t ch, char* buffer, size_t bufferSize) {
     return Grammatica_ordToCpoint(ch, buffer, bufferSize);
 }
 
-GrammaticaError Grammatica_ordToCpoint(uint32_t ordinal, char* buffer, size_t bufferSize) {
+GrammaticaError_t Grammatica_ordToCpoint(uint32_t ordinal, char* buffer, size_t bufferSize) {
     if (buffer == NULL) {
         return GRAMMATICA_ERROR_NULL_POINTER;
     }
@@ -26,11 +26,11 @@ GrammaticaError Grammatica_ordToCpoint(uint32_t ordinal, char* buffer, size_t bu
     return GRAMMATICA_OK;
 }
 
-GrammaticaError Grammatica_charToHex(uint32_t ch, char* buffer, size_t bufferSize) {
+GrammaticaError_t Grammatica_charToHex(uint32_t ch, char* buffer, size_t bufferSize) {
     return Grammatica_ordToHex(ch, buffer, bufferSize);
 }
 
-GrammaticaError Grammatica_ordToHex(uint32_t ordinal, char* buffer, size_t bufferSize) {
+GrammaticaError_t Grammatica_ordToHex(uint32_t ordinal, char* buffer, size_t bufferSize) {
     if (buffer == NULL) {
         return GRAMMATICA_ERROR_NULL_POINTER;
     }

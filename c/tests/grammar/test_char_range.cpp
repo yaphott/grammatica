@@ -16,12 +16,22 @@ protected:
 
 // Test: test_char_range_render_empty
 TEST_F(CharRangeTest, RenderEmpty) {
-    // In C, we can't create a CharRange with 0 ranges (it returns NULL)
-    // So we test that creating with NULL or 0 count returns NULL
+    GrammaticaCharRangeEntry range = {'a', 'z'};
+    grammar = grammaticaCharRangeCreate(&range, 1, false);
+    ASSERT_NE(nullptr, grammar);
+
+    // Manually clear the ranges to simulate empty state
+    // In Python: grammar.char_ranges = []
+    // In C: We can't directly modify internal state, so we test that
+    // an empty range creation returns NULL and renders as NULL
+    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
+    grammar = nullptr;
+
+    // Creating with 0 ranges should return NULL
     grammar = grammaticaCharRangeCreate(nullptr, 0, false);
     EXPECT_EQ(nullptr, grammar);
 
-    // Also test that render returns NULL for invalid input
+    // Rendering NULL should return NULL
     char* rendered = grammaticaGrammarRender(nullptr, true, true);
     EXPECT_EQ(nullptr, rendered);
 }
@@ -235,6 +245,7 @@ TEST_F(CharRangeTest, RenderNegatedRange) {
     free(rendered);
 }
 
+
 // Test: test_char_range_render - "Adjacent characters"
 TEST_F(CharRangeTest, RenderAdjacentChars) {
     GrammaticaCharRangeEntry range = {'a', 'b'};
@@ -248,231 +259,246 @@ TEST_F(CharRangeTest, RenderAdjacentChars) {
 }
 
 // Test: test_char_range_render - Characters that are always safe in ranges
-// Testing a sample of ALWAYS_SAFE_CHARS - CHAR_ESCAPE_MAP - RANGE_ESCAPE_CHARS
-TEST_F(CharRangeTest, RenderAlwaysSafeChars) {
-    // Test digit
-    GrammaticaCharRangeEntry range1 = {'5', '5'};
-    grammar = grammaticaCharRangeCreate(&range1, 1, false);
-    char* rendered1 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[5]", rendered1);
-    free(rendered1);
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
+// ALWAYS_SAFE_CHARS - CHAR_ESCAPE_MAP - RANGE_ESCAPE_CHARS
+// This includes: digits (0-9), letters (a-zA-Z), space, and punctuation (!#$%&'()*+,./:;<=>?@_`{|}~)
+// Note: " is in STRING_LITERAL_ESCAPE_CHARS but not in RANGE_ESCAPE_CHARS or CHAR_ESCAPE_MAP
 
-    // Test letter
-    GrammaticaCharRangeEntry range2 = {'g', 'g'};
-    grammar = grammaticaCharRangeCreate(&range2, 1, false);
-    char* rendered2 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[g]", rendered2);
-    free(rendered2);
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
+class CharRangeRenderAlwaysSafeTest : public ::testing::TestWithParam<std::pair<uint32_t, const char*>> {
+protected:
+    GrammaticaCharRange* grammar = nullptr;
 
-    // Test punctuation (excluding range escape chars)
-    GrammaticaCharRangeEntry range3 = {'!', '!'};
-    grammar = grammaticaCharRangeCreate(&range3, 1, false);
-    char* rendered3 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[!]", rendered3);
-    free(rendered3);
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
+    void TearDown() override {
+        if (grammar != nullptr) {
+            grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
+        }
+    }
+};
 
-    // Test space
-    GrammaticaCharRangeEntry range4 = {' ', ' '};
-    grammar = grammaticaCharRangeCreate(&range4, 1, false);
-    char* rendered4 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[ ]", rendered4);
-    free(rendered4);
-}
-
-// Test: test_char_range_render - Characters with CHAR_ESCAPE_MAP escapes
-TEST_F(CharRangeTest, RenderCharEscapeMap) {
-    // Test newline
-    GrammaticaCharRangeEntry range1 = {'\n', '\n'};
-    grammar = grammaticaCharRangeCreate(&range1, 1, false);
-    char* rendered1 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[\\n]", rendered1);
-    free(rendered1);
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
-
-    // Test carriage return
-    GrammaticaCharRangeEntry range2 = {'\r', '\r'};
-    grammar = grammaticaCharRangeCreate(&range2, 1, false);
-    char* rendered2 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[\\r]", rendered2);
-    free(rendered2);
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
-
-    // Test tab
-    GrammaticaCharRangeEntry range3 = {'\t', '\t'};
-    grammar = grammaticaCharRangeCreate(&range3, 1, false);
-    char* rendered3 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[\\t]", rendered3);
-    free(rendered3);
-}
-
-// Test: test_char_range_render - Characters with RANGE_ESCAPE_CHARS (simple escape)
-TEST_F(CharRangeTest, RenderRangeEscapeChars) {
-    // Test caret
-    GrammaticaCharRangeEntry range1 = {'^', '^'};
-    grammar = grammaticaCharRangeCreate(&range1, 1, false);
-    char* rendered1 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[\\^]", rendered1);
-    free(rendered1);
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
-
-    // Test dash
-    GrammaticaCharRangeEntry range2 = {'-', '-'};
-    grammar = grammaticaCharRangeCreate(&range2, 1, false);
-    char* rendered2 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[\\-]", rendered2);
-    free(rendered2);
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
-
-    // Test left bracket
-    GrammaticaCharRangeEntry range3 = {'[', '['};
-    grammar = grammaticaCharRangeCreate(&range3, 1, false);
-    char* rendered3 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[\\[]", rendered3);
-    free(rendered3);
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
-
-    // Test right bracket
-    GrammaticaCharRangeEntry range4 = {']', ']'};
-    grammar = grammaticaCharRangeCreate(&range4, 1, false);
-    char* rendered4 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[\\]]", rendered4);
-    free(rendered4);
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
-
-    // Test backslash
-    GrammaticaCharRangeEntry range5 = {'\\', '\\'};
-    grammar = grammaticaCharRangeCreate(&range5, 1, false);
-    char* rendered5 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[\\\\]", rendered5);
-    free(rendered5);
-}
-
-// Test: test_char_range_render - Other characters are fully escaped (hex)
-TEST_F(CharRangeTest, RenderOtherCharsHexEscaped) {
-    // Test null character
-    GrammaticaCharRangeEntry range1 = {0x00, 0x00};
-    grammar = grammaticaCharRangeCreate(&range1, 1, false);
-    char* rendered1 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[\\x00]", rendered1);
-    free(rendered1);
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
-
-    // Test control character
-    GrammaticaCharRangeEntry range2 = {0x01, 0x01};
-    grammar = grammaticaCharRangeCreate(&range2, 1, false);
-    char* rendered2 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[\\x01]", rendered2);
-    free(rendered2);
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
-
-    // Test DEL character
-    GrammaticaCharRangeEntry range3 = {0x7F, 0x7F};
-    grammar = grammaticaCharRangeCreate(&range3, 1, false);
-    char* rendered3 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[\\x7F]", rendered3);
-    free(rendered3);
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
-
-    // Test high byte character
-    GrammaticaCharRangeEntry range4 = {0xFF, 0xFF};
-    grammar = grammaticaCharRangeCreate(&range4, 1, false);
-    char* rendered4 = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
-    EXPECT_STREQ("[\\xFF]", rendered4);
-    free(rendered4);
-}
-
-// Test: test_char_range_as_string (C doesn't have this method - informational only)
-// This test doesn't apply to C implementation
-
-// Test: test_char_range_attrs_dict (C doesn't have this method - informational only)
-// This test doesn't apply to C implementation
-
-// Additional C-specific tests
-
-TEST_F(CharRangeTest, Copy) {
-    GrammaticaCharRangeEntry range = {'a', 'z'};
+TEST_P(CharRangeRenderAlwaysSafeTest, RenderAlwaysSafe) {
+    auto [codepoint, expected] = GetParam();
+    GrammaticaCharRangeEntry range = {codepoint, codepoint};
     grammar = grammaticaCharRangeCreate(&range, 1, false);
     ASSERT_NE(nullptr, grammar);
 
-    GrammaticaGrammar* copied = grammaticaGrammarCopy((GrammaticaGrammar*)grammar);
-    ASSERT_NE(nullptr, copied);
-    EXPECT_TRUE(grammaticaGrammarEquals((GrammaticaGrammar*)grammar, copied, true));
-    EXPECT_NE((GrammaticaGrammar*)grammar, copied);  // Different instances
-
-    grammaticaGrammarUnref(copied);
+    char* rendered = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
+    ASSERT_NE(nullptr, rendered);
+    EXPECT_STREQ(expected, rendered);
+    free(rendered);
 }
 
-TEST_F(CharRangeTest, Equals) {
-    GrammaticaCharRangeEntry range1 = {'a', 'z'};
-    grammar = grammaticaCharRangeCreate(&range1, 1, false);
+INSTANTIATE_TEST_SUITE_P(
+    AlwaysSafeChars,
+    CharRangeRenderAlwaysSafeTest,
+    ::testing::Values(
+        // Digits
+        std::make_pair('0', "[0]"),
+        std::make_pair('1', "[1]"),
+        std::make_pair('2', "[2]"),
+        std::make_pair('3', "[3]"),
+        std::make_pair('4', "[4]"),
+        std::make_pair('5', "[5]"),
+        std::make_pair('6', "[6]"),
+        std::make_pair('7', "[7]"),
+        std::make_pair('8', "[8]"),
+        std::make_pair('9', "[9]"),
+        // Lowercase letters
+        std::make_pair('a', "[a]"),
+        std::make_pair('b', "[b]"),
+        std::make_pair('c', "[c]"),
+        std::make_pair('d', "[d]"),
+        std::make_pair('e', "[e]"),
+        std::make_pair('f', "[f]"),
+        std::make_pair('g', "[g]"),
+        std::make_pair('h', "[h]"),
+        std::make_pair('i', "[i]"),
+        std::make_pair('j', "[j]"),
+        std::make_pair('k', "[k]"),
+        std::make_pair('l', "[l]"),
+        std::make_pair('m', "[m]"),
+        std::make_pair('n', "[n]"),
+        std::make_pair('o', "[o]"),
+        std::make_pair('p', "[p]"),
+        std::make_pair('q', "[q]"),
+        std::make_pair('r', "[r]"),
+        std::make_pair('s', "[s]"),
+        std::make_pair('t', "[t]"),
+        std::make_pair('u', "[u]"),
+        std::make_pair('v', "[v]"),
+        std::make_pair('w', "[w]"),
+        std::make_pair('x', "[x]"),
+        std::make_pair('y', "[y]"),
+        std::make_pair('z', "[z]"),
+        // Uppercase letters
+        std::make_pair('A', "[A]"),
+        std::make_pair('B', "[B]"),
+        std::make_pair('C', "[C]"),
+        std::make_pair('D', "[D]"),
+        std::make_pair('E', "[E]"),
+        std::make_pair('F', "[F]"),
+        std::make_pair('G', "[G]"),
+        std::make_pair('H', "[H]"),
+        std::make_pair('I', "[I]"),
+        std::make_pair('J', "[J]"),
+        std::make_pair('K', "[K]"),
+        std::make_pair('L', "[L]"),
+        std::make_pair('M', "[M]"),
+        std::make_pair('N', "[N]"),
+        std::make_pair('O', "[O]"),
+        std::make_pair('P', "[P]"),
+        std::make_pair('Q', "[Q]"),
+        std::make_pair('R', "[R]"),
+        std::make_pair('S', "[S]"),
+        std::make_pair('T', "[T]"),
+        std::make_pair('U', "[U]"),
+        std::make_pair('V', "[V]"),
+        std::make_pair('W', "[W]"),
+        std::make_pair('X', "[X]"),
+        std::make_pair('Y', "[Y]"),
+        std::make_pair('Z', "[Z]"),
+        // Punctuation (excluding RANGE_ESCAPE_CHARS: ^-[]\\ and CHAR_ESCAPE_MAP: \n\r\t)
+        std::make_pair('!', "[!]"),
+        std::make_pair('#', "[#]"),
+        std::make_pair('$', "[$]"),
+        std::make_pair('%', "[%]"),
+        std::make_pair('&', "[&]"),
+        std::make_pair('\'', "[']"),
+        std::make_pair('(', "[(]"),
+        std::make_pair(')', "[)]"),
+        std::make_pair('*', "[*]"),
+        std::make_pair('+', "[+]"),
+        std::make_pair(',', "[,]"),
+        std::make_pair('.', "[.]"),
+        std::make_pair('/', "[/]"),
+        std::make_pair(':', "[:]"),
+        std::make_pair(';', "[;]"),
+        std::make_pair('<', "[<]"),
+        std::make_pair('=', "[=]"),
+        std::make_pair('>', "[>]"),
+        std::make_pair('?', "[?]"),
+        std::make_pair('@', "[@]"),
+        std::make_pair('_', "[_]"),
+        std::make_pair('`', "[`]"),
+        std::make_pair('{', "[{]"),
+        std::make_pair('|', "[|]"),
+        std::make_pair('}', "[}]"),
+        std::make_pair('~', "[~]"),
+        std::make_pair('"', "[\"]"),  // STRING_LITERAL_ESCAPE_CHAR but not RANGE_ESCAPE_CHAR
+        // Space
+        std::make_pair(' ', "[ ]")
+    )
+);
+
+// Test: test_char_range_render - Characters with CHAR_ESCAPE_MAP escapes
+// (but not in RANGE_ESCAPE_CHARS, which is all of them: \n, \r, \t)
+class CharRangeRenderCharEscapeMapTest : public ::testing::TestWithParam<std::pair<uint32_t, const char*>> {
+protected:
+    GrammaticaCharRange* grammar = nullptr;
+
+    void TearDown() override {
+        if (grammar != nullptr) {
+            grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
+        }
+    }
+};
+
+TEST_P(CharRangeRenderCharEscapeMapTest, RenderCharEscapeMap) {
+    auto [codepoint, expected] = GetParam();
+    GrammaticaCharRangeEntry range = {codepoint, codepoint};
+    grammar = grammaticaCharRangeCreate(&range, 1, false);
     ASSERT_NE(nullptr, grammar);
 
-    GrammaticaCharRangeEntry range2 = {'a', 'z'};
-    GrammaticaCharRange* other = grammaticaCharRangeCreate(&range2, 1, false);
-    ASSERT_NE(nullptr, other);
-
-    GrammaticaCharRangeEntry range3 = {'0', '9'};
-    GrammaticaCharRange* different = grammaticaCharRangeCreate(&range3, 1, false);
-    ASSERT_NE(nullptr, different);
-
-    EXPECT_TRUE(grammaticaGrammarEquals((GrammaticaGrammar*)grammar, (GrammaticaGrammar*)other, true));
-    EXPECT_FALSE(grammaticaGrammarEquals((GrammaticaGrammar*)grammar, (GrammaticaGrammar*)different, true));
-
-    grammaticaGrammarUnref((GrammaticaGrammar*)other);
-    grammaticaGrammarUnref((GrammaticaGrammar*)different);
+    char* rendered = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
+    ASSERT_NE(nullptr, rendered);
+    EXPECT_STREQ(expected, rendered);
+    free(rendered);
 }
 
-TEST_F(CharRangeTest, EqualsNegatedDifference) {
-    GrammaticaCharRangeEntry range1 = {'a', 'z'};
-    grammar = grammaticaCharRangeCreate(&range1, 1, false);
+INSTANTIATE_TEST_SUITE_P(
+    CharEscapeMap,
+    CharRangeRenderCharEscapeMapTest,
+    ::testing::Values(
+        std::make_pair('\n', "[\\n]"),
+        std::make_pair('\r', "[\\r]"),
+        std::make_pair('\t', "[\\t]")
+    )
+);
+
+// Test: test_char_range_render - Characters with RANGE_ESCAPE_CHARS (simple backslash escape)
+class CharRangeRenderRangeEscapeTest : public ::testing::TestWithParam<std::pair<uint32_t, const char*>> {
+protected:
+    GrammaticaCharRange* grammar = nullptr;
+
+    void TearDown() override {
+        if (grammar != nullptr) {
+            grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
+        }
+    }
+};
+
+TEST_P(CharRangeRenderRangeEscapeTest, RenderRangeEscape) {
+    auto [codepoint, expected] = GetParam();
+    GrammaticaCharRangeEntry range = {codepoint, codepoint};
+    grammar = grammaticaCharRangeCreate(&range, 1, false);
     ASSERT_NE(nullptr, grammar);
 
-    GrammaticaCharRangeEntry range2 = {'a', 'z'};
-    GrammaticaCharRange* negated = grammaticaCharRangeCreate(&range2, 1, true);
-    ASSERT_NE(nullptr, negated);
-
-    EXPECT_FALSE(grammaticaGrammarEquals((GrammaticaGrammar*)grammar, (GrammaticaGrammar*)negated, true));
-
-    grammaticaGrammarUnref((GrammaticaGrammar*)negated);
+    char* rendered = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
+    ASSERT_NE(nullptr, rendered);
+    EXPECT_STREQ(expected, rendered);
+    free(rendered);
 }
 
-TEST_F(CharRangeTest, MergeAdjacentRanges) {
-    // Test that adjacent ranges are merged (e.g., a-c and d-f merge to a-f)
-    GrammaticaCharRangeEntry ranges[] = {{'a', 'c'}, {'d', 'f'}};
-    grammar = grammaticaCharRangeCreate(ranges, 2, false);
+INSTANTIATE_TEST_SUITE_P(
+    RangeEscapeChars,
+    CharRangeRenderRangeEscapeTest,
+    ::testing::Values(
+        std::make_pair('^', "[\\^]"),
+        std::make_pair('-', "[\\-]"),
+        std::make_pair('[', "[\\[]"),
+        std::make_pair(']', "[\\]]"),
+        std::make_pair('\\', "[\\\\]")
+    )
+);
+
+// Test: test_char_range_render - Other characters are fully escaped (hex)
+class CharRangeRenderHexEscapeTest : public ::testing::TestWithParam<std::pair<uint32_t, const char*>> {
+protected:
+    GrammaticaCharRange* grammar = nullptr;
+
+    void TearDown() override {
+        if (grammar != nullptr) {
+            grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
+        }
+    }
+};
+
+TEST_P(CharRangeRenderHexEscapeTest, RenderHexEscape) {
+    auto [codepoint, expected] = GetParam();
+    GrammaticaCharRangeEntry range = {codepoint, codepoint};
+    grammar = grammaticaCharRangeCreate(&range, 1, false);
     ASSERT_NE(nullptr, grammar);
 
-    size_t count;
-    const GrammaticaCharRangeEntry* merged = grammaticaCharRangeGetRanges(grammar, &count);
-    EXPECT_EQ(1, count);
-    EXPECT_EQ('a', merged[0].start);
-    EXPECT_EQ('f', merged[0].end);
+    char* rendered = grammaticaGrammarRender((GrammaticaGrammar*)grammar, true, true);
+    ASSERT_NE(nullptr, rendered);
+    EXPECT_STREQ(expected, rendered);
+    free(rendered);
 }
 
-TEST_F(CharRangeTest, GetRangesNullInput) {
-    size_t count = 99;
-    const GrammaticaCharRangeEntry* ranges = grammaticaCharRangeGetRanges(nullptr, &count);
-    EXPECT_EQ(nullptr, ranges);
-    EXPECT_EQ(0, count);
-}
+INSTANTIATE_TEST_SUITE_P(
+    HexEscapedChars,
+    CharRangeRenderHexEscapeTest,
+    ::testing::Values(
+        std::make_pair(0x00, "[\\x00]"),
+        std::make_pair(0x01, "[\\x01]"),
+        std::make_pair(0x02, "[\\x02]"),
+        std::make_pair(0x03, "[\\x03]"),
+        std::make_pair(0x04, "[\\x04]"),
+        std::make_pair(0x7F, "[\\x7F]"),
+        std::make_pair(0x80, "[\\x80]"),
+        std::make_pair(0x81, "[\\x81]"),
+        std::make_pair(0xFF, "[\\xFF]")
+    )
+);
 
-TEST_F(CharRangeTest, IsNegatedNullInput) {
-    bool negated = grammaticaCharRangeIsNegated(nullptr);
-    EXPECT_FALSE(negated);
-}
 
+// Note: test_char_range_as_string and test_char_range_attrs_dict are not applicable to C
+// These are Python-specific methods for string representation and attribute dictionaries

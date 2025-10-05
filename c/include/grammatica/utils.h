@@ -19,7 +19,7 @@ extern "C" {
  * @param bufferSize Size of the buffer
  * @return GRAMMATICA_OK on success, error code otherwise
  */
-GrammaticaError Grammatica_charToCpoint(uint32_t ch, char* buffer, size_t bufferSize);
+GrammaticaError_t Grammatica_charToCpoint(uint32_t ch, char* buffer, size_t bufferSize);
 
 /**
  * @brief Convert an ordinal to a Unicode code point string (\\uXXXX or \\UXXXXXXXX)
@@ -28,7 +28,7 @@ GrammaticaError Grammatica_charToCpoint(uint32_t ch, char* buffer, size_t buffer
  * @param bufferSize Size of the buffer
  * @return GRAMMATICA_OK on success, error code otherwise
  */
-GrammaticaError Grammatica_ordToCpoint(uint32_t ordinal, char* buffer, size_t bufferSize);
+GrammaticaError_t Grammatica_ordToCpoint(uint32_t ordinal, char* buffer, size_t bufferSize);
 
 /**
  * @brief Convert a character to a hexadecimal escape sequence (\\xXX or \\xXXXX...)
@@ -37,7 +37,7 @@ GrammaticaError Grammatica_ordToCpoint(uint32_t ordinal, char* buffer, size_t bu
  * @param bufferSize Size of the buffer
  * @return GRAMMATICA_OK on success, error code otherwise
  */
-GrammaticaError Grammatica_charToHex(uint32_t ch, char* buffer, size_t bufferSize);
+GrammaticaError_t Grammatica_charToHex(uint32_t ch, char* buffer, size_t bufferSize);
 
 /**
  * @brief Convert an ordinal to a hexadecimal escape sequence (\\xXX or \\xXXXX...)
@@ -46,7 +46,7 @@ GrammaticaError Grammatica_charToHex(uint32_t ch, char* buffer, size_t bufferSiz
  * @param bufferSize Size of the buffer
  * @return GRAMMATICA_OK on success, error code otherwise
  */
-GrammaticaError Grammatica_ordToHex(uint32_t ordinal, char* buffer, size_t bufferSize);
+GrammaticaError_t Grammatica_ordToHex(uint32_t ordinal, char* buffer, size_t bufferSize);
 
 #ifdef __cplusplus
 }

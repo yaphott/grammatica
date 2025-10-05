@@ -35,7 +35,7 @@ void grammaticaStringBuilderDestroy(GrammaticaStringBuilder* sb) {
     }
 }
 
-static GrammaticaError ensure_capacity(GrammaticaStringBuilder* sb, size_t required) {
+static GrammaticaError_t ensure_capacity(GrammaticaStringBuilder* sb, size_t required) {
     if (sb->capacity >= required) {
         return GRAMMATICA_OK;
     }
@@ -52,13 +52,13 @@ static GrammaticaError ensure_capacity(GrammaticaStringBuilder* sb, size_t requi
     return GRAMMATICA_OK;
 }
 
-GrammaticaError grammaticaStringBuilderAppend(GrammaticaStringBuilder* sb, const char* str) {
+GrammaticaError_t grammaticaStringBuilderAppend(GrammaticaStringBuilder* sb, const char* str) {
     if (sb == NULL || str == NULL) {
         return GRAMMATICA_ERROR_NULL_POINTER;
     }
     size_t str_len = strlen(str);
     size_t required = sb->length + str_len + 1;
-    GrammaticaError err = ensure_capacity(sb, required);
+    GrammaticaError_t err = ensure_capacity(sb, required);
     if (err != GRAMMATICA_OK) {
         return err;
     }
@@ -68,12 +68,12 @@ GrammaticaError grammaticaStringBuilderAppend(GrammaticaStringBuilder* sb, const
     return GRAMMATICA_OK;
 }
 
-GrammaticaError grammaticaStringBuilderAppend_char(GrammaticaStringBuilder* sb, char ch) {
+GrammaticaError_t grammaticaStringBuilderAppend_char(GrammaticaStringBuilder* sb, char ch) {
     if (sb == NULL) {
         return GRAMMATICA_ERROR_NULL_POINTER;
     }
     size_t required = sb->length + 2;
-    GrammaticaError err = ensure_capacity(sb, required);
+    GrammaticaError_t err = ensure_capacity(sb, required);
     if (err != GRAMMATICA_OK) {
         return err;
     }
@@ -83,7 +83,7 @@ GrammaticaError grammaticaStringBuilderAppend_char(GrammaticaStringBuilder* sb, 
     return GRAMMATICA_OK;
 }
 
-GrammaticaError grammaticaStringBuilderAppend_format(GrammaticaStringBuilder* sb, const char* format, ...) {
+GrammaticaError_t grammaticaStringBuilderAppend_format(GrammaticaStringBuilder* sb, const char* format, ...) {
     if (sb == NULL || format == NULL) {
         return GRAMMATICA_ERROR_NULL_POINTER;
     }
@@ -99,7 +99,7 @@ GrammaticaError grammaticaStringBuilderAppend_format(GrammaticaStringBuilder* sb
         return GRAMMATICA_ERROR_INVALID_ARGUMENT;
     }
     size_t required = sb->length + needed + 1;
-    GrammaticaError err = ensure_capacity(sb, required);
+    GrammaticaError_t err = ensure_capacity(sb, required);
     if (err != GRAMMATICA_OK) {
         va_end(args);
         return err;

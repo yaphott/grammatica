@@ -117,7 +117,7 @@ bool grammaticaGrammarEquals(const GrammaticaGrammar* grammar, const GrammaticaG
  * @param quantifier Quantifier to validate
  * @return GRAMMATICA_OK on success, error code otherwise
  */
-GrammaticaError grammaticaValidateQuantifier(GrammaticaQuantifier quantifier);
+GrammaticaError_t grammaticaValidateQuantifier(GrammaticaQuantifier quantifier);
 
 /**
  * @brief Render a quantifier as a string
@@ -154,7 +154,7 @@ void grammaticaGrammarArrayDestroy(GrammaticaGrammarArray* array);
  * @param grammar Grammar to append (will be ref'd)
  * @return GRAMMATICA_OK on success, error code otherwise
  */
-GrammaticaError grammaticaGrammarArrayAppend(GrammaticaGrammarArray* array, GrammaticaGrammar* grammar);
+GrammaticaError_t grammaticaGrammarArrayAppend(GrammaticaGrammarArray* array, GrammaticaGrammar* grammar);
 
 /**
  * @brief Copy a grammar array

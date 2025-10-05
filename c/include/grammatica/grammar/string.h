@@ -39,7 +39,7 @@ const char* grammaticaStringGetValue(const GrammaticaString* grammar);
  * @param array Grammar array
  * @return GRAMMATICA_OK on success, error code otherwise
  */
-GrammaticaError grammaticaMergeAdjacentStrings(GrammaticaGrammarArray* array);
+GrammaticaError_t grammaticaMergeAdjacentStrings(GrammaticaGrammarArray* array);
 
 #ifdef __cplusplus
 }
