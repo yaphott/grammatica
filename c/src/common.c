@@ -1,4 +1,4 @@
-#include "grammatica/common.h"
+#include "common.h"
 
 const char* Grammatica_errorString(GrammaticaError_t error) {
     switch (error) {

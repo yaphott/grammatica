@@ -1,5 +1,5 @@
 #define _GNU_SOURCE
-#include "grammatica/grammar/derivation_rule.h"
+#include "derivation_rule.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

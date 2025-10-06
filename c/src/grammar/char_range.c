@@ -1,7 +1,7 @@
-#include "grammatica/grammar/char_range.h"
-#include "grammatica/grammar/string.h"
-#include "grammatica/constants.h"
-#include "grammatica/utils.h"
+#include "char_range.h"
+#include "string.h"
+#include "../constants.h"
+#include "../utils.h"
 #include <stdlib.h>
 #include <string.h>
 

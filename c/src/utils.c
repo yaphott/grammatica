@@ -1,4 +1,4 @@
-#include "grammatica/utils.h"
+#include "utils.h"
 #include <stdio.h>
 #include <string.h>
 

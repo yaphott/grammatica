@@ -1,5 +1,5 @@
 #define _GNU_SOURCE
-#include "grammatica/grammar/base.h"
+#include "base.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

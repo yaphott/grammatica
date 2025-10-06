@@ -1,4 +1,4 @@
-#include "grammatica/constants.h"
+#include "constants.h"
 #include <string.h>
 #include <ctype.h>
 

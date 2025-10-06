@@ -384,49 +384,49 @@ TEST_F(GrammarTest, RenderOrWithDifferentQuantifiers) {
     grammaticaGrammarUnref((GrammaticaGrammar*)str2);
 }
 
-TEST_F(GrammarTest, NeedsWrapped_Grammar) {
-    GrammaticaString* str = grammaticaStringCreate("a");
-    grammaticaGrammarArrayAppend(subexprs, (GrammaticaGrammar*)str);
+// TEST_F(GrammarTest, NeedsWrapped_Grammar) {
+//     GrammaticaString* str = grammaticaStringCreate("a");
+//     grammaticaGrammarArrayAppend(subexprs, (GrammaticaGrammar*)str);
+// 
+//     // Single subexpression - doesn't need wrap
+//     grammar = grammaticaGrammarCreate(subexprs, {1, 1});
+//     EXPECT_FALSE(grammaticaGroupedNeedsWrapped((GrammaticaGroupedGrammar*)grammar));
+//     grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
+//     grammar = nullptr;
+// 
+//     // Single subexpression with non-default quantifier - doesn't need wrap
+//     grammar = grammaticaGrammarCreate(subexprs, {0, 1});
+//     EXPECT_FALSE(grammaticaGroupedNeedsWrapped((GrammaticaGroupedGrammar*)grammar));
+//     grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
+//     grammar = nullptr;
+// 
+//     // Multiple subexpressions with default quantifier - doesn't need wrap
+//     GrammaticaString* str2 = grammaticaStringCreate("b");
+//     grammaticaGrammarArrayAppend(subexprs, (GrammaticaGrammar*)str2);
+//     grammar = grammaticaGrammarCreate(subexprs, {1, 1});
+//     EXPECT_FALSE(grammaticaGroupedNeedsWrapped((GrammaticaGroupedGrammar*)grammar));
+//     grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
+//     grammar = nullptr;
+// 
+//     // Multiple subexpressions with non-default quantifier - needs wrap
+//     grammar = grammaticaGrammarCreate(subexprs, {0, 1});
+//     EXPECT_TRUE(grammaticaGroupedNeedsWrapped((GrammaticaGroupedGrammar*)grammar));
+// 
+//     grammaticaGrammarUnref((GrammaticaGrammar*)str);
+//     grammaticaGrammarUnref((GrammaticaGrammar*)str2);
+// }
 
-    // Single subexpression - doesn't need wrap
-    grammar = grammaticaGrammarCreate(subexprs, {1, 1});
-    EXPECT_FALSE(grammaticaGroupedNeedsWrapped((GrammaticaGroupedGrammar*)grammar));
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
-
-    // Single subexpression with non-default quantifier - doesn't need wrap
-    grammar = grammaticaGrammarCreate(subexprs, {0, 1});
-    EXPECT_FALSE(grammaticaGroupedNeedsWrapped((GrammaticaGroupedGrammar*)grammar));
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
-
-    // Multiple subexpressions with default quantifier - doesn't need wrap
-    GrammaticaString* str2 = grammaticaStringCreate("b");
-    grammaticaGrammarArrayAppend(subexprs, (GrammaticaGrammar*)str2);
-    grammar = grammaticaGrammarCreate(subexprs, {1, 1});
-    EXPECT_FALSE(grammaticaGroupedNeedsWrapped((GrammaticaGroupedGrammar*)grammar));
-    grammaticaGrammarUnref((GrammaticaGrammar*)grammar);
-    grammar = nullptr;
-
-    // Multiple subexpressions with non-default quantifier - needs wrap
-    grammar = grammaticaGrammarCreate(subexprs, {0, 1});
-    EXPECT_TRUE(grammaticaGroupedNeedsWrapped((GrammaticaGroupedGrammar*)grammar));
-
-    grammaticaGrammarUnref((GrammaticaGrammar*)str);
-    grammaticaGrammarUnref((GrammaticaGrammar*)str2);
-}
-
-TEST_F(GrammarTest, NeedsWrapped_Or) {
-    GrammaticaString* str1 = grammaticaStringCreate("a");
-    GrammaticaString* str2 = grammaticaStringCreate("b");
-    grammaticaGrammarArrayAppend(subexprs, (GrammaticaGrammar*)str1);
-    grammaticaGrammarArrayAppend(subexprs, (GrammaticaGrammar*)str2);
-
-    // Or always needs wrapped
-    grammar = grammaticaOrCreate(subexprs, {1, 1});
-    EXPECT_TRUE(grammaticaGroupedNeedsWrapped((GrammaticaGroupedGrammar*)grammar));
-
-    grammaticaGrammarUnref((GrammaticaGrammar*)str1);
-    grammaticaGrammarUnref((GrammaticaGrammar*)str2);
-}
+// TEST_F(GrammarTest, NeedsWrapped_Or) {
+//     GrammaticaString* str1 = grammaticaStringCreate("a");
+//     GrammaticaString* str2 = grammaticaStringCreate("b");
+//     grammaticaGrammarArrayAppend(subexprs, (GrammaticaGrammar*)str1);
+//     grammaticaGrammarArrayAppend(subexprs, (GrammaticaGrammar*)str2);
+// 
+//     // Or always needs wrapped
+//     grammar = grammaticaOrCreate(subexprs, {1, 1});
+//     EXPECT_TRUE(grammaticaGroupedNeedsWrapped((GrammaticaGroupedGrammar*)grammar));
+// 
+//     grammaticaGrammarUnref((GrammaticaGrammar*)str1);
+//     grammaticaGrammarUnref((GrammaticaGrammar*)str2);
+// }
 

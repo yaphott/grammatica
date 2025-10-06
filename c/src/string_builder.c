@@ -1,4 +1,4 @@
-#include "grammatica/string_builder.h"
+#include "string_builder.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

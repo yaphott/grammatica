@@ -1,5 +1,5 @@
-#include "grammatica/grammar/grammar.h"
-#include "grammatica/grammar/string.h"
+#include "grammar.h"
+#include "string.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

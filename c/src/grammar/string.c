@@ -1,7 +1,7 @@
 #define _GNU_SOURCE
-#include "grammatica/grammar/string.h"
-#include "grammatica/constants.h"
-#include "grammatica/utils.h"
+#include "string.h"
+#include "../constants.h"
+#include "../utils.h"
 #include <stdlib.h>
 #include <string.h>
 
