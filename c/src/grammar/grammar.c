@@ -17,6 +17,7 @@ static char* or_render(const GrammaticaGrammar* grammar, bool full, bool wrap);
 static GrammaticaGrammar* or_simplify(const GrammaticaGrammar* grammar);
 static GrammaticaGrammar* or_copy(const GrammaticaGrammar* grammar);
 static bool or_equals(const GrammaticaGrammar* grammar, const GrammaticaGrammar* other, bool check_quantifier);
+static size_t merge_adjacent_default_or(GrammaticaGrammarArray* subexprs);
 
 static const GrammaticaGrammarVTable grammar_vtable = {
     .destroy = grammar_destroy,
@@ -266,6 +267,83 @@ static GrammaticaGrammar* grammar_simplify(const GrammaticaGrammar* grammar) {
     GrammaticaGroupedGrammar* result = grammaticaGrammarCreate(simplified_array, grouped->quantifier);
     grammaticaGrammarArrayDestroy(simplified_array);
     return (GrammaticaGrammar*)result;
+}
+
+// Merge adjacent Or expressions with default quantifier (1, 1) in-place
+static size_t merge_adjacent_default_or(GrammaticaGrammarArray* subexprs) {
+    if (subexprs == NULL || subexprs->count < 2) {
+        return subexprs ? subexprs->count : 0;
+    }
+    size_t n = subexprs->count;
+    int last_idx = -1;
+    // Iterate backwards through subexprs
+    for (int i = (int)n - 1; i >= 0; i--) {
+        GrammaticaGrammar* subexpr = subexprs->items[i];
+        // Check if this is an Or with default quantifier (1, 1)
+        bool is_default_or = (subexpr->type == GRAMMATICA_TYPE_OR);
+        if (is_default_or) {
+            const GrammaticaGroupedGrammar* grouped = (const GrammaticaGroupedGrammar*)subexpr;
+            is_default_or = (grouped->quantifier.min == 1 && grouped->quantifier.max == 1);
+        }
+        if (is_default_or) {
+            if (last_idx < 1) {
+                last_idx = i;
+            } else {
+                n--;
+            }
+        } else {
+            if (last_idx > 0) {
+                // Merge Or expressions from i+1 to last_idx into a single Or
+                GrammaticaGrammarArray* merged = grammaticaGrammarArrayCreate(0);
+                for (int j = i + 1; j <= last_idx; j++) {
+                    const GrammaticaGroupedGrammar* or_expr = (const GrammaticaGroupedGrammar*)subexprs->items[j];
+                    for (size_t k = 0; k < or_expr->subexprs->count; k++) {
+                        grammaticaGrammarArrayAppend(merged, or_expr->subexprs->items[k]);
+                    }
+                }
+                // Create new Or with merged subexprs
+                GrammaticaGroupedGrammar* new_or = grammaticaOrCreate(merged, (GrammaticaQuantifier){1, 1});
+                // Replace the item at i+1 with the new merged Or
+                grammaticaGrammarUnref(subexprs->items[i + 1]);
+                subexprs->items[i + 1] = (GrammaticaGrammar*)new_or;
+                // Remove items from i+2 to last_idx
+                for (int j = i + 2; j <= last_idx; j++) {
+                    grammaticaGrammarUnref(subexprs->items[j]);
+                }
+                // Shift remaining items down
+                for (size_t j = last_idx + 1; j < subexprs->count; j++) {
+                    subexprs->items[j - (last_idx - i - 1)] = subexprs->items[j];
+                }
+                subexprs->count -= (last_idx - i - 1);
+                grammaticaGrammarArrayDestroy(merged);
+            }
+            last_idx = -1;
+        }
+    }
+    // Handle case where sequence starts at index 0
+    if (last_idx > 0) {
+        GrammaticaGrammarArray* merged = grammaticaGrammarArrayCreate(0);
+        for (int j = 0; j <= last_idx; j++) {
+            const GrammaticaGroupedGrammar* or_expr = (const GrammaticaGroupedGrammar*)subexprs->items[j];
+            for (size_t k = 0; k < or_expr->subexprs->count; k++) {
+                grammaticaGrammarArrayAppend(merged, or_expr->subexprs->items[k]);
+            }
+        }
+        GrammaticaGroupedGrammar* new_or = grammaticaOrCreate(merged, (GrammaticaQuantifier){1, 1});
+        // Unref old items
+        for (int j = 0; j <= last_idx; j++) {
+            grammaticaGrammarUnref(subexprs->items[j]);
+        }
+        subexprs->items[0] = (GrammaticaGrammar*)new_or;
+        // Shift remaining items down
+        for (size_t j = last_idx + 1; j < subexprs->count; j++) {
+            subexprs->items[j - last_idx] = subexprs->items[j];
+        }
+        subexprs->count -= last_idx;
+        n -= last_idx;
+        grammaticaGrammarArrayDestroy(merged);
+    }
+    return n;
 }
 
 static GrammaticaGrammar* or_simplify(const GrammaticaGrammar* grammar) {
