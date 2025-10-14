@@ -1,5 +1,3 @@
-from grammatica import __version__ as version
-
 __all__ = [
     "ALWAYS_SAFE_CHARS",
     "CHAR_ESCAPE_MAP",

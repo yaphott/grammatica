@@ -1,3 +1,7 @@
+"""
+Utility functions.
+"""
+
 __all__ = [
     "char_to_cpoint",
     "char_to_hex",

@@ -1,73 +1,26 @@
 import pytest
 
-from grammatica.grammar.base import (
-    BaseGrammar,
-    BaseGroupGrammar,
-    value_is_simple,
-    value_to_string,
-)
+from grammatica.grammar.base import value_is_simple, value_to_string
 from grammatica.grammar.string import String
 
 try:
-    from .helpers import fmt_result
+    from .helpers import (
+        NoOpGrammar,
+        NoOpGrammarAlt,
+        NoOpGroupGrammar,
+        fmt_result,
+    )
 except ImportError:
     import sys
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from helpers import fmt_result
-
-
-class NoOpGrammar(BaseGrammar):
-    def __init__(self):
-        pass
-
-    def render(self, wrap=False):
-        return self.render()
-
-    def simplify(self):
-        return self.simplify()
-
-    def attrs_dict(self):
-        return {}
-
-
-class NoOpGrammarAlt(BaseGrammar):
-    def __init__(self):
-        pass
-
-    def render(self, wrap=False):
-        return self.render()
-
-    def simplify(self):
-        return self.simplify()
-
-    def attrs_dict(self):
-        return {}
-
-
-class NoOpGroupGrammar(BaseGroupGrammar):
-    separator = " "
-
-    def __init__(
-        self,
-        exprs,
-        quantifier=None,
-    ):
-        super().__init__(
-            subexprs=exprs,
-            quantifier=quantifier if quantifier else (1, 1),
-        )
-
-    @staticmethod
-    def simplify_subexprs(original_subexprs, quantifier):
-        return None
-
-    def needs_wrapped(self):
-        return False
-
-    def attrs_dict(self):
-        return super().attrs_dict()
+    from helpers import (
+        NoOpGrammar,
+        NoOpGrammarAlt,
+        NoOpGroupGrammar,
+        fmt_result,
+    )
 
 
 def test_base_grammar_render():
@@ -83,109 +36,6 @@ def test_base_grammar_simplify():
 def test_base_grammar_attrs_dict():
     grammar = NoOpGrammar()
     assert super(NoOpGrammar, grammar).attrs_dict() == {}
-
-
-@pytest.mark.parametrize(
-    "quantifier, expected",
-    [
-        (1, (1, 1)),
-        (5, (5, 5)),
-        ((1, 1), (1, 1)),
-        ((0, 1), (0, 1)),
-        ((0, 5), (0, 5)),
-        ((0, None), (0, None)),
-        ((1, None), (1, None)),
-        ((5, 5), (5, 5)),
-        ((2, 5), (2, 5)),
-        ((2, None), (2, None)),
-    ],
-)
-def test_base_group_grammar_quantifier(quantifier, expected):
-    grammar = NoOpGroupGrammar([String("a")], quantifier=quantifier)
-    assert grammar.quantifier == expected
-
-
-def test_base_group_grammar_quantifier_validation_negative_lower_bound():
-    with pytest.raises(ValueError, match=r"Range lower bound must be non-negative: \(-1, 5\)"):
-        NoOpGroupGrammar([String("a")], quantifier=(-1, 5))
-
-
-def test_base_group_grammar_quantifier_validation_zero_upper_bound():
-    with pytest.raises(
-        ValueError,
-        match=r"Range upper bound must be positive or None \(infinity\): \(0, 0\)",
-    ):
-        NoOpGroupGrammar([String("a")], quantifier=(0, 0))
-
-
-def test_base_group_grammar_quantifier_validation_negative_upper_bound():
-    with pytest.raises(
-        ValueError,
-        match=r"Range upper bound must be positive or None \(infinity\): \(0, -1\)",
-    ):
-        NoOpGroupGrammar([String("a")], quantifier=(0, -1))
-
-
-def test_base_group_grammar_quantifier_validation_lower_bound_greater_than_upper_bound():
-    with pytest.raises(ValueError, match=r"Range lower bound must be <= range upper bound: \(5, 3\)"):
-        NoOpGroupGrammar([], quantifier=(5, 3))
-
-
-@pytest.mark.parametrize(
-    "grammar, expected",
-    [
-        (NoOpGroupGrammar([]), None),
-        (NoOpGroupGrammar([String("")]), None),
-        (NoOpGroupGrammar([String("a"), String("")]), '"a"'),
-    ],
-)
-def test_base_group_grammar_render(grammar, expected):
-    actual = super(NoOpGroupGrammar, grammar).render()
-    if expected is None:
-        assert actual is None
-    else:
-        assert actual == expected
-
-
-def test_base_group_grammar_simplify():
-    grammar = NoOpGroupGrammar([])
-    assert super(NoOpGroupGrammar, grammar).simplify() is None
-
-
-def test_base_group_grammar_simplify_subexprs():
-    grammar = NoOpGroupGrammar([])
-    assert super(NoOpGroupGrammar, grammar).simplify_subexprs(grammar.subexprs, grammar.quantifier) is None
-
-
-def test_base_group_grammar_needs_wrapped():
-    grammar = NoOpGroupGrammar([])
-    assert super(NoOpGroupGrammar, grammar).needs_wrapped() is False
-
-
-def test_base_group_grammar_attrs_dict():
-    grammar = NoOpGroupGrammar([])
-    assert super(NoOpGroupGrammar, grammar).attrs_dict() == {
-        "subexprs": [],
-        "quantifier": (1, 1),
-    }
-
-
-@pytest.mark.parametrize(
-    "quantifier, expected",
-    [
-        ((1, 1), None),
-        ((0, 1), "?"),
-        ((0, 2), "{0,2}"),
-        ((0, None), "*"),
-        ((1, None), "+"),
-        ((2, 2), "{2}"),
-        ((2, 5), "{2,5}"),
-        ((2, None), "{2,}"),
-    ],
-)
-def test_base_group_grammar_render_quantifier(quantifier, expected):
-    grammar = NoOpGroupGrammar([], quantifier=quantifier)
-    assert grammar.render_quantifier() == expected
 
 
 @pytest.mark.parametrize(
@@ -241,11 +91,11 @@ def test_base_group_grammar_render_quantifier(quantifier, expected):
             "expected": False,
         },
         {
-            "description": "Equal to different grammar with the same attributes",
+            "description": "Not equal to different grammar type even with the same attributes",
             "grammar": NoOpGrammar(),
             "other": NoOpGrammarAlt(),
             "check_quantifier": True,
-            "expected": True,
+            "expected": False,
         },
         {
             "description": "Not equal when quantifier differs and check_quantifier is True",
@@ -289,6 +139,36 @@ def test_base_grammar_equals(test_case):
 def test_base_grammar_equals_same_instance():
     grammar = NoOpGrammar()
     assert grammar.equals(grammar)
+
+
+# TODO: More direct way to test would be to have a child of BaseGrammar that defines some attrs
+@pytest.mark.parametrize(
+    "grammar, indent, expected",
+    [
+        (
+            NoOpGroupGrammar([String("a")]),
+            None,
+            "NoOpGroupGrammar(subexprs=[String(value='a')], quantifier=(1, 1))",
+        ),
+        (
+            NoOpGroupGrammar([String("a")]),
+            2,
+            "NoOpGroupGrammar(\n  subexprs=[\n    String(value='a')\n  ],\n  quantifier=(1, 1)\n)",
+        ),
+    ],
+)
+def test_base_grammar_as_string(grammar, indent, expected):
+    assert grammar.as_string(indent=indent) == expected
+
+
+def test_base_grammar_str_and_repr():
+    grammar = NoOpGroupGrammar([String("a"), String("b")])
+    assert (
+        str(grammar)
+        == repr(grammar)
+        == grammar.as_string(indent=None)
+        == "NoOpGroupGrammar(subexprs=[String(value='a'), String(value='b')], quantifier=(1, 1))"
+    )
 
 
 @pytest.mark.parametrize(
@@ -379,33 +259,3 @@ def test_value_to_string_unsupported_type():
 
     with pytest.raises(ValueError, match=r"Unsupported value type: CustomType"):
         value_to_string(CustomType(), indent=None)
-
-
-# TODO: More direct way to test would be to have a child of BaseGrammar that defines some attrs
-@pytest.mark.parametrize(
-    "grammar, indent, expected",
-    [
-        (
-            NoOpGroupGrammar([String("a")]),
-            None,
-            "NoOpGroupGrammar(subexprs=[String(value='a')], quantifier=(1, 1))",
-        ),
-        (
-            NoOpGroupGrammar([String("a")]),
-            2,
-            "NoOpGroupGrammar(\n  subexprs=[\n    String(value='a')\n  ],\n  quantifier=(1, 1)\n)",
-        ),
-    ],
-)
-def test_base_grammar_as_string(grammar, indent, expected):
-    assert grammar.as_string(indent=indent) == expected
-
-
-def test_base_grammar_str_and_repr():
-    grammar = NoOpGroupGrammar([String("a"), String("b")])
-    assert (
-        str(grammar)
-        == repr(grammar)
-        == grammar.as_string(indent=None)
-        == "NoOpGroupGrammar(subexprs=[String(value='a'), String(value='b')], quantifier=(1, 1))"
-    )
