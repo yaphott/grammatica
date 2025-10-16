@@ -5,8 +5,8 @@ from grammatica.constants import (
     CHAR_ESCAPE_MAP,
     STRING_LITERAL_ESCAPE_CHARS,
 )
-from grammatica.grammar.grammar import Grammar
-from grammatica.grammar.string import String, merge_adjacent_strings
+from grammatica.grammar.group.and_ import And
+from grammatica.grammar.string import String, merge_adjacent_string_grammars
 
 try:
     from .helpers import fmt_result
@@ -134,20 +134,20 @@ def test_string_as_string():
         },
         {
             "description": "Mixed adjacent String and other grammars",
-            "subexprs": [String("a"), String("b"), Grammar([String("c")]), String("d")],
-            "expected": [String("ab"), Grammar([String("c")]), String("d")],
+            "subexprs": [String("a"), String("b"), And([String("c")]), String("d")],
+            "expected": [String("ab"), And([String("c")]), String("d")],
         },
         {
             "description": "No adjacent String",
-            "subexprs": [Grammar([String("a")]), Grammar([String("b")])],
-            "expected": [Grammar([String("a")]), Grammar([String("b")])],
+            "subexprs": [And([String("a")]), And([String("b")])],
+            "expected": [And([String("a")]), And([String("b")])],
         },
     ],
 )
-def test_merge_adjacent_strings(test_case):
+def test_merge_adjacent_string_grammars(test_case):
     subexprs = [expr.copy() for expr in test_case["subexprs"]]
     n = len(subexprs)
-    new_n = merge_adjacent_strings(subexprs, n)
+    new_n = merge_adjacent_string_grammars(subexprs, n)
     assert new_n == len(test_case["expected"]), "\n".join(
         (
             f"Description: {test_case['description']!r}",

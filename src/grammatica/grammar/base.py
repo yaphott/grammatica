@@ -17,11 +17,10 @@ if TYPE_CHECKING:
     )
 
 
-class BaseGrammar(ABC):
-    """Represents a base grammar expression.
+class Grammar(ABC):
+    """Base class for grammar expressions."""
 
-    Provides an abstraction for rendering, simplifying, and copying grammar expressions.
-    """
+    __slots__: tuple[str, ...] = ()
 
     @abstractmethod
     def render(self, full: bool = True, wrap: bool = True) -> str | None:
@@ -37,14 +36,14 @@ class BaseGrammar(ABC):
         return None
 
     @abstractmethod
-    def simplify(self) -> BaseGrammar | None:
+    def simplify(self) -> Grammar | None:
         """Simplify the grammar.
 
         Attempts to reduce redundancy, remove empty subexpressions, and optimize the grammar.
         The resulting grammar and its parts are copies, and the original grammar is not modified.
 
         Returns:
-            BaseGrammar | None: Simplified expression, or None if resolved to empty.
+            Grammar | None: Simplified expression, or None if resolved to empty.
         """
         return None
 
@@ -111,9 +110,7 @@ class BaseGrammar(ABC):
         """
         if self is other:
             return True
-        if not isinstance(other, BaseGrammar):
-            return False
-        if type(self) != type(other):
+        if not isinstance(other, type(self)):
             return False
         attrs = self.attrs_dict()
         other_attrs = other.attrs_dict()
@@ -128,11 +125,11 @@ class BaseGrammar(ABC):
     def __eq__(self, other: Any) -> bool:
         return self.equals(other)
 
-    def copy(self) -> BaseGrammar:
+    def copy(self) -> Grammar:
         """Create a copy of the grammar.
 
         Returns:
-            BaseGrammar: Copy of the grammar.
+            Grammar: Copy of the grammar.
         """
         cls = type(self)
         kwargs = self.attrs_dict()
@@ -250,6 +247,6 @@ def value_to_string(value: Any, indent: int | None) -> str:
         return _collection_to_string(value, indent=indent)
     if isinstance(value, dict):
         return _mapping_to_string(value, indent=indent)
-    if isinstance(value, BaseGrammar):
+    if isinstance(value, Grammar):
         return value.as_string(indent=indent)
     raise ValueError(f"Unsupported value type: {type(value).__name__}")

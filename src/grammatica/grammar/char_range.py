@@ -12,7 +12,7 @@ from grammatica.constants import (
     CHAR_ESCAPE_MAP,
     RANGE_ESCAPE_CHARS,
 )
-from grammatica.grammar.base import BaseGrammar
+from grammatica.grammar.base import Grammar
 from grammatica.grammar.string import String
 from grammatica.utils import char_to_hex
 
@@ -26,8 +26,10 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-class CharRange(BaseGrammar):
+class CharRange(Grammar):
     """Set of allowed or disallowed characters."""
+
+    __slots__: tuple[str, ...] = ("char_ranges", "negate")
 
     def __init__(
         self,

@@ -1,8 +1,8 @@
 import pytest
 
 from grammatica.grammar.derivation_rule import DerivationRule
-from grammatica.grammar.grammar import Grammar
-from grammatica.grammar.or_group import Or
+from grammatica.grammar.group.and_ import And
+from grammatica.grammar.group.or_ import Or
 from grammatica.grammar.string import String
 
 try:
@@ -30,7 +30,7 @@ except ImportError:
         },
         {
             "description": "With Grammar",
-            "grammar": DerivationRule("expr", Grammar([String("a"), String("b")])),
+            "grammar": DerivationRule("expr", And([String("a"), String("b")])),
             "expected": 'expr ::= "a" "b"',
         },
         {
@@ -107,13 +107,13 @@ def test_derivation_rule_render_not_full(test_case):
             "expected": 'choice ::= "a"',
         },
         {
-            "description": "Never wrap Grammar when wrap=True",
-            "grammar": DerivationRule("choice", Grammar([String("a"), String("b")])),
+            "description": "Do not wrap And when wrap=True",
+            "grammar": DerivationRule("choice", And([String("a"), String("b")])),
             "wrap": True,
             "expected": 'choice ::= "a" "b"',
         },
         {
-            "description": "Never wrap when wrap=False",
+            "description": "Do not wrap when wrap=False",
             "grammar": DerivationRule("choice", Or([String("a"), String("b")])),
             "wrap": False,
             "expected": 'choice ::= "a" | "b"',
@@ -137,12 +137,12 @@ def test_derivation_rule_render_wrap(test_case):
     [
         {
             "description": "Simplifies value",
-            "grammar": DerivationRule("merged", Grammar([String("a"), String("b")])),
+            "grammar": DerivationRule("merged", And([String("a"), String("b")])),
             "expected": DerivationRule("merged", String("ab")),
         },
         {
             "description": "Grammar that simplifies to None returns None",
-            "grammar": DerivationRule("empty", Grammar([])),
+            "grammar": DerivationRule("empty", And([])),
             "expected": None,
         },
     ],

@@ -1,14 +1,14 @@
-.. _api.or:
+.. _api.group.or_:
 
 ==========
 Or objects
 ==========
-.. currentmodule:: grammatica.grammar
+.. currentmodule:: grammatica.grammar.group
 
 Constructor
 -----------
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/group/
 
    Or
 
@@ -16,7 +16,7 @@ Attributes
 ----------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/group/
 
    Or.separator
    Or.subexprs
@@ -26,7 +26,7 @@ Rendering
 ---------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/group/
 
    Or.render
    Or.render_quantifier
@@ -37,7 +37,7 @@ Simplification
 --------------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/group/
 
    Or.simplify
    Or.simplify_subexprs
@@ -46,7 +46,7 @@ Utility
 -----------------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/group/
 
    Or.copy
    Or.equals
@@ -57,6 +57,6 @@ Metadata
 .. warning:: ``Or.attrs_dict`` is considered experimental and may change without warning.
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/group/
 
    Or.attrs_dict

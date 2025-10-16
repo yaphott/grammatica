@@ -23,17 +23,17 @@ except ImportError:
     )
 
 
-def test_base_grammar_render():
+def test_grammar_render():
     grammar = NoOpGrammar()
     assert super(NoOpGrammar, grammar).render() is None
 
 
-def test_base_grammar_simplify():
+def test_grammar_simplify():
     grammar = NoOpGrammar()
     assert super(NoOpGrammar, grammar).simplify() is None
 
 
-def test_base_grammar_attrs_dict():
+def test_grammar_attrs_dict():
     grammar = NoOpGrammar()
     assert super(NoOpGrammar, grammar).attrs_dict() == {}
 
@@ -120,7 +120,7 @@ def test_base_grammar_attrs_dict():
         },
     ],
 )
-def test_base_grammar_equals(test_case):
+def test_grammar_equals(test_case):
     actual = test_case["grammar"].equals(
         test_case["other"],
         check_quantifier=test_case["check_quantifier"],
@@ -136,12 +136,12 @@ def test_base_grammar_equals(test_case):
     )
 
 
-def test_base_grammar_equals_same_instance():
+def test_grammar_equals_same_instance():
     grammar = NoOpGrammar()
     assert grammar.equals(grammar)
 
 
-# TODO: More direct way to test would be to have a child of BaseGrammar that defines some attrs
+# TODO: More direct way to test would be to have a child of Grammar that defines some attrs
 @pytest.mark.parametrize(
     "grammar, indent, expected",
     [
@@ -157,11 +157,11 @@ def test_base_grammar_equals_same_instance():
         ),
     ],
 )
-def test_base_grammar_as_string(grammar, indent, expected):
+def test_grammar_as_string(grammar, indent, expected):
     assert grammar.as_string(indent=indent) == expected
 
 
-def test_base_grammar_str_and_repr():
+def test_grammar_str_and_repr():
     grammar = NoOpGroupGrammar([String("a"), String("b")])
     assert (
         str(grammar)

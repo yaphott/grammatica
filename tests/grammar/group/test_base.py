@@ -3,12 +3,12 @@ import pytest
 from grammatica.grammar.string import String
 
 try:
-    from .helpers import NoOpGroupGrammar
+    from ..helpers import NoOpGroupGrammar
 except ImportError:
     import sys
     from os import path
 
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+    sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
     from helpers import NoOpGroupGrammar
 
 
@@ -27,17 +27,17 @@ except ImportError:
         ((2, None), (2, None)),
     ],
 )
-def test_base_group_grammar_quantifier(quantifier, expected):
+def test_group_grammar_quantifier(quantifier, expected):
     grammar = NoOpGroupGrammar([String("a")], quantifier=quantifier)
     assert grammar.quantifier == expected
 
 
-def test_base_group_grammar_quantifier_validation_negative_lower_bound():
+def test_group_grammar_quantifier_validation_negative_lower_bound():
     with pytest.raises(ValueError, match=r"Range lower bound must be non-negative: \(-1, 5\)"):
         NoOpGroupGrammar([String("a")], quantifier=(-1, 5))
 
 
-def test_base_group_grammar_quantifier_validation_zero_upper_bound():
+def test_group_grammar_quantifier_validation_zero_upper_bound():
     with pytest.raises(
         ValueError,
         match=r"Range upper bound must be positive or None \(infinity\): \(0, 0\)",
@@ -45,7 +45,7 @@ def test_base_group_grammar_quantifier_validation_zero_upper_bound():
         NoOpGroupGrammar([String("a")], quantifier=(0, 0))
 
 
-def test_base_group_grammar_quantifier_validation_negative_upper_bound():
+def test_group_grammar_quantifier_validation_negative_upper_bound():
     with pytest.raises(
         ValueError,
         match=r"Range upper bound must be positive or None \(infinity\): \(0, -1\)",
@@ -53,7 +53,7 @@ def test_base_group_grammar_quantifier_validation_negative_upper_bound():
         NoOpGroupGrammar([String("a")], quantifier=(0, -1))
 
 
-def test_base_group_grammar_quantifier_validation_lower_bound_greater_than_upper_bound():
+def test_group_grammar_quantifier_validation_lower_bound_greater_than_upper_bound():
     with pytest.raises(ValueError, match=r"Range lower bound must be <= range upper bound: \(5, 3\)"):
         NoOpGroupGrammar([], quantifier=(5, 3))
 
@@ -66,7 +66,7 @@ def test_base_group_grammar_quantifier_validation_lower_bound_greater_than_upper
         (NoOpGroupGrammar([String("a"), String("")]), '"a"'),
     ],
 )
-def test_base_group_grammar_render(grammar, expected):
+def test_group_grammar_render(grammar, expected):
     actual = super(NoOpGroupGrammar, grammar).render()
     if expected is None:
         assert actual is None
@@ -74,22 +74,22 @@ def test_base_group_grammar_render(grammar, expected):
         assert actual == expected
 
 
-def test_base_group_grammar_simplify():
+def test_group_grammar_simplify():
     grammar = NoOpGroupGrammar([])
     assert super(NoOpGroupGrammar, grammar).simplify() is None
 
 
-def test_base_group_grammar_simplify_subexprs():
+def test_group_grammar_simplify_subexprs():
     grammar = NoOpGroupGrammar([])
     assert super(NoOpGroupGrammar, grammar).simplify_subexprs(grammar.subexprs, grammar.quantifier) is None
 
 
-def test_base_group_grammar_needs_wrapped():
+def test_group_grammar_needs_wrapped():
     grammar = NoOpGroupGrammar([])
     assert super(NoOpGroupGrammar, grammar).needs_wrapped() is False
 
 
-def test_base_group_grammar_attrs_dict():
+def test_group_grammar_attrs_dict():
     grammar = NoOpGroupGrammar([])
     assert super(NoOpGroupGrammar, grammar).attrs_dict() == {
         "subexprs": [],
@@ -110,6 +110,6 @@ def test_base_group_grammar_attrs_dict():
         ((2, None), "{2,}"),
     ],
 )
-def test_base_group_grammar_render_quantifier(quantifier, expected):
+def test_group_grammar_render_quantifier(quantifier, expected):
     grammar = NoOpGroupGrammar([], quantifier=quantifier)
     assert grammar.render_quantifier() == expected

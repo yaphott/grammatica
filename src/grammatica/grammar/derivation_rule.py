@@ -6,33 +6,35 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from grammatica.grammar.base import BaseGrammar
+from grammatica.grammar.base import Grammar
 
 if TYPE_CHECKING:
     from typing import Any
 
 
-class DerivationRule(BaseGrammar):
+class DerivationRule(Grammar):
     """Derivation rule that expands to a expression (grammar).
 
     Non-terminal symbol and an expression separated by a metasymbol (e.g. 'symbol ::= expression').
     """
 
+    __slots__: tuple[str, ...] = ("symbol", "value")
+
     separator: str = " ::= "
     """Separator metasymbol to use for the derivation rule."""
 
-    def __init__(self, symbol: str, value: BaseGrammar) -> None:
+    def __init__(self, symbol: str, value: Grammar) -> None:
         """Derivation rule that expands to a grammar.
 
         Args:
             symbol (str): Symbol (non-terminal) for the derivation rule.
-            value (BaseGrammar): Grammar the symbol derives into.
+            value (Grammar): Grammar the symbol derives into.
         """
         super().__init__()
 
         self.symbol: str = symbol
         """Symbol (non-terminal) for the derivation rule."""
-        self.value: BaseGrammar = value
+        self.value: Grammar = value
         """Grammar the symbol derives into."""
 
     def render(self, full: bool = True, wrap: bool = True) -> str | None:

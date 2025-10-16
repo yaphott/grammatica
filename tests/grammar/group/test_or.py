@@ -1,16 +1,16 @@
 import pytest
 
-from grammatica.grammar.grammar import Grammar
-from grammatica.grammar.or_group import Or, merge_adjacent_default_or
+from grammatica.grammar.group.and_ import And
+from grammatica.grammar.group.or_ import Or, merge_adjacent_default_or_grammars
 from grammatica.grammar.string import String
 
 try:
-    from .helpers import fmt_result
+    from ..helpers import fmt_result
 except ImportError:
     import sys
     from os import path
 
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+    sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
     from helpers import fmt_result
 
 
@@ -40,7 +40,7 @@ except ImportError:
         {
             "description": "Or with single subexpression and (0, 1) quantifier",
             "grammar": Or([String("a")], quantifier=(0, 1)),
-            "expected": Grammar([String("a")], quantifier=(0, 1)),
+            "expected": And([String("a")], quantifier=(0, 1)),
         },
         {
             "description": "Or with consecutive String subexpressions",
@@ -70,7 +70,7 @@ except ImportError:
                 ],
                 quantifier=(0, 1),
             ),
-            "expected": Grammar([String("a")], quantifier=(0, 1)),
+            "expected": And([String("a")], quantifier=(0, 1)),
         },
         {
             "description": "Nested Or with consecutive String subexpressions and (0, 1) quantifiers",
@@ -114,15 +114,15 @@ except ImportError:
         {
             "description": "Or with simple repeating subexpression and (0, 1) quantifier",
             "grammar": Or([String("a"), String("a"), String("a")], quantifier=(0, 1)),
-            "expected": Grammar([String("a")], quantifier=(0, 1)),
+            "expected": And([String("a")], quantifier=(0, 1)),
         },
         {
             "description": "Or with complex repeating subexpression",
             "grammar": Or(
                 [
-                    Grammar([String("a"), String("b")]),
-                    Grammar([String("a"), String("b")]),
-                    Grammar([String("a"), String("b")]),
+                    And([String("a"), String("b")]),
+                    And([String("a"), String("b")]),
+                    And([String("a"), String("b")]),
                 ],
             ),
             "expected": String("ab"),
@@ -131,13 +131,13 @@ except ImportError:
             "description": "Or with complex repeating subexpression and (0, 1) quantifiers",
             "grammar": Or(
                 [
-                    Grammar([String("a"), String("b")], quantifier=(0, 1)),
-                    Grammar([String("a"), String("b")], quantifier=(0, 1)),
-                    Grammar([String("a"), String("b")], quantifier=(0, 1)),
+                    And([String("a"), String("b")], quantifier=(0, 1)),
+                    And([String("a"), String("b")], quantifier=(0, 1)),
+                    And([String("a"), String("b")], quantifier=(0, 1)),
                 ],
                 quantifier=(0, 1),
             ),
-            "expected": Grammar([String("ab")], quantifier=(0, 1)),
+            "expected": And([String("ab")], quantifier=(0, 1)),
         },
     ],
 )
@@ -308,13 +308,13 @@ def test_or_attrs_dict():
             "subexprs": [
                 Or([String("a")]),
                 Or([String("b")]),
-                Grammar([String("c"), String("d")]),
+                And([String("c"), String("d")]),
                 Or([String("e")]),
                 Or([String("f")]),
             ],
             "expected": [
                 Or([String("a"), String("b")]),
-                Grammar([String("c"), String("d")]),
+                And([String("c"), String("d")]),
                 Or([String("e"), String("f")]),
             ],
         },
@@ -323,22 +323,22 @@ def test_or_attrs_dict():
             "subexprs": [
                 String("a"),
                 Or([String("b")]),
-                Grammar([String("c")]),
+                And([String("c")]),
                 String("d"),
             ],
             "expected": [
                 String("a"),
                 Or([String("b")]),
-                Grammar([String("c")]),
+                And([String("c")]),
                 String("d"),
             ],
         },
     ],
 )
-def test_merge_adjacent_default_or(test_case):
+def test_merge_adjacent_default_or_grammars(test_case):
     subexprs = [expr.copy() for expr in test_case["subexprs"]]
     n = len(subexprs)
-    new_n = merge_adjacent_default_or(subexprs, n)
+    new_n = merge_adjacent_default_or_grammars(subexprs, n)
     assert new_n == len(test_case["expected"]), "\n".join(
         (
             f"Description: {test_case['description']!r}",

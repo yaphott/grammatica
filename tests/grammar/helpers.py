@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from grammatica.grammar.base import BaseGrammar, value_to_string
-from grammatica.grammar.base_group import BaseGroupGrammar
+from grammatica.grammar.base import Grammar, value_to_string
+from grammatica.grammar.group.base import GroupGrammar
 
 if TYPE_CHECKING:
     from typing import Any
 
 
-class NoOpGrammar(BaseGrammar):
+class NoOpGrammar(Grammar):
     def __init__(self):
         pass
 
@@ -23,7 +23,7 @@ class NoOpGrammar(BaseGrammar):
         return {}
 
 
-class NoOpGrammarAlt(BaseGrammar):
+class NoOpGrammarAlt(Grammar):
     def __init__(self):
         pass
 
@@ -37,7 +37,7 @@ class NoOpGrammarAlt(BaseGrammar):
         return {}
 
 
-class NoOpGroupGrammar(BaseGroupGrammar):
+class NoOpGroupGrammar(GroupGrammar):
     separator = " "
 
     def __init__(
