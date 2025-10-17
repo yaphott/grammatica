@@ -20,7 +20,7 @@ bool char_is_ascii_letter(char c) {
 
 /* Check if character is punctuation */
 bool char_is_punctuation(char c) {
-	return strchr(PUNCTUATION, c) != NULL;
+	return c != '\0' && strchr(PUNCTUATION, c) != NULL;
 }
 
 /* Check if character is space */

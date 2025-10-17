@@ -5,9 +5,9 @@
 extern "C" {
 #endif
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 /* Opaque context handle for thread-safe operations */
 typedef struct GrammaticaContext_t* GrammaticaContextHandle_t;
@@ -33,24 +33,18 @@ typedef struct And_t And;
 typedef struct Or_t Or;
 
 /* Grammar type enumeration */
-typedef enum {
-    GRAMMAR_TYPE_CHAR_RANGE,
-    GRAMMAR_TYPE_STRING,
-    GRAMMAR_TYPE_DERIVATION_RULE,
-    GRAMMAR_TYPE_AND,
-    GRAMMAR_TYPE_OR
-} GrammarType;
+typedef enum { GRAMMAR_TYPE_CHAR_RANGE, GRAMMAR_TYPE_STRING, GRAMMAR_TYPE_DERIVATION_RULE, GRAMMAR_TYPE_AND, GRAMMAR_TYPE_OR } GrammarType;
 
 /* Quantifier structure */
 typedef struct {
-    int lower;
-    int upper;  /* -1 for infinity */
+	int lower;
+	int upper; /* -1 for infinity */
 } Quantifier;
 
 /* CharRange operations */
 typedef struct {
-    char start;
-    char end;
+	char start;
+	char end;
 } CharRangePair;
 
 CharRange* grammatica_char_range_create(GrammaticaContextHandle_t ctx, const CharRangePair* ranges, size_t num_ranges, bool negate);

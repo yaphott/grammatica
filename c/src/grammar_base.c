@@ -188,20 +188,55 @@ Grammar* grammatica_grammar_copy(GrammaticaContextHandle_t ctx, const Grammar* g
 	if (!ctx || !grammar) {
 		return NULL;
 	}
+	void* copied_data = NULL;
 	switch (grammar->type) {
 		case GRAMMAR_TYPE_CHAR_RANGE:
-			return (Grammar*)grammatica_char_range_copy(ctx, (CharRange*)grammar->data);
+			copied_data = grammatica_char_range_copy(ctx, (CharRange*)grammar->data);
+			break;
 		case GRAMMAR_TYPE_STRING:
-			return (Grammar*)grammatica_string_copy(ctx, (String*)grammar->data);
+			copied_data = grammatica_string_copy(ctx, (String*)grammar->data);
+			break;
 		case GRAMMAR_TYPE_DERIVATION_RULE:
-			return (Grammar*)grammatica_derivation_rule_copy(ctx, (DerivationRule*)grammar->data);
+			copied_data = grammatica_derivation_rule_copy(ctx, (DerivationRule*)grammar->data);
+			break;
 		case GRAMMAR_TYPE_AND:
-			return (Grammar*)grammatica_and_copy(ctx, (And*)grammar->data);
+			copied_data = grammatica_and_copy(ctx, (And*)grammar->data);
+			break;
 		case GRAMMAR_TYPE_OR:
-			return (Grammar*)grammatica_or_copy(ctx, (Or*)grammar->data);
+			copied_data = grammatica_or_copy(ctx, (Or*)grammar->data);
+			break;
 		default:
 			return NULL;
 	}
+	if (!copied_data) {
+		return NULL;
+	}
+	/* Wrap in Grammar structure */
+	Grammar* result = (Grammar*)malloc(sizeof(Grammar));
+	if (!result) {
+		/* Clean up copied data based on type */
+		switch (grammar->type) {
+			case GRAMMAR_TYPE_CHAR_RANGE:
+				grammatica_char_range_destroy(ctx, (CharRange*)copied_data);
+				break;
+			case GRAMMAR_TYPE_STRING:
+				grammatica_string_destroy(ctx, (String*)copied_data);
+				break;
+			case GRAMMAR_TYPE_DERIVATION_RULE:
+				grammatica_derivation_rule_destroy(ctx, (DerivationRule*)copied_data);
+				break;
+			case GRAMMAR_TYPE_AND:
+				grammatica_and_destroy(ctx, (And*)copied_data);
+				break;
+			case GRAMMAR_TYPE_OR:
+				grammatica_or_destroy(ctx, (Or*)copied_data);
+				break;
+		}
+		return NULL;
+	}
+	result->type = grammar->type;
+	result->data = copied_data;
+	return result;
 }
 
 /* Utility functions */

@@ -32,15 +32,10 @@ target_link_libraries(grammatica PRIVATE Threads::Threads)
 
 # GoogleTest setup
 enable_testing()
-include(FetchContent)
-FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG v1.15.2
-)
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+# Use local googletest directory
+add_subdirectory(googletest)
 
 # Test source files
 set(TEST_SOURCES

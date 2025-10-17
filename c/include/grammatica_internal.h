@@ -1,9 +1,10 @@
 #ifndef GRAMMATICA_INTERNAL_H
 #define GRAMMATICA_INTERNAL_H
 
-#include "grammatica.h"
 #include <pthread.h>
 #include <stddef.h>
+
+#include "grammatica.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,51 +12,51 @@ extern "C" {
 
 /* Internal context structure */
 typedef struct GrammaticaContext_t {
-    GrammaticaErrorHandler error_handler;
-    void* error_userdata;
-    GrammaticaNoticeHandler notice_handler;
-    void* notice_userdata;
-    char error_buffer[1024];
-    pthread_mutex_t mutex;
-    int initialized;
+	GrammaticaErrorHandler error_handler;
+	void* error_userdata;
+	GrammaticaNoticeHandler notice_handler;
+	void* notice_userdata;
+	char error_buffer[1024];
+	pthread_mutex_t mutex;
+	int initialized;
 } GrammaticaContext;
 
 /* Internal grammar structure */
 struct Grammar_t {
-    GrammarType type;
-    void* data;
+	GrammarType type;
+	void* data;
 };
 
 /* Internal CharRange structure */
 struct CharRange_t {
-    CharRangePair* ranges;
-    size_t num_ranges;
-    bool negate;
+	CharRangePair* ranges;
+	size_t num_ranges;
+	bool negate;
 };
 
 /* Internal String structure */
 struct String_t {
-    char* value;
+	char* value;
 };
 
 /* Internal DerivationRule structure */
 struct DerivationRule_t {
-    char* symbol;
-    Grammar* value;
+	char* symbol;
+	Grammar* value;
 };
 
 /* Internal And structure */
 struct And_t {
-    Grammar** subexprs;
-    size_t num_subexprs;
-    Quantifier quantifier;
+	Grammar** subexprs;
+	size_t num_subexprs;
+	Quantifier quantifier;
 };
 
 /* Internal Or structure */
 struct Or_t {
-    Grammar** subexprs;
-    size_t num_subexprs;
-    Quantifier quantifier;
+	Grammar** subexprs;
+	size_t num_subexprs;
+	Quantifier quantifier;
 };
 
 /* Helper functions for error reporting */
