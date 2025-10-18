@@ -7,14 +7,12 @@
 #include "grammatica_internal.h"
 #include "grammatica_utils.h"
 
-/* Helper function to compare CharRangePairs for qsort */
 static int char_range_pair_compare(const void* a, const void* b) {
 	const CharRangePair* pair_a = (const CharRangePair*)a;
 	const CharRangePair* pair_b = (const CharRangePair*)b;
 	return (unsigned char)pair_a->start - (unsigned char)pair_b->start;
 }
 
-/* Helper function to merge overlapping/adjacent ranges */
 static size_t merge_char_ranges(CharRangePair* ranges, size_t num_ranges) {
 	if (num_ranges <= 1) {
 		return num_ranges;
@@ -34,7 +32,6 @@ static size_t merge_char_ranges(CharRangePair* ranges, size_t num_ranges) {
 	return write_idx + 1;
 }
 
-/* Helper function to create set of ordinals from ranges */
 static void ranges_to_ords(const CharRangePair* ranges, size_t num_ranges, bool* ord_set) {
 	memset(ord_set, 0, 256 * sizeof(bool));
 	for (size_t i = 0; i < num_ranges; i++) {
@@ -46,7 +43,6 @@ static void ranges_to_ords(const CharRangePair* ranges, size_t num_ranges, bool*
 	}
 }
 
-/* Helper function to create ranges from ordinal set */
 static size_t ords_to_ranges(const bool* ord_set, CharRangePair* out_ranges) {
 	size_t count = 0;
 	int start = -1;
@@ -72,7 +68,6 @@ static size_t ords_to_ranges(const bool* ord_set, CharRangePair* out_ranges) {
 	return count;
 }
 
-/* Create CharRange from ranges */
 CharRange* grammatica_char_range_create(GrammaticaContextHandle_t ctx, const CharRangePair* ranges, size_t num_ranges, bool negate) {
 	if (!ctx || !ranges || num_ranges == 0) {
 		if (ctx && num_ranges == 0) {
@@ -111,7 +106,6 @@ CharRange* grammatica_char_range_create(GrammaticaContextHandle_t ctx, const Cha
 	return range;
 }
 
-/* Create CharRange from characters */
 CharRange* grammatica_char_range_from_chars(GrammaticaContextHandle_t ctx, const char* chars, size_t num_chars, bool negate) {
 	if (!ctx || !chars || num_chars == 0) {
 		if (ctx) {
@@ -133,7 +127,6 @@ CharRange* grammatica_char_range_from_chars(GrammaticaContextHandle_t ctx, const
 	return result;
 }
 
-/* Create CharRange from ordinals */
 CharRange* grammatica_char_range_from_ords(GrammaticaContextHandle_t ctx, const int* ords, size_t num_ords, bool negate) {
 	if (!ctx || !ords || num_ords == 0) {
 		if (ctx) {
@@ -161,7 +154,6 @@ CharRange* grammatica_char_range_from_ords(GrammaticaContextHandle_t ctx, const 
 	return result;
 }
 
-/* Destroy CharRange */
 void grammatica_char_range_destroy(GrammaticaContextHandle_t ctx, CharRange* range) {
 	(void)ctx;
 	if (!range) {
@@ -171,7 +163,6 @@ void grammatica_char_range_destroy(GrammaticaContextHandle_t ctx, CharRange* ran
 	free(range);
 }
 
-/* Helper to escape a character for range context */
 static char* escape_char_for_range(char c) {
 	const char* special_escape = char_get_escape(c);
 	if (special_escape) {
@@ -197,7 +188,6 @@ static char* escape_char_for_range(char c) {
 	return char_to_hex(c);
 }
 
-/* Render CharRange */
 char* grammatica_char_range_render(GrammaticaContextHandle_t ctx, const CharRange* range, bool full, bool wrap) {
 	(void)full;
 	(void)wrap;
@@ -217,39 +207,54 @@ char* grammatica_char_range_render(GrammaticaContextHandle_t ctx, const CharRang
 		return NULL;
 	}
 	size_t num_render_ranges = ords_to_ranges(ord_set, render_ranges);
-	/* Build the string */
-	char* result = (char*)malloc(4096);
-	if (!result) {
-		free(render_ranges);
-		grammatica_report_error(ctx, "Memory allocation failed");
-		return NULL;
-	}
+	/* Build the string - use stack buffer for small strings */
+	char stack_buf[512];
+	char* result = stack_buf;
+	size_t buf_size = sizeof(stack_buf);
 	size_t pos = 0;
+
 	result[pos++] = '[';
 	if (range->negate) {
 		result[pos++] = '^';
 	}
 	for (size_t i = 0; i < num_render_ranges; i++) {
+		/* Check if we need more space (estimate) */
+		if (pos + 32 > buf_size) {
+			/* Switch to heap allocation if needed */
+			if (result == stack_buf) {
+				result = (char*)malloc(4096);
+				if (!result) {
+					free(render_ranges);
+					grammatica_report_error(ctx, "Memory allocation failed");
+					return NULL;
+				}
+				memcpy(result, stack_buf, pos);
+				buf_size = 4096;
+			}
+		}
+
 		char* start_esc = escape_char_for_range(render_ranges[i].start);
 		if (!start_esc) {
-			free(result);
+			if (result != stack_buf)
+				free(result);
 			free(render_ranges);
 			return NULL;
 		}
 		if (render_ranges[i].start == render_ranges[i].end) {
-			pos += snprintf(result + pos, 4096 - pos, "%s", start_esc);
+			pos += snprintf(result + pos, buf_size - pos, "%s", start_esc);
 		} else {
 			char* end_esc = escape_char_for_range(render_ranges[i].end);
 			if (!end_esc) {
 				free(start_esc);
-				free(result);
+				if (result != stack_buf)
+					free(result);
 				free(render_ranges);
 				return NULL;
 			}
 			if ((unsigned char)render_ranges[i].end == (unsigned char)render_ranges[i].start + 1) {
-				pos += snprintf(result + pos, 4096 - pos, "%s%s", start_esc, end_esc);
+				pos += snprintf(result + pos, buf_size - pos, "%s%s", start_esc, end_esc);
 			} else {
-				pos += snprintf(result + pos, 4096 - pos, "%s-%s", start_esc, end_esc);
+				pos += snprintf(result + pos, buf_size - pos, "%s-%s", start_esc, end_esc);
 			}
 			free(end_esc);
 		}
@@ -258,12 +263,12 @@ char* grammatica_char_range_render(GrammaticaContextHandle_t ctx, const CharRang
 	result[pos++] = ']';
 	result[pos] = '\0';
 	free(render_ranges);
-	char* final_result = strdup(result);
-	free(result);
+
+	/* Return final result - if on stack, duplicate it */
+	char* final_result = (result == stack_buf) ? strdup(result) : result;
 	return final_result;
 }
 
-/* Simplify CharRange */
 Grammar* grammatica_char_range_simplify(GrammaticaContextHandle_t ctx, const CharRange* range) {
 	if (!ctx || !range) {
 		return NULL;
@@ -271,61 +276,87 @@ Grammar* grammatica_char_range_simplify(GrammaticaContextHandle_t ctx, const Cha
 	if (range->num_ranges == 0) {
 		return NULL;
 	}
+
+	Grammar* grammar = NULL;
+	String* str = NULL;
+	CharRange* copy = NULL;
+
 	if (range->num_ranges == 1 && range->ranges[0].start == range->ranges[0].end) {
 		/* Single character - convert to String */
 		char value[2] = {range->ranges[0].start, '\0'};
-		String* str = grammatica_string_create(ctx, value);
+		str = grammatica_string_create(ctx, value);
 		if (!str) {
-			return NULL;
+			goto cleanup;
 		}
-		Grammar* grammar = (Grammar*)malloc(sizeof(Grammar));
+		grammar = (Grammar*)malloc(sizeof(Grammar));
 		if (!grammar) {
-			grammatica_string_destroy(ctx, str);
-			return NULL;
+			grammatica_report_error(ctx, "Memory allocation failed");
+			goto cleanup;
 		}
 		grammar->type = GRAMMAR_TYPE_STRING;
 		grammar->data = str;
-		return grammar;
+		return grammar; /* Success */
 	}
+
 	/* Return a copy */
-	CharRange* copy = grammatica_char_range_copy(ctx, range);
+	copy = grammatica_char_range_copy(ctx, range);
 	if (!copy) {
-		return NULL;
+		goto cleanup;
 	}
-	Grammar* grammar = (Grammar*)malloc(sizeof(Grammar));
+	grammar = (Grammar*)malloc(sizeof(Grammar));
 	if (!grammar) {
-		grammatica_char_range_destroy(ctx, copy);
-		return NULL;
+		grammatica_report_error(ctx, "Memory allocation failed");
+		goto cleanup;
 	}
 	grammar->type = GRAMMAR_TYPE_CHAR_RANGE;
 	grammar->data = copy;
-	return grammar;
+	return grammar; /* Success */
+
+cleanup:
+	if (str)
+		grammatica_string_destroy(ctx, str);
+	if (copy)
+		grammatica_char_range_destroy(ctx, copy);
+	if (grammar)
+		free(grammar);
+	return NULL;
 }
 
-/* Convert CharRange to string representation */
 char* grammatica_char_range_as_string(GrammaticaContextHandle_t ctx, const CharRange* range) {
 	if (!ctx || !range) {
 		return NULL;
 	}
-	char* result = (char*)malloc(4096);
-	if (!result) {
-		return NULL;
-	}
+	/* Use stack buffer for small strings, heap for large */
+	char stack_buf[512];
+	char* result = stack_buf;
+	size_t buf_size = sizeof(stack_buf);
 	size_t pos = 0;
-	pos += snprintf(result + pos, 4096 - pos, "CharRange(char_ranges=[");
+
+	pos += snprintf(result + pos, buf_size - pos, "CharRange(char_ranges=[");
 	for (size_t i = 0; i < range->num_ranges; i++) {
-		if (i > 0) {
-			pos += snprintf(result + pos, 4096 - pos, ", ");
+		/* Check if we need more space */
+		if (pos + 64 > buf_size && result == stack_buf) {
+			result = (char*)malloc(4096);
+			if (!result) {
+				grammatica_report_error(ctx, "Memory allocation failed");
+				return NULL;
+			}
+			memcpy(result, stack_buf, pos);
+			buf_size = 4096;
 		}
-		pos += snprintf(result + pos, 4096 - pos, "('%c', '%c')", range->ranges[i].start, range->ranges[i].end);
+
+		if (i > 0) {
+			pos += snprintf(result + pos, buf_size - pos, ", ");
+		}
+		pos += snprintf(result + pos, buf_size - pos, "('%c', '%c')", range->ranges[i].start, range->ranges[i].end);
 	}
-	pos += snprintf(result + pos, 4096 - pos, "], negate=%s)", range->negate ? "True" : "False");
-	char* final_result = strdup(result);
-	free(result);
+	pos += snprintf(result + pos, buf_size - pos, "], negate=%s)", range->negate ? "True" : "False");
+
+	/* Return final result - if on stack, duplicate it */
+	char* final_result = (result == stack_buf) ? strdup(result) : result;
 	return final_result;
 }
 
-/* Check if two CharRanges are equal */
 bool grammatica_char_range_equals(GrammaticaContextHandle_t ctx, const CharRange* a, const CharRange* b) {
 	if (!ctx) {
 		return false;
@@ -347,7 +378,6 @@ bool grammatica_char_range_equals(GrammaticaContextHandle_t ctx, const CharRange
 	return true;
 }
 
-/* Copy CharRange */
 CharRange* grammatica_char_range_copy(GrammaticaContextHandle_t ctx, const CharRange* range) {
 	if (!ctx || !range) {
 		return NULL;
@@ -355,7 +385,6 @@ CharRange* grammatica_char_range_copy(GrammaticaContextHandle_t ctx, const CharR
 	return grammatica_char_range_create(ctx, range->ranges, range->num_ranges, range->negate);
 }
 
-/* Get number of ranges */
 size_t grammatica_char_range_get_num_ranges(GrammaticaContextHandle_t ctx, const CharRange* range) {
 	if (!ctx || !range) {
 		return 0;
@@ -363,7 +392,6 @@ size_t grammatica_char_range_get_num_ranges(GrammaticaContextHandle_t ctx, const
 	return range->num_ranges;
 }
 
-/* Get ranges */
 int grammatica_char_range_get_ranges(GrammaticaContextHandle_t ctx, const CharRange* range, CharRangePair* out_ranges, size_t max_ranges) {
 	if (!ctx || !range || !out_ranges) {
 		return -1;
@@ -373,7 +401,6 @@ int grammatica_char_range_get_ranges(GrammaticaContextHandle_t ctx, const CharRa
 	return (int)copy_count;
 }
 
-/* Get negate flag */
 bool grammatica_char_range_get_negate(GrammaticaContextHandle_t ctx, const CharRange* range) {
 	if (!ctx || !range) {
 		return false;

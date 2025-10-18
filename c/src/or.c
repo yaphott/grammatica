@@ -8,14 +8,12 @@
 
 static const char* OR_SEPARATOR = " | ";
 
-/* Forward declarations */
 extern Grammar* and_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** subexprs, size_t num_subexprs, Quantifier quantifier);
 static Grammar* or_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** subexprs, size_t num_subexprs, Quantifier quantifier);
 static bool or_needs_wrapped(const Or* or_expr);
 
-/* Create Or */
 Or* grammatica_or_create(GrammaticaContextHandle_t ctx, Grammar** subexprs, size_t num_subexprs, Quantifier quantifier) {
-	if (!ctx || !subexprs) {
+	if (!grammatica_context_is_valid(ctx) || !subexprs) {
 		return NULL;
 	}
 	if (quantifier.lower < 0) {
@@ -49,7 +47,6 @@ Or* grammatica_or_create(GrammaticaContextHandle_t ctx, Grammar** subexprs, size
 	return or_expr;
 }
 
-/* Destroy Or */
 void grammatica_or_destroy(GrammaticaContextHandle_t ctx, Or* or_expr) {
 	if (!or_expr) {
 		return;
@@ -61,7 +58,6 @@ void grammatica_or_destroy(GrammaticaContextHandle_t ctx, Or* or_expr) {
 	free(or_expr);
 }
 
-/* Check if Or needs wrapping */
 static bool or_needs_wrapped(const Or* or_expr) {
 	size_t n = or_expr->num_subexprs;
 	if (n < 1) {
@@ -96,10 +92,9 @@ static bool or_needs_wrapped(const Or* or_expr) {
 	return true;
 }
 
-/* Render Or */
 char* grammatica_or_render(GrammaticaContextHandle_t ctx, const Or* or_expr, bool full, bool wrap) {
 	(void)full;
-	if (!ctx || !or_expr) {
+	if (!grammatica_context_is_valid(ctx) || !or_expr) {
 		return NULL;
 	}
 	if (or_expr->num_subexprs < 1) {
@@ -153,15 +148,23 @@ char* grammatica_or_render(GrammaticaContextHandle_t ctx, const Or* or_expr, boo
 	return final_result;
 }
 
-/* Simplify Or - simplified version */
 static Grammar* or_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** original_subexprs, size_t original_num,
                                      Quantifier quantifier) {
-	/* Simplify each subexpression and remove duplicates */
-	Grammar** subexprs = (Grammar**)malloc(original_num * sizeof(Grammar*));
-	if (!subexprs) {
-		return NULL;
-	}
+	Grammar** subexprs = NULL;
+	Grammar** sub_subexprs = NULL;
+	Or* or_expr = NULL;
+	Grammar* grammar = NULL;
+	Grammar* result = NULL;
 	size_t n = 0;
+	size_t sub_num = 0;
+	
+	/* Simplify each subexpression and remove duplicates */
+	subexprs = (Grammar**)malloc(original_num * sizeof(Grammar*));
+	if (!subexprs) {
+		grammatica_report_error(ctx, "Memory allocation failed");
+		goto cleanup;
+	}
+	
 	for (size_t i = 0; i < original_num; i++) {
 		Grammar* simplified = grammatica_grammar_simplify(ctx, original_subexprs[i]);
 		if (simplified) {
@@ -179,19 +182,21 @@ static Grammar* or_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** or
 			}
 		}
 	}
+	
 	/* Empty expression is no-op */
 	if (n < 1) {
-		free(subexprs);
-		return NULL;
+		goto cleanup;
 	}
+	
 	/* Single subexpression */
 	if (n == 1) {
 		/* Unwrap a single default (1, 1) subexpression */
 		if (quantifier.lower == 1 && quantifier.upper == 1) {
-			Grammar* result = subexprs[0];
-			free(subexprs);
-			return result;
+			result = subexprs[0];
+			subexprs[0] = NULL; /* Prevent cleanup from freeing it */
+			goto cleanup;
 		}
+		
 		/* Or that is optional (0, 1) can recursively unwrap */
 		if (quantifier.lower == 0 && quantifier.upper == 1) {
 			if (subexprs[0]->type == GRAMMAR_TYPE_AND || subexprs[0]->type == GRAMMAR_TYPE_OR) {
@@ -201,9 +206,8 @@ static Grammar* or_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** or
 				} else {
 					sub_quant = ((Or*)subexprs[0]->data)->quantifier;
 				}
+				
 				if ((sub_quant.lower == 0 && sub_quant.upper == 1) || (sub_quant.lower == 1 && sub_quant.upper == 1)) {
-					Grammar** sub_subexprs;
-					size_t sub_num;
 					if (subexprs[0]->type == GRAMMAR_TYPE_AND) {
 						And* sub_and = (And*)subexprs[0]->data;
 						sub_num = sub_and->num_subexprs;
@@ -211,6 +215,17 @@ static Grammar* or_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** or
 						if (sub_subexprs) {
 							for (size_t i = 0; i < sub_num; i++) {
 								sub_subexprs[i] = grammatica_grammar_copy(ctx, sub_and->subexprs[i]);
+								if (!sub_subexprs[i]) {
+									/* Cleanup already copied subexprs */
+									for (size_t j = 0; j < i; j++) {
+										if (sub_subexprs[j]) {
+											grammatica_grammar_destroy(ctx, sub_subexprs[j]);
+										}
+									}
+									free(sub_subexprs);
+									sub_subexprs = NULL;
+									goto cleanup;
+								}
 							}
 						}
 					} else {
@@ -220,60 +235,107 @@ static Grammar* or_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** or
 						if (sub_subexprs) {
 							for (size_t i = 0; i < sub_num; i++) {
 								sub_subexprs[i] = grammatica_grammar_copy(ctx, sub_or->subexprs[i]);
+								if (!sub_subexprs[i]) {
+									/* Cleanup already copied subexprs */
+									for (size_t j = 0; j < i; j++) {
+										if (sub_subexprs[j]) {
+											grammatica_grammar_destroy(ctx, sub_subexprs[j]);
+										}
+									}
+									free(sub_subexprs);
+									sub_subexprs = NULL;
+									goto cleanup;
+								}
 							}
 						}
 					}
+					
 					if (sub_subexprs) {
 						grammatica_grammar_destroy(ctx, subexprs[0]);
-						free(subexprs);
+						subexprs[0] = NULL;
 						/* Use And's simplify for single Or */
-						Grammar* result = and_simplify_subexprs(ctx, sub_subexprs, sub_num, quantifier);
+						result = and_simplify_subexprs(ctx, sub_subexprs, sub_num, quantifier);
+						/* Cleanup sub_subexprs array */
 						for (size_t i = 0; i < sub_num; i++) {
-							if (sub_subexprs[i])
+							if (sub_subexprs[i]) {
 								grammatica_grammar_destroy(ctx, sub_subexprs[i]);
+							}
 						}
 						free(sub_subexprs);
-						return result;
+						sub_subexprs = NULL;
+						goto cleanup;
 					}
 				}
 			}
 		}
+		
 		/* Or with a single subexpression is the same as And with a single subexpression */
 		/* Use And's simplify_subexprs */
-		Grammar* result = and_simplify_subexprs(ctx, subexprs, n, quantifier);
+		result = and_simplify_subexprs(ctx, subexprs, n, quantifier);
+		/* Clear subexprs to prevent double-free (and_simplify_subexprs takes ownership) */
 		for (size_t i = 0; i < n; i++) {
-			if (subexprs[i])
+			if (subexprs[i]) {
 				grammatica_grammar_destroy(ctx, subexprs[i]);
+				subexprs[i] = NULL;
+			}
 		}
-		free(subexprs);
-		return result;
+		goto cleanup;
 	}
+	
 	/* Create Or with simplified subexpressions */
-	Or* or_expr = grammatica_or_create(ctx, subexprs, n, quantifier);
-	free(subexprs);
+	or_expr = grammatica_or_create(ctx, subexprs, n, quantifier);
 	if (!or_expr) {
-		return NULL;
+		grammatica_report_error(ctx, "Failed to create Or expression");
+		goto cleanup;
 	}
-	Grammar* grammar = (Grammar*)malloc(sizeof(Grammar));
+	
+	grammar = (Grammar*)malloc(sizeof(Grammar));
 	if (!grammar) {
-		grammatica_or_destroy(ctx, or_expr);
-		return NULL;
+		grammatica_report_error(ctx, "Memory allocation failed");
+		goto cleanup;
 	}
+	
 	grammar->type = GRAMMAR_TYPE_OR;
 	grammar->data = or_expr;
-	return grammar;
+	or_expr = NULL; /* Prevent cleanup from freeing it */
+	result = grammar;
+	grammar = NULL;
+	
+cleanup:
+	if (subexprs) {
+		for (size_t i = 0; i < n; i++) {
+			if (subexprs[i]) {
+				grammatica_grammar_destroy(ctx, subexprs[i]);
+			}
+		}
+		free(subexprs);
+	}
+	if (sub_subexprs) {
+		for (size_t i = 0; i < sub_num; i++) {
+			if (sub_subexprs[i]) {
+				grammatica_grammar_destroy(ctx, sub_subexprs[i]);
+			}
+		}
+		free(sub_subexprs);
+	}
+	if (or_expr) {
+		grammatica_or_destroy(ctx, or_expr);
+	}
+	if (grammar) {
+		free(grammar);
+	}
+	return result;
 }
 
 Grammar* grammatica_or_simplify(GrammaticaContextHandle_t ctx, const Or* or_expr) {
-	if (!ctx || !or_expr) {
+	if (!grammatica_context_is_valid(ctx) || !or_expr) {
 		return NULL;
 	}
 	return or_simplify_subexprs(ctx, or_expr->subexprs, or_expr->num_subexprs, or_expr->quantifier);
 }
 
-/* Convert Or to string representation */
 char* grammatica_or_as_string(GrammaticaContextHandle_t ctx, const Or* or_expr) {
-	if (!ctx || !or_expr) {
+	if (!grammatica_context_is_valid(ctx) || !or_expr) {
 		return NULL;
 	}
 	char* result = (char*)malloc(16384);
@@ -302,9 +364,8 @@ char* grammatica_or_as_string(GrammaticaContextHandle_t ctx, const Or* or_expr) 
 	return final_result;
 }
 
-/* Check if two Ors are equal */
 bool grammatica_or_equals(GrammaticaContextHandle_t ctx, const Or* a, const Or* b, bool check_quantifier) {
-	if (!ctx) {
+	if (!grammatica_context_is_valid(ctx)) {
 		return false;
 	}
 	if (a == b) {
@@ -329,9 +390,8 @@ bool grammatica_or_equals(GrammaticaContextHandle_t ctx, const Or* a, const Or* 
 	return true;
 }
 
-/* Copy Or */
 Or* grammatica_or_copy(GrammaticaContextHandle_t ctx, const Or* or_expr) {
-	if (!ctx || !or_expr) {
+	if (!grammatica_context_is_valid(ctx) || !or_expr) {
 		return NULL;
 	}
 	Grammar** subexprs_copy = (Grammar**)malloc(or_expr->num_subexprs * sizeof(Grammar*));
@@ -353,17 +413,15 @@ Or* grammatica_or_copy(GrammaticaContextHandle_t ctx, const Or* or_expr) {
 	return result;
 }
 
-/* Get number of subexpressions */
 size_t grammatica_or_get_num_subexprs(GrammaticaContextHandle_t ctx, const Or* or_expr) {
-	if (!ctx || !or_expr) {
+	if (!grammatica_context_is_valid(ctx) || !or_expr) {
 		return 0;
 	}
 	return or_expr->num_subexprs;
 }
 
-/* Get subexpressions */
 int grammatica_or_get_subexprs(GrammaticaContextHandle_t ctx, const Or* or_expr, Grammar** out_subexprs, size_t max_subexprs) {
-	if (!ctx || !or_expr || !out_subexprs) {
+	if (!grammatica_context_is_valid(ctx) || !or_expr || !out_subexprs) {
 		return -1;
 	}
 	size_t copy_count = or_expr->num_subexprs < max_subexprs ? or_expr->num_subexprs : max_subexprs;
@@ -371,10 +429,9 @@ int grammatica_or_get_subexprs(GrammaticaContextHandle_t ctx, const Or* or_expr,
 	return (int)copy_count;
 }
 
-/* Get quantifier */
 Quantifier grammatica_or_get_quantifier(GrammaticaContextHandle_t ctx, const Or* or_expr) {
 	Quantifier result = {0, 0};
-	if (!ctx || !or_expr) {
+	if (!grammatica_context_is_valid(ctx) || !or_expr) {
 		return result;
 	}
 	return or_expr->quantifier;

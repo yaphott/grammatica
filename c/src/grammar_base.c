@@ -5,13 +5,16 @@
 #include "grammatica.h"
 #include "grammatica_internal.h"
 
-/* Context management */
 GrammaticaContextHandle_t grammatica_init(void) {
 	GrammaticaContext* ctx = (GrammaticaContext*)calloc(1, sizeof(GrammaticaContext));
 	if (!ctx) {
 		return NULL;
 	}
-	pthread_mutex_init(&ctx->mutex, NULL);
+	if (pthread_mutex_init(&ctx->mutex, NULL) != 0) {
+		free(ctx);
+		return NULL;
+	}
+	ctx->magic = GRAMMATICA_MAGIC;
 	ctx->initialized = 1;
 	ctx->error_handler = NULL;
 	ctx->error_userdata = NULL;
@@ -24,6 +27,13 @@ void grammatica_finish(GrammaticaContextHandle_t ctx) {
 	if (!ctx) {
 		return;
 	}
+	if (!grammatica_context_is_valid(ctx)) {
+		return;
+	}
+	pthread_mutex_lock(&ctx->mutex);
+	ctx->magic = 0; /* Invalidate the context */
+	ctx->initialized = 0;
+	pthread_mutex_unlock(&ctx->mutex);
 	pthread_mutex_destroy(&ctx->mutex);
 	free(ctx);
 }
@@ -32,47 +42,76 @@ void grammatica_set_error_handler(GrammaticaContextHandle_t ctx, GrammaticaError
 	if (!ctx) {
 		return;
 	}
+	pthread_mutex_lock(&ctx->mutex);
 	ctx->error_handler = handler;
 	ctx->error_userdata = userdata;
+	pthread_mutex_unlock(&ctx->mutex);
 }
 
 void grammatica_set_notice_handler(GrammaticaContextHandle_t ctx, GrammaticaNoticeHandler handler, void* userdata) {
 	if (!ctx) {
 		return;
 	}
+	pthread_mutex_lock(&ctx->mutex);
 	ctx->notice_handler = handler;
 	ctx->notice_userdata = userdata;
+	pthread_mutex_unlock(&ctx->mutex);
 }
 
-/* Helper functions for error reporting */
 void grammatica_report_error(GrammaticaContextHandle_t ctx, const char* message) {
 	if (!ctx) {
 		return;
 	}
+	pthread_mutex_lock(&ctx->mutex);
 	if (ctx->error_handler) {
 		ctx->error_handler(message, ctx->error_userdata);
+	} else {
+		/* Store in error_buffer for later retrieval */
+		strncpy(ctx->error_buffer, message, sizeof(ctx->error_buffer) - 1);
+		ctx->error_buffer[sizeof(ctx->error_buffer) - 1] = '\0';
 	}
+	pthread_mutex_unlock(&ctx->mutex);
 }
 
 void grammatica_report_notice(GrammaticaContextHandle_t ctx, const char* message) {
 	if (!ctx) {
 		return;
 	}
+	pthread_mutex_lock(&ctx->mutex);
 	if (ctx->notice_handler) {
 		ctx->notice_handler(message, ctx->notice_userdata);
 	}
+	pthread_mutex_unlock(&ctx->mutex);
 }
 
-/* Generic grammar operations */
+const char* grammatica_get_last_error(GrammaticaContextHandle_t ctx) {
+	if (!grammatica_context_is_valid(ctx)) {
+		return "Invalid context";
+	}
+	pthread_mutex_lock(&ctx->mutex);
+	const char* result = ctx->error_buffer[0] != '\0' ? ctx->error_buffer : NULL;
+	pthread_mutex_unlock(&ctx->mutex);
+	return result;
+}
+
+void grammatica_clear_error(GrammaticaContextHandle_t ctx) {
+	if (!grammatica_context_is_valid(ctx)) {
+		return;
+	}
+	pthread_mutex_lock(&ctx->mutex);
+	ctx->error_buffer[0] = '\0';
+	pthread_mutex_unlock(&ctx->mutex);
+}
+
 GrammarType grammatica_grammar_get_type(GrammaticaContextHandle_t ctx, const Grammar* grammar) {
-	if (!ctx || !grammar) {
+	if (!grammatica_context_is_valid(ctx) || !grammar) {
 		return (GrammarType)-1;
 	}
 	return grammar->type;
 }
 
 void grammatica_grammar_destroy(GrammaticaContextHandle_t ctx, Grammar* grammar) {
-	if (!ctx || !grammar) {
+	if (!grammatica_context_is_valid(ctx) || !grammar) {
 		return;
 	}
 	switch (grammar->type) {
@@ -96,7 +135,7 @@ void grammatica_grammar_destroy(GrammaticaContextHandle_t ctx, Grammar* grammar)
 }
 
 char* grammatica_grammar_render(GrammaticaContextHandle_t ctx, const Grammar* grammar, bool full, bool wrap) {
-	if (!ctx || !grammar) {
+	if (!grammatica_context_is_valid(ctx) || !grammar) {
 		return NULL;
 	}
 	switch (grammar->type) {
@@ -116,7 +155,7 @@ char* grammatica_grammar_render(GrammaticaContextHandle_t ctx, const Grammar* gr
 }
 
 Grammar* grammatica_grammar_simplify(GrammaticaContextHandle_t ctx, const Grammar* grammar) {
-	if (!ctx || !grammar) {
+	if (!grammatica_context_is_valid(ctx) || !grammar) {
 		return NULL;
 	}
 	switch (grammar->type) {
@@ -136,7 +175,7 @@ Grammar* grammatica_grammar_simplify(GrammaticaContextHandle_t ctx, const Gramma
 }
 
 char* grammatica_grammar_as_string(GrammaticaContextHandle_t ctx, const Grammar* grammar) {
-	if (!ctx || !grammar) {
+	if (!grammatica_context_is_valid(ctx) || !grammar) {
 		return NULL;
 	}
 	switch (grammar->type) {
@@ -156,7 +195,7 @@ char* grammatica_grammar_as_string(GrammaticaContextHandle_t ctx, const Grammar*
 }
 
 bool grammatica_grammar_equals(GrammaticaContextHandle_t ctx, const Grammar* a, const Grammar* b) {
-	if (!ctx) {
+	if (!grammatica_context_is_valid(ctx)) {
 		return false;
 	}
 	if (a == b) {
@@ -185,7 +224,7 @@ bool grammatica_grammar_equals(GrammaticaContextHandle_t ctx, const Grammar* a, 
 }
 
 Grammar* grammatica_grammar_copy(GrammaticaContextHandle_t ctx, const Grammar* grammar) {
-	if (!ctx || !grammar) {
+	if (!grammatica_context_is_valid(ctx) || !grammar) {
 		return NULL;
 	}
 	void* copied_data = NULL;
@@ -239,7 +278,6 @@ Grammar* grammatica_grammar_copy(GrammaticaContextHandle_t ctx, const Grammar* g
 	return result;
 }
 
-/* Utility functions */
 void grammatica_free_string(GrammaticaContextHandle_t ctx, char* str) {
 	(void)ctx; /* Unused in simple implementation */
 	free(str);

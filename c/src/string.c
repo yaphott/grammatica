@@ -7,7 +7,6 @@
 #include "grammatica_internal.h"
 #include "grammatica_utils.h"
 
-/* Helper to escape a character for string literal context */
 static char* escape_char_for_string(char c) {
 	if (char_is_always_safe(c)) {
 		char* result = (char*)malloc(2);
@@ -33,7 +32,6 @@ static char* escape_char_for_string(char c) {
 	return char_to_hex(c);
 }
 
-/* Create String */
 String* grammatica_string_create(GrammaticaContextHandle_t ctx, const char* value) {
 	if (!ctx || !value) {
 		return NULL;
@@ -52,7 +50,6 @@ String* grammatica_string_create(GrammaticaContextHandle_t ctx, const char* valu
 	return str;
 }
 
-/* Destroy String */
 void grammatica_string_destroy(GrammaticaContextHandle_t ctx, String* str) {
 	(void)ctx;
 	if (!str) {
@@ -62,7 +59,6 @@ void grammatica_string_destroy(GrammaticaContextHandle_t ctx, String* str) {
 	free(str);
 }
 
-/* Render String */
 char* grammatica_string_render(GrammaticaContextHandle_t ctx, const String* str, bool full, bool wrap) {
 	(void)full;
 	(void)wrap;
@@ -72,31 +68,44 @@ char* grammatica_string_render(GrammaticaContextHandle_t ctx, const String* str,
 	if (strlen(str->value) == 0) {
 		return NULL;
 	}
-	/* Build escaped string */
-	char* result = (char*)malloc(4096);
-	if (!result) {
-		grammatica_report_error(ctx, "Memory allocation failed");
-		return NULL;
-	}
+	/* Build escaped string - use stack buffer for small strings */
+	char stack_buf[512];
+	char* result = stack_buf;
+	size_t buf_size = sizeof(stack_buf);
 	size_t pos = 0;
+
 	result[pos++] = '"';
 	for (const char* p = str->value; *p; p++) {
+		/* Check if we need more space */
+		if (pos + 16 > buf_size) {
+			if (result == stack_buf) {
+				result = (char*)malloc(4096);
+				if (!result) {
+					grammatica_report_error(ctx, "Memory allocation failed");
+					return NULL;
+				}
+				memcpy(result, stack_buf, pos);
+				buf_size = 4096;
+			}
+		}
+
 		char* escaped = escape_char_for_string(*p);
 		if (!escaped) {
-			free(result);
+			if (result != stack_buf)
+				free(result);
 			return NULL;
 		}
-		pos += snprintf(result + pos, 4096 - pos, "%s", escaped);
+		pos += snprintf(result + pos, buf_size - pos, "%s", escaped);
 		free(escaped);
 	}
 	result[pos++] = '"';
 	result[pos] = '\0';
-	char* final_result = strdup(result);
-	free(result);
+
+	/* Return final result - if on stack, duplicate it */
+	char* final_result = (result == stack_buf) ? strdup(result) : result;
 	return final_result;
 }
 
-/* Simplify String */
 Grammar* grammatica_string_simplify(GrammaticaContextHandle_t ctx, const String* str) {
 	if (!ctx || !str) {
 		return NULL;
@@ -104,36 +113,46 @@ Grammar* grammatica_string_simplify(GrammaticaContextHandle_t ctx, const String*
 	if (strlen(str->value) == 0) {
 		return NULL;
 	}
-	String* copy = grammatica_string_copy(ctx, str);
+
+	Grammar* grammar = NULL;
+	String* copy = NULL;
+
+	copy = grammatica_string_copy(ctx, str);
 	if (!copy) {
-		return NULL;
+		goto cleanup;
 	}
-	Grammar* grammar = (Grammar*)malloc(sizeof(Grammar));
+	grammar = (Grammar*)malloc(sizeof(Grammar));
 	if (!grammar) {
-		grammatica_string_destroy(ctx, copy);
-		return NULL;
+		grammatica_report_error(ctx, "Memory allocation failed");
+		goto cleanup;
 	}
 	grammar->type = GRAMMAR_TYPE_STRING;
 	grammar->data = copy;
-	return grammar;
+	return grammar; /* Success */
+
+cleanup:
+	if (copy)
+		grammatica_string_destroy(ctx, copy);
+	if (grammar)
+		free(grammar);
+	return NULL;
 }
 
-/* Convert String to string representation */
 char* grammatica_string_as_string(GrammaticaContextHandle_t ctx, const String* str) {
 	if (!ctx || !str) {
 		return NULL;
 	}
-	char* result = (char*)malloc(4096);
+	/* Allocate only what we need */
+	size_t needed = snprintf(NULL, 0, "String(value='%s')", str->value) + 1;
+	char* result = (char*)malloc(needed);
 	if (!result) {
+		grammatica_report_error(ctx, "Memory allocation failed");
 		return NULL;
 	}
-	snprintf(result, 4096, "String(value='%s')", str->value);
-	char* final_result = strdup(result);
-	free(result);
-	return final_result;
+	snprintf(result, needed, "String(value='%s')", str->value);
+	return result;
 }
 
-/* Check if two Strings are equal */
 bool grammatica_string_equals(GrammaticaContextHandle_t ctx, const String* a, const String* b) {
 	if (!ctx) {
 		return false;
@@ -147,7 +166,6 @@ bool grammatica_string_equals(GrammaticaContextHandle_t ctx, const String* a, co
 	return strcmp(a->value, b->value) == 0;
 }
 
-/* Copy String */
 String* grammatica_string_copy(GrammaticaContextHandle_t ctx, const String* str) {
 	if (!ctx || !str) {
 		return NULL;
@@ -155,7 +173,6 @@ String* grammatica_string_copy(GrammaticaContextHandle_t ctx, const String* str)
 	return grammatica_string_create(ctx, str->value);
 }
 
-/* Get string value */
 const char* grammatica_string_get_value(GrammaticaContextHandle_t ctx, const String* str) {
 	if (!ctx || !str) {
 		return NULL;

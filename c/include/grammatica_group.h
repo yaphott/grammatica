@@ -7,10 +7,8 @@
 extern "C" {
 #endif
 
-/* Helper function to render quantifier */
 char* render_quantifier(Quantifier quantifier);
 
-/* Helper function to check if quantifier needs wrapping */
 bool quantifier_needs_wrap(Quantifier quantifier);
 
 #ifdef __cplusplus

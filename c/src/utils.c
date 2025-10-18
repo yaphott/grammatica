@@ -4,12 +4,10 @@
 
 #include "grammatica_utils.h"
 
-/* Convert character to Unicode code point string */
 char* char_to_cpoint(char c) {
 	return ord_to_cpoint((unsigned char)c);
 }
 
-/* Convert ordinal to Unicode code point string */
 char* ord_to_cpoint(int ordinal) {
 	char* result = (char*)malloc(16);
 	if (!result) {
@@ -23,12 +21,10 @@ char* ord_to_cpoint(int ordinal) {
 	return result;
 }
 
-/* Convert character to hex string */
 char* char_to_hex(char c) {
 	return ord_to_hex((unsigned char)c);
 }
 
-/* Convert ordinal to hex string */
 char* ord_to_hex(int ordinal) {
 	char* result = (char*)malloc(16);
 	if (!result) {

@@ -2,6 +2,7 @@
 #define GRAMMATICA_INTERNAL_H
 
 #include <pthread.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "grammatica.h"
@@ -10,8 +11,10 @@
 extern "C" {
 #endif
 
-/* Internal context structure */
+#define GRAMMATICA_MAGIC 0x47524D4D /* "GRMM" */
+
 typedef struct GrammaticaContext_t {
+	uint32_t magic;
 	GrammaticaErrorHandler error_handler;
 	void* error_userdata;
 	GrammaticaNoticeHandler notice_handler;
@@ -21,47 +24,82 @@ typedef struct GrammaticaContext_t {
 	int initialized;
 } GrammaticaContext;
 
-/* Internal grammar structure */
 struct Grammar_t {
 	GrammarType type;
 	void* data;
 };
 
-/* Internal CharRange structure */
 struct CharRange_t {
 	CharRangePair* ranges;
 	size_t num_ranges;
 	bool negate;
 };
 
-/* Internal String structure */
 struct String_t {
 	char* value;
 };
 
-/* Internal DerivationRule structure */
 struct DerivationRule_t {
 	char* symbol;
 	Grammar* value;
 };
 
-/* Internal And structure */
 struct And_t {
 	Grammar** subexprs;
 	size_t num_subexprs;
 	Quantifier quantifier;
 };
 
-/* Internal Or structure */
 struct Or_t {
 	Grammar** subexprs;
 	size_t num_subexprs;
 	Quantifier quantifier;
 };
 
-/* Helper functions for error reporting */
 void grammatica_report_error(GrammaticaContextHandle_t ctx, const char* message);
 void grammatica_report_notice(GrammaticaContextHandle_t ctx, const char* message);
+
+static inline bool grammatica_context_is_valid(const GrammaticaContext* ctx) {
+	return ctx && ctx->magic == GRAMMATICA_MAGIC && ctx->initialized;
+}
+
+/* Validation helper macros for consistent error checking */
+#define VALIDATE_CONTEXT_RET_NULL(ctx) \
+	do { \
+		if (!grammatica_context_is_valid(ctx)) { \
+			return NULL; \
+		} \
+	} while (0)
+
+#define VALIDATE_CONTEXT_RET_FALSE(ctx) \
+	do { \
+		if (!grammatica_context_is_valid(ctx)) { \
+			return false; \
+		} \
+	} while (0)
+
+#define VALIDATE_CONTEXT_RET_VOID(ctx) \
+	do { \
+		if (!grammatica_context_is_valid(ctx)) { \
+			return; \
+		} \
+	} while (0)
+
+#define VALIDATE_PARAM_RET_NULL(ctx, param, msg) \
+	do { \
+		if (!(param)) { \
+			grammatica_report_error(ctx, msg); \
+			return NULL; \
+		} \
+	} while (0)
+
+#define VALIDATE_PARAM_RET_FALSE(ctx, param, msg) \
+	do { \
+		if (!(param)) { \
+			grammatica_report_error(ctx, msg); \
+			return false; \
+		} \
+	} while (0)
 
 #ifdef __cplusplus
 }

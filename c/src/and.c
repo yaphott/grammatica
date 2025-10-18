@@ -8,13 +8,11 @@
 
 static const char* AND_SEPARATOR = " ";
 
-/* Forward declarations */
 Grammar* and_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** subexprs, size_t num_subexprs, Quantifier quantifier);
 static bool and_needs_wrapped(const And* and_expr);
 
-/* Create And */
 And* grammatica_and_create(GrammaticaContextHandle_t ctx, Grammar** subexprs, size_t num_subexprs, Quantifier quantifier) {
-	if (!ctx || !subexprs) {
+	if (!grammatica_context_is_valid(ctx) || !subexprs) {
 		return NULL;
 	}
 	if (quantifier.lower < 0) {
@@ -48,7 +46,6 @@ And* grammatica_and_create(GrammaticaContextHandle_t ctx, Grammar** subexprs, si
 	return and_expr;
 }
 
-/* Destroy And */
 void grammatica_and_destroy(GrammaticaContextHandle_t ctx, And* and_expr) {
 	if (!and_expr) {
 		return;
@@ -60,7 +57,6 @@ void grammatica_and_destroy(GrammaticaContextHandle_t ctx, And* and_expr) {
 	free(and_expr);
 }
 
-/* Check if And needs wrapping */
 static bool and_needs_wrapped(const And* and_expr) {
 	size_t n = and_expr->num_subexprs;
 	if (n < 1) {
@@ -95,10 +91,9 @@ static bool and_needs_wrapped(const And* and_expr) {
 	return !(and_expr->quantifier.lower == 1 && and_expr->quantifier.upper == 1);
 }
 
-/* Render And */
 char* grammatica_and_render(GrammaticaContextHandle_t ctx, const And* and_expr, bool full, bool wrap) {
 	(void)full;
-	if (!ctx || !and_expr) {
+	if (!grammatica_context_is_valid(ctx) || !and_expr) {
 		return NULL;
 	}
 	if (and_expr->num_subexprs < 1) {
@@ -152,13 +147,20 @@ char* grammatica_and_render(GrammaticaContextHandle_t ctx, const And* and_expr, 
 	return final_result;
 }
 
-/* Simplify And - simplified version without all optimizations */
 Grammar* and_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** original_subexprs, size_t original_num, Quantifier quantifier) {
+	Grammar** subexprs = NULL;
+	Grammar** sub_subexprs = NULL;
+	And* and_expr = NULL;
+	Grammar* grammar = NULL;
+	Grammar* result = NULL;
+	
 	/* Simplify each subexpression */
-	Grammar** subexprs = (Grammar**)malloc(original_num * sizeof(Grammar*));
+	subexprs = (Grammar**)malloc(original_num * sizeof(Grammar*));
 	if (!subexprs) {
-		return NULL;
+		grammatica_report_error(ctx, "Memory allocation failed");
+		goto cleanup;
 	}
+	
 	size_t n = 0;
 	for (size_t i = 0; i < original_num; i++) {
 		Grammar* simplified = grammatica_grammar_simplify(ctx, original_subexprs[i]);
@@ -166,67 +168,105 @@ Grammar* and_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** original
 			subexprs[n++] = simplified;
 		}
 	}
+	
 	/* Empty expression is no-op */
 	if (n < 1) {
-		free(subexprs);
-		return NULL;
+		goto cleanup;
 	}
+	
 	/* Single subexpression with default quantifier */
 	if (n == 1 && quantifier.lower == 1 && quantifier.upper == 1) {
-		Grammar* result = subexprs[0];
-		free(subexprs);
-		return result;
+		result = subexprs[0];
+		subexprs[0] = NULL; /* Prevent cleanup from freeing it */
+		goto cleanup;
 	}
+	
 	/* And that is optional (0, 1) can recursively unwrap */
 	if (n == 1 && quantifier.lower == 0 && quantifier.upper == 1) {
 		if (subexprs[0]->type == GRAMMAR_TYPE_AND) {
 			And* sub_and = (And*)subexprs[0]->data;
 			if ((sub_and->quantifier.lower == 0 && sub_and->quantifier.upper == 1) ||
 			    (sub_and->quantifier.lower == 1 && sub_and->quantifier.upper == 1)) {
-				Grammar** sub_subexprs = (Grammar**)malloc(sub_and->num_subexprs * sizeof(Grammar*));
+				sub_subexprs = (Grammar**)malloc(sub_and->num_subexprs * sizeof(Grammar*));
 				if (sub_subexprs) {
-					for (size_t i = 0; i < sub_and->num_subexprs; i++) {
+					size_t sub_num = sub_and->num_subexprs;
+					for (size_t i = 0; i < sub_num; i++) {
 						sub_subexprs[i] = grammatica_grammar_copy(ctx, sub_and->subexprs[i]);
+						if (!sub_subexprs[i]) {
+							/* Cleanup already copied subexprs */
+							for (size_t j = 0; j < i; j++) {
+								if (sub_subexprs[j]) {
+									grammatica_grammar_destroy(ctx, sub_subexprs[j]);
+								}
+							}
+							free(sub_subexprs);
+							sub_subexprs = NULL;
+							goto cleanup;
+						}
 					}
 					grammatica_grammar_destroy(ctx, subexprs[0]);
-					free(subexprs);
-					Grammar* result = and_simplify_subexprs(ctx, sub_subexprs, sub_and->num_subexprs, quantifier);
-					for (size_t i = 0; i < sub_and->num_subexprs; i++) {
-						if (sub_subexprs[i])
+					subexprs[0] = NULL;
+					result = and_simplify_subexprs(ctx, sub_subexprs, sub_num, quantifier);
+					/* Cleanup sub_subexprs array */
+					for (size_t i = 0; i < sub_num; i++) {
+						if (sub_subexprs[i]) {
 							grammatica_grammar_destroy(ctx, sub_subexprs[i]);
+						}
 					}
 					free(sub_subexprs);
-					return result;
+					sub_subexprs = NULL;
+					goto cleanup;
 				}
 			}
 		}
 	}
+	
 	/* Create And with simplified subexpressions */
-	And* and_expr = grammatica_and_create(ctx, subexprs, n, quantifier);
-	free(subexprs);
+	and_expr = grammatica_and_create(ctx, subexprs, n, quantifier);
 	if (!and_expr) {
-		return NULL;
+		grammatica_report_error(ctx, "Failed to create And expression");
+		goto cleanup;
 	}
-	Grammar* grammar = (Grammar*)malloc(sizeof(Grammar));
+	
+	grammar = (Grammar*)malloc(sizeof(Grammar));
 	if (!grammar) {
-		grammatica_and_destroy(ctx, and_expr);
-		return NULL;
+		grammatica_report_error(ctx, "Memory allocation failed");
+		goto cleanup;
 	}
+	
 	grammar->type = GRAMMAR_TYPE_AND;
 	grammar->data = and_expr;
-	return grammar;
+	and_expr = NULL; /* Prevent cleanup from freeing it */
+	result = grammar;
+	grammar = NULL;
+	
+cleanup:
+	if (subexprs) {
+		for (size_t i = 0; i < n; i++) {
+			if (subexprs[i]) {
+				grammatica_grammar_destroy(ctx, subexprs[i]);
+			}
+		}
+		free(subexprs);
+	}
+	if (and_expr) {
+		grammatica_and_destroy(ctx, and_expr);
+	}
+	if (grammar) {
+		free(grammar);
+	}
+	return result;
 }
 
 Grammar* grammatica_and_simplify(GrammaticaContextHandle_t ctx, const And* and_expr) {
-	if (!ctx || !and_expr) {
+	if (!grammatica_context_is_valid(ctx) || !and_expr) {
 		return NULL;
 	}
 	return and_simplify_subexprs(ctx, and_expr->subexprs, and_expr->num_subexprs, and_expr->quantifier);
 }
 
-/* Convert And to string representation */
 char* grammatica_and_as_string(GrammaticaContextHandle_t ctx, const And* and_expr) {
-	if (!ctx || !and_expr) {
+	if (!grammatica_context_is_valid(ctx) || !and_expr) {
 		return NULL;
 	}
 	char* result = (char*)malloc(16384);
@@ -255,9 +295,8 @@ char* grammatica_and_as_string(GrammaticaContextHandle_t ctx, const And* and_exp
 	return final_result;
 }
 
-/* Check if two Ands are equal */
 bool grammatica_and_equals(GrammaticaContextHandle_t ctx, const And* a, const And* b, bool check_quantifier) {
-	if (!ctx) {
+	if (!grammatica_context_is_valid(ctx)) {
 		return false;
 	}
 	if (a == b) {
@@ -282,9 +321,8 @@ bool grammatica_and_equals(GrammaticaContextHandle_t ctx, const And* a, const An
 	return true;
 }
 
-/* Copy And */
 And* grammatica_and_copy(GrammaticaContextHandle_t ctx, const And* and_expr) {
-	if (!ctx || !and_expr) {
+	if (!grammatica_context_is_valid(ctx) || !and_expr) {
 		return NULL;
 	}
 	Grammar** subexprs_copy = (Grammar**)malloc(and_expr->num_subexprs * sizeof(Grammar*));
@@ -306,17 +344,15 @@ And* grammatica_and_copy(GrammaticaContextHandle_t ctx, const And* and_expr) {
 	return result;
 }
 
-/* Get number of subexpressions */
 size_t grammatica_and_get_num_subexprs(GrammaticaContextHandle_t ctx, const And* and_expr) {
-	if (!ctx || !and_expr) {
+	if (!grammatica_context_is_valid(ctx) || !and_expr) {
 		return 0;
 	}
 	return and_expr->num_subexprs;
 }
 
-/* Get subexpressions */
 int grammatica_and_get_subexprs(GrammaticaContextHandle_t ctx, const And* and_expr, Grammar** out_subexprs, size_t max_subexprs) {
-	if (!ctx || !and_expr || !out_subexprs) {
+	if (!grammatica_context_is_valid(ctx) || !and_expr || !out_subexprs) {
 		return -1;
 	}
 	size_t copy_count = and_expr->num_subexprs < max_subexprs ? and_expr->num_subexprs : max_subexprs;
@@ -324,10 +360,9 @@ int grammatica_and_get_subexprs(GrammaticaContextHandle_t ctx, const And* and_ex
 	return (int)copy_count;
 }
 
-/* Get quantifier */
 Quantifier grammatica_and_get_quantifier(GrammaticaContextHandle_t ctx, const And* and_expr) {
 	Quantifier result = {0, 0};
-	if (!ctx || !and_expr) {
+	if (!grammatica_context_is_valid(ctx) || !and_expr) {
 		return result;
 	}
 	return and_expr->quantifier;

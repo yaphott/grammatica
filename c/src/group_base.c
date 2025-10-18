@@ -5,7 +5,6 @@
 #include "grammatica.h"
 #include "grammatica_internal.h"
 
-/* Helper function to render quantifier */
 char* render_quantifier(Quantifier quantifier) {
 	int lower = quantifier.lower;
 	int upper = quantifier.upper;
@@ -44,7 +43,6 @@ char* render_quantifier(Quantifier quantifier) {
 	return result;
 }
 
-/* Helper function to check if quantifier needs wrapping */
 bool quantifier_needs_wrap(Quantifier quantifier) {
 	return !(quantifier.lower == 1 && quantifier.upper == 1);
 }
