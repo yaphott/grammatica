@@ -20,6 +20,7 @@ typedef struct GrammaticaContext_t {
 	GrammaticaNoticeHandler notice_handler;
 	void* notice_userdata;
 	char error_buffer[1024];
+	GrammaticaErrorCode error_code;
 	pthread_mutex_t mutex;
 	int initialized;
 } GrammaticaContext;
@@ -57,6 +58,7 @@ struct Or_t {
 };
 
 void grammatica_report_error(GrammaticaContextHandle_t ctx, const char* message);
+void grammatica_report_error_with_code(GrammaticaContextHandle_t ctx, GrammaticaErrorCode code, const char* message);
 void grammatica_report_notice(GrammaticaContextHandle_t ctx, const char* message);
 
 static inline bool grammatica_context_is_valid(const GrammaticaContext* ctx) {
@@ -64,41 +66,41 @@ static inline bool grammatica_context_is_valid(const GrammaticaContext* ctx) {
 }
 
 /* Validation helper macros for consistent error checking */
-#define VALIDATE_CONTEXT_RET_NULL(ctx) \
-	do { \
+#define VALIDATE_CONTEXT_RET_NULL(ctx)           \
+	do {                                         \
 		if (!grammatica_context_is_valid(ctx)) { \
-			return NULL; \
-		} \
+			return NULL;                         \
+		}                                        \
 	} while (0)
 
-#define VALIDATE_CONTEXT_RET_FALSE(ctx) \
-	do { \
+#define VALIDATE_CONTEXT_RET_FALSE(ctx)          \
+	do {                                         \
 		if (!grammatica_context_is_valid(ctx)) { \
-			return false; \
-		} \
+			return false;                        \
+		}                                        \
 	} while (0)
 
-#define VALIDATE_CONTEXT_RET_VOID(ctx) \
-	do { \
+#define VALIDATE_CONTEXT_RET_VOID(ctx)           \
+	do {                                         \
 		if (!grammatica_context_is_valid(ctx)) { \
-			return; \
-		} \
+			return;                              \
+		}                                        \
 	} while (0)
 
-#define VALIDATE_PARAM_RET_NULL(ctx, param, msg) \
-	do { \
-		if (!(param)) { \
-			grammatica_report_error(ctx, msg); \
-			return NULL; \
-		} \
+#define VALIDATE_PARAM_RET_NULL(ctx, param, msg)                                             \
+	do {                                                                                     \
+		if (!(param)) {                                                                      \
+			grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_INVALID_PARAMETER, msg); \
+			return NULL;                                                                     \
+		}                                                                                    \
 	} while (0)
 
-#define VALIDATE_PARAM_RET_FALSE(ctx, param, msg) \
-	do { \
-		if (!(param)) { \
-			grammatica_report_error(ctx, msg); \
-			return false; \
-		} \
+#define VALIDATE_PARAM_RET_FALSE(ctx, param, msg)                                            \
+	do {                                                                                     \
+		if (!(param)) {                                                                      \
+			grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_INVALID_PARAMETER, msg); \
+			return false;                                                                    \
+		}                                                                                    \
 	} while (0)
 
 #ifdef __cplusplus

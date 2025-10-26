@@ -15,12 +15,27 @@ typedef void (*GrammaticaErrorHandler)(const char* message, void* userdata);
 
 typedef void (*GrammaticaNoticeHandler)(const char* message, void* userdata);
 
+/* Error codes for categorizing errors */
+typedef enum {
+	GRAMMATICA_ERROR_NONE = 0,          /* No error */
+	GRAMMATICA_ERROR_INVALID_CONTEXT,   /* Invalid or NULL context */
+	GRAMMATICA_ERROR_INVALID_PARAMETER, /* Invalid function parameter */
+	GRAMMATICA_ERROR_OUT_OF_MEMORY,     /* Memory allocation failed */
+	GRAMMATICA_ERROR_INVALID_GRAMMAR,   /* Invalid grammar structure */
+	GRAMMATICA_ERROR_SIMPLIFICATION,    /* Error during simplification */
+	GRAMMATICA_ERROR_RENDER,            /* Error during rendering */
+	GRAMMATICA_ERROR_COPY,              /* Error during copy operation */
+	GRAMMATICA_ERROR_UNKNOWN            /* Unknown/unspecified error */
+} GrammaticaErrorCode;
+
 GrammaticaContextHandle_t grammatica_init(void);
 void grammatica_finish(GrammaticaContextHandle_t ctx);
 void grammatica_set_error_handler(GrammaticaContextHandle_t ctx, GrammaticaErrorHandler handler, void* userdata);
 void grammatica_set_notice_handler(GrammaticaContextHandle_t ctx, GrammaticaNoticeHandler handler, void* userdata);
 
 const char* grammatica_get_last_error(GrammaticaContextHandle_t ctx);
+GrammaticaErrorCode grammatica_get_last_error_code(GrammaticaContextHandle_t ctx);
+const char* grammatica_error_code_to_string(GrammaticaErrorCode code);
 void grammatica_clear_error(GrammaticaContextHandle_t ctx);
 
 typedef struct Grammar_t Grammar;
@@ -108,7 +123,7 @@ void grammatica_free_string(GrammaticaContextHandle_t ctx, char* str);
 
 /* ========================================================================
  * Convenience Helper Functions
- * 
+ *
  * These functions provide simpler, more user-friendly ways to create
  * common grammar patterns.
  * ======================================================================== */
@@ -117,10 +132,10 @@ void grammatica_free_string(GrammaticaContextHandle_t ctx, char* str);
 Grammar* grammatica_literal(GrammaticaContextHandle_t ctx, const char* str);
 
 /* Character class shortcuts */
-Grammar* grammatica_digit(GrammaticaContextHandle_t ctx);         /* [0-9] */
-Grammar* grammatica_alpha(GrammaticaContextHandle_t ctx);          /* [a-zA-Z] */
-Grammar* grammatica_alnum(GrammaticaContextHandle_t ctx);          /* [0-9a-zA-Z] */
-Grammar* grammatica_whitespace(GrammaticaContextHandle_t ctx);     /* [ \t\n\r] */
+Grammar* grammatica_digit(GrammaticaContextHandle_t ctx);      /* [0-9] */
+Grammar* grammatica_alpha(GrammaticaContextHandle_t ctx);      /* [a-zA-Z] */
+Grammar* grammatica_alnum(GrammaticaContextHandle_t ctx);      /* [0-9a-zA-Z] */
+Grammar* grammatica_whitespace(GrammaticaContextHandle_t ctx); /* [ \t\n\r] */
 
 /* Quantifier shortcuts */
 Grammar* grammatica_optional(GrammaticaContextHandle_t ctx, const Grammar* g);      /* g? */

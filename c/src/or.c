@@ -32,13 +32,13 @@ Or* grammatica_or_create(GrammaticaContextHandle_t ctx, Grammar** subexprs, size
 	}
 	Or* or_expr = (Or*)calloc(1, sizeof(Or));
 	if (!or_expr) {
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	or_expr->subexprs = (Grammar**)malloc(num_subexprs * sizeof(Grammar*));
 	if (!or_expr->subexprs && num_subexprs > 0) {
 		free(or_expr);
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	memcpy(or_expr->subexprs, subexprs, num_subexprs * sizeof(Grammar*));
@@ -161,7 +161,7 @@ static Grammar* or_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** or
 	/* Simplify each subexpression and remove duplicates */
 	subexprs = (Grammar**)malloc(original_num * sizeof(Grammar*));
 	if (!subexprs) {
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		goto cleanup;
 	}
 	
@@ -291,7 +291,7 @@ static Grammar* or_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** or
 	
 	grammar = (Grammar*)malloc(sizeof(Grammar));
 	if (!grammar) {
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		goto cleanup;
 	}
 	

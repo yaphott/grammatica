@@ -71,14 +71,14 @@ static size_t ords_to_ranges(const bool* ord_set, CharRangePair* out_ranges) {
 CharRange* grammatica_char_range_create(GrammaticaContextHandle_t ctx, const CharRangePair* ranges, size_t num_ranges, bool negate) {
 	if (!ctx || !ranges || num_ranges == 0) {
 		if (ctx && num_ranges == 0) {
-			grammatica_report_error(ctx, "char_ranges must not be empty");
+			grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_INVALID_PARAMETER, "char_ranges must not be empty");
 		}
 		return NULL;
 	}
 	/* Validate ranges */
 	for (size_t i = 0; i < num_ranges; i++) {
 		if ((unsigned char)ranges[i].end < (unsigned char)ranges[i].start) {
-			grammatica_report_error(ctx, "end must be greater than or equal to start");
+			grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_INVALID_PARAMETER, "end must be greater than or equal to start");
 			return NULL;
 		}
 	}
@@ -87,14 +87,14 @@ CharRange* grammatica_char_range_create(GrammaticaContextHandle_t ctx, const Cha
 	ranges_to_ords(ranges, num_ranges, ord_set);
 	CharRangePair* merged_ranges = (CharRangePair*)malloc(256 * sizeof(CharRangePair));
 	if (!merged_ranges) {
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	size_t merged_count = ords_to_ranges(ord_set, merged_ranges);
 	CharRange* range = (CharRange*)calloc(1, sizeof(CharRange));
 	if (!range) {
 		free(merged_ranges);
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	range->ranges = (CharRangePair*)realloc(merged_ranges, merged_count * sizeof(CharRangePair));
@@ -109,14 +109,14 @@ CharRange* grammatica_char_range_create(GrammaticaContextHandle_t ctx, const Cha
 CharRange* grammatica_char_range_from_chars(GrammaticaContextHandle_t ctx, const char* chars, size_t num_chars, bool negate) {
 	if (!ctx || !chars || num_chars == 0) {
 		if (ctx) {
-			grammatica_report_error(ctx, "No characters provided");
+			grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_INVALID_PARAMETER, "No characters provided");
 		}
 		return NULL;
 	}
 	/* Convert chars to ords */
 	int* ords = (int*)malloc(num_chars * sizeof(int));
 	if (!ords) {
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	for (size_t i = 0; i < num_chars; i++) {
@@ -130,7 +130,7 @@ CharRange* grammatica_char_range_from_chars(GrammaticaContextHandle_t ctx, const
 CharRange* grammatica_char_range_from_ords(GrammaticaContextHandle_t ctx, const int* ords, size_t num_ords, bool negate) {
 	if (!ctx || !ords || num_ords == 0) {
 		if (ctx) {
-			grammatica_report_error(ctx, "No ordinals provided");
+			grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_INVALID_PARAMETER, "No ordinals provided");
 		}
 		return NULL;
 	}
@@ -145,7 +145,7 @@ CharRange* grammatica_char_range_from_ords(GrammaticaContextHandle_t ctx, const 
 	/* Convert to ranges */
 	CharRangePair* ranges = (CharRangePair*)malloc(256 * sizeof(CharRangePair));
 	if (!ranges) {
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	size_t num_ranges = ords_to_ranges(ord_set, ranges);
@@ -203,16 +203,19 @@ char* grammatica_char_range_render(GrammaticaContextHandle_t ctx, const CharRang
 	/* Convert back to ranges (already merged) */
 	CharRangePair* render_ranges = (CharRangePair*)malloc(256 * sizeof(CharRangePair));
 	if (!render_ranges) {
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	size_t num_render_ranges = ords_to_ranges(ord_set, render_ranges);
 	/* Build the string - use stack buffer for small strings */
 	char stack_buf[512];
-	char* result = stack_buf;
+	char* heap_buf = NULL;
+	char* result;
 	size_t buf_size = sizeof(stack_buf);
 	size_t pos = 0;
+	bool using_heap = false;
 
+	result = stack_buf;
 	result[pos++] = '[';
 	if (range->negate) {
 		result[pos++] = '^';
@@ -221,22 +224,24 @@ char* grammatica_char_range_render(GrammaticaContextHandle_t ctx, const CharRang
 		/* Check if we need more space (estimate) */
 		if (pos + 32 > buf_size) {
 			/* Switch to heap allocation if needed */
-			if (result == stack_buf) {
-				result = (char*)malloc(4096);
-				if (!result) {
+			if (!using_heap) {
+				heap_buf = (char*)malloc(4096);
+				if (!heap_buf) {
 					free(render_ranges);
-					grammatica_report_error(ctx, "Memory allocation failed");
+					grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 					return NULL;
 				}
-				memcpy(result, stack_buf, pos);
+				memcpy(heap_buf, stack_buf, pos);
+				result = heap_buf;
 				buf_size = 4096;
+				using_heap = true;
 			}
 		}
 
 		char* start_esc = escape_char_for_range(render_ranges[i].start);
 		if (!start_esc) {
-			if (result != stack_buf)
-				free(result);
+			if (using_heap)
+				free(heap_buf);
 			free(render_ranges);
 			return NULL;
 		}
@@ -246,8 +251,8 @@ char* grammatica_char_range_render(GrammaticaContextHandle_t ctx, const CharRang
 			char* end_esc = escape_char_for_range(render_ranges[i].end);
 			if (!end_esc) {
 				free(start_esc);
-				if (result != stack_buf)
-					free(result);
+				if (using_heap)
+					free(heap_buf);
 				free(render_ranges);
 				return NULL;
 			}
@@ -264,9 +269,12 @@ char* grammatica_char_range_render(GrammaticaContextHandle_t ctx, const CharRang
 	result[pos] = '\0';
 	free(render_ranges);
 
-	/* Return final result - if on stack, duplicate it */
-	char* final_result = (result == stack_buf) ? strdup(result) : result;
-	return final_result;
+	/* Return heap buffer if we allocated one, otherwise duplicate stack buffer */
+	if (using_heap) {
+		return heap_buf;
+	} else {
+		return strdup(stack_buf);
+	}
 }
 
 Grammar* grammatica_char_range_simplify(GrammaticaContextHandle_t ctx, const CharRange* range) {
@@ -290,7 +298,7 @@ Grammar* grammatica_char_range_simplify(GrammaticaContextHandle_t ctx, const Cha
 		}
 		grammar = (Grammar*)malloc(sizeof(Grammar));
 		if (!grammar) {
-			grammatica_report_error(ctx, "Memory allocation failed");
+			grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 			goto cleanup;
 		}
 		grammar->type = GRAMMAR_TYPE_STRING;
@@ -305,7 +313,7 @@ Grammar* grammatica_char_range_simplify(GrammaticaContextHandle_t ctx, const Cha
 	}
 	grammar = (Grammar*)malloc(sizeof(Grammar));
 	if (!grammar) {
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		goto cleanup;
 	}
 	grammar->type = GRAMMAR_TYPE_CHAR_RANGE;
@@ -328,21 +336,26 @@ char* grammatica_char_range_as_string(GrammaticaContextHandle_t ctx, const CharR
 	}
 	/* Use stack buffer for small strings, heap for large */
 	char stack_buf[512];
-	char* result = stack_buf;
+	char* heap_buf = NULL;
+	char* result;
 	size_t buf_size = sizeof(stack_buf);
 	size_t pos = 0;
+	bool using_heap = false;
 
+	result = stack_buf;
 	pos += snprintf(result + pos, buf_size - pos, "CharRange(char_ranges=[");
 	for (size_t i = 0; i < range->num_ranges; i++) {
 		/* Check if we need more space */
-		if (pos + 64 > buf_size && result == stack_buf) {
-			result = (char*)malloc(4096);
-			if (!result) {
-				grammatica_report_error(ctx, "Memory allocation failed");
+		if (pos + 64 > buf_size && !using_heap) {
+			heap_buf = (char*)malloc(4096);
+			if (!heap_buf) {
+				grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 				return NULL;
 			}
-			memcpy(result, stack_buf, pos);
+			memcpy(heap_buf, stack_buf, pos);
+			result = heap_buf;
 			buf_size = 4096;
+			using_heap = true;
 		}
 
 		if (i > 0) {
@@ -352,9 +365,12 @@ char* grammatica_char_range_as_string(GrammaticaContextHandle_t ctx, const CharR
 	}
 	pos += snprintf(result + pos, buf_size - pos, "], negate=%s)", range->negate ? "True" : "False");
 
-	/* Return final result - if on stack, duplicate it */
-	char* final_result = (result == stack_buf) ? strdup(result) : result;
-	return final_result;
+	/* Return heap buffer if we allocated one, otherwise duplicate stack buffer */
+	if (using_heap) {
+		return heap_buf;
+	} else {
+		return strdup(stack_buf);
+	}
 }
 
 bool grammatica_char_range_equals(GrammaticaContextHandle_t ctx, const CharRange* a, const CharRange* b) {

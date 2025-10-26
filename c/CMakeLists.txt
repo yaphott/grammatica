@@ -24,7 +24,6 @@ set(GRAMMATICA_SOURCES
     src/group_base.c
     src/and.c
     src/or.c
-    src/convenience.c
 )
 
 # Build library

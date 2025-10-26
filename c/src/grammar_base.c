@@ -20,6 +20,7 @@ GrammaticaContextHandle_t grammatica_init(void) {
 	ctx->error_userdata = NULL;
 	ctx->notice_handler = NULL;
 	ctx->notice_userdata = NULL;
+	ctx->error_code = GRAMMATICA_ERROR_NONE;
 	return ctx;
 }
 
@@ -59,10 +60,16 @@ void grammatica_set_notice_handler(GrammaticaContextHandle_t ctx, GrammaticaNoti
 }
 
 void grammatica_report_error(GrammaticaContextHandle_t ctx, const char* message) {
+	/* Default to unknown error code for backward compatibility */
+	grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_UNKNOWN, message);
+}
+
+void grammatica_report_error_with_code(GrammaticaContextHandle_t ctx, GrammaticaErrorCode code, const char* message) {
 	if (!ctx) {
 		return;
 	}
 	pthread_mutex_lock(&ctx->mutex);
+	ctx->error_code = code;
 	if (ctx->error_handler) {
 		ctx->error_handler(message, ctx->error_userdata);
 	} else {
@@ -94,11 +101,46 @@ const char* grammatica_get_last_error(GrammaticaContextHandle_t ctx) {
 	return result;
 }
 
+GrammaticaErrorCode grammatica_get_last_error_code(GrammaticaContextHandle_t ctx) {
+	if (!grammatica_context_is_valid(ctx)) {
+		return GRAMMATICA_ERROR_INVALID_CONTEXT;
+	}
+	pthread_mutex_lock(&ctx->mutex);
+	GrammaticaErrorCode code = ctx->error_code;
+	pthread_mutex_unlock(&ctx->mutex);
+	return code;
+}
+
+const char* grammatica_error_code_to_string(GrammaticaErrorCode code) {
+	switch (code) {
+		case GRAMMATICA_ERROR_NONE:
+			return "No error";
+		case GRAMMATICA_ERROR_INVALID_CONTEXT:
+			return "Invalid context";
+		case GRAMMATICA_ERROR_INVALID_PARAMETER:
+			return "Invalid parameter";
+		case GRAMMATICA_ERROR_OUT_OF_MEMORY:
+			return "Out of memory";
+		case GRAMMATICA_ERROR_INVALID_GRAMMAR:
+			return "Invalid grammar";
+		case GRAMMATICA_ERROR_SIMPLIFICATION:
+			return "Simplification error";
+		case GRAMMATICA_ERROR_RENDER:
+			return "Render error";
+		case GRAMMATICA_ERROR_COPY:
+			return "Copy error";
+		case GRAMMATICA_ERROR_UNKNOWN:
+		default:
+			return "Unknown error";
+	}
+}
+
 void grammatica_clear_error(GrammaticaContextHandle_t ctx) {
 	if (!grammatica_context_is_valid(ctx)) {
 		return;
 	}
 	pthread_mutex_lock(&ctx->mutex);
+	ctx->error_code = GRAMMATICA_ERROR_NONE;
 	ctx->error_buffer[0] = '\0';
 	pthread_mutex_unlock(&ctx->mutex);
 }

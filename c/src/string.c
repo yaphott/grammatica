@@ -38,13 +38,13 @@ String* grammatica_string_create(GrammaticaContextHandle_t ctx, const char* valu
 	}
 	String* str = (String*)calloc(1, sizeof(String));
 	if (!str) {
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	str->value = strdup(value);
 	if (!str->value) {
 		free(str);
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	return str;
@@ -70,29 +70,34 @@ char* grammatica_string_render(GrammaticaContextHandle_t ctx, const String* str,
 	}
 	/* Build escaped string - use stack buffer for small strings */
 	char stack_buf[512];
-	char* result = stack_buf;
+	char* heap_buf = NULL;
+	char* result;
 	size_t buf_size = sizeof(stack_buf);
 	size_t pos = 0;
+	bool using_heap = false;
 
+	result = stack_buf;
 	result[pos++] = '"';
 	for (const char* p = str->value; *p; p++) {
 		/* Check if we need more space */
 		if (pos + 16 > buf_size) {
-			if (result == stack_buf) {
-				result = (char*)malloc(4096);
-				if (!result) {
-					grammatica_report_error(ctx, "Memory allocation failed");
+			if (!using_heap) {
+				heap_buf = (char*)malloc(4096);
+				if (!heap_buf) {
+					grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 					return NULL;
 				}
-				memcpy(result, stack_buf, pos);
+				memcpy(heap_buf, stack_buf, pos);
+				result = heap_buf;
 				buf_size = 4096;
+				using_heap = true;
 			}
 		}
 
 		char* escaped = escape_char_for_string(*p);
 		if (!escaped) {
-			if (result != stack_buf)
-				free(result);
+			if (using_heap)
+				free(heap_buf);
 			return NULL;
 		}
 		pos += snprintf(result + pos, buf_size - pos, "%s", escaped);
@@ -101,9 +106,12 @@ char* grammatica_string_render(GrammaticaContextHandle_t ctx, const String* str,
 	result[pos++] = '"';
 	result[pos] = '\0';
 
-	/* Return final result - if on stack, duplicate it */
-	char* final_result = (result == stack_buf) ? strdup(result) : result;
-	return final_result;
+	/* Return heap buffer if we allocated one, otherwise duplicate stack buffer */
+	if (using_heap) {
+		return heap_buf;
+	} else {
+		return strdup(stack_buf);
+	}
 }
 
 Grammar* grammatica_string_simplify(GrammaticaContextHandle_t ctx, const String* str) {
@@ -123,7 +131,7 @@ Grammar* grammatica_string_simplify(GrammaticaContextHandle_t ctx, const String*
 	}
 	grammar = (Grammar*)malloc(sizeof(Grammar));
 	if (!grammar) {
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		goto cleanup;
 	}
 	grammar->type = GRAMMAR_TYPE_STRING;
@@ -146,7 +154,7 @@ char* grammatica_string_as_string(GrammaticaContextHandle_t ctx, const String* s
 	size_t needed = snprintf(NULL, 0, "String(value='%s')", str->value) + 1;
 	char* result = (char*)malloc(needed);
 	if (!result) {
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	snprintf(result, needed, "String(value='%s')", str->value);

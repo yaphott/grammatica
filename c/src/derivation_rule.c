@@ -13,13 +13,13 @@ DerivationRule* grammatica_derivation_rule_create(GrammaticaContextHandle_t ctx,
 	}
 	DerivationRule* rule = (DerivationRule*)calloc(1, sizeof(DerivationRule));
 	if (!rule) {
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	rule->symbol = strdup(symbol);
 	if (!rule->symbol) {
 		free(rule);
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	rule->value = value;
@@ -51,7 +51,7 @@ char* grammatica_derivation_rule_render(GrammaticaContextHandle_t ctx, const Der
 	char* result = (char*)malloc(strlen(rule->symbol) + strlen(DERIVATION_RULE_SEPARATOR) + strlen(rendered) + 1);
 	if (!result) {
 		grammatica_free_string(ctx, rendered);
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	sprintf(result, "%s%s%s", rule->symbol, DERIVATION_RULE_SEPARATOR, rendered);
@@ -78,7 +78,7 @@ Grammar* grammatica_derivation_rule_simplify(GrammaticaContextHandle_t ctx, cons
 	}
 	grammar = (Grammar*)malloc(sizeof(Grammar));
 	if (!grammar) {
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		goto cleanup;
 	}
 	grammar->type = GRAMMAR_TYPE_DERIVATION_RULE;
@@ -108,7 +108,7 @@ char* grammatica_derivation_rule_as_string(GrammaticaContextHandle_t ctx, const 
 	char* result = (char*)malloc(needed);
 	if (!result) {
 		grammatica_free_string(ctx, value_str);
-		grammatica_report_error(ctx, "Memory allocation failed");
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	snprintf(result, needed, "DerivationRule(symbol='%s', value=%s)", rule->symbol, value_str);
