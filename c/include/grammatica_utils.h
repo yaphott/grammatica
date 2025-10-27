@@ -11,10 +11,10 @@ extern "C" {
 #endif
 
 /* Character conversion utilities */
-char* char_to_cpoint(char c);
-char* ord_to_cpoint(int ordinal);
-char* char_to_hex(char c);
-char* ord_to_hex(int ordinal);
+unsigned char* char_to_cpoint(const unsigned char c);
+unsigned char* ord_to_cpoint(const int ordinal);
+unsigned char* char_to_hex(const unsigned char c);
+unsigned char* ord_to_hex(const int ordinal);
 
 /* String Builder - dynamic string construction utility */
 typedef struct StringBuilder_t StringBuilder;

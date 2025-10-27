@@ -4,11 +4,13 @@
 
 #include "grammatica_utils.h"
 
-char* char_to_cpoint(char c) {
-	return ord_to_cpoint((unsigned char)c);
+/* The caller owns the result */
+unsigned char* char_to_cpoint(const unsigned char c) {
+	return ord_to_cpoint(c);
 }
 
-char* ord_to_cpoint(int ordinal) {
+/* The caller owns the result */
+unsigned char* ord_to_cpoint(const int ordinal) {
 	char* result = (char*)malloc(16);
 	if (result == NULL) {
 		return NULL;
@@ -21,12 +23,14 @@ char* ord_to_cpoint(int ordinal) {
 	return result;
 }
 
-char* char_to_hex(char c) {
-	return ord_to_hex((unsigned char)c);
+/* The caller owns the result */
+unsigned char* char_to_hex(const unsigned char c) {
+	return ord_to_hex(c);
 }
 
-char* ord_to_hex(int ordinal) {
-	char* result = (char*)malloc(16);
+/* The caller owns the result */
+unsigned char* ord_to_hex(const int ordinal) {
+	unsigned char* result = (char*)malloc(16);
 	if (result == NULL) {
 		return NULL;
 	}

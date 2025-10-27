@@ -55,7 +55,7 @@ String* grammatica_string_create(GrammaticaContextHandle_t ctx, const char* valu
 
 void grammatica_string_destroy(GrammaticaContextHandle_t ctx, String* str) {
 	(void)ctx;
-	if (!str) {
+	if (str == NULL) {
 		return;
 	}
 	free(str->value);
@@ -115,16 +115,14 @@ Grammar* grammatica_string_simplify(GrammaticaContextHandle_t ctx, const String*
 	if (strlen(str->value) == 0) {
 		return NULL;
 	}
-
 	Grammar* grammar = NULL;
 	String* copy = NULL;
-
 	copy = grammatica_string_copy(ctx, str);
 	if (!copy) {
 		goto cleanup;
 	}
 	grammar = (Grammar*)malloc(sizeof(Grammar));
-	if (!grammar) {
+	if (grammar == NULL) {
 		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		goto cleanup;
 	}
