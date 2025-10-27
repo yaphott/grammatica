@@ -57,22 +57,22 @@ typedef struct {
 	char end;
 } CharRangePair;
 
-CharRange* grammatica_char_range_create(GrammaticaContextHandle_t ctx, const CharRangePair* ranges, size_t num_ranges, bool negate);
-CharRange* grammatica_char_range_from_chars(GrammaticaContextHandle_t ctx, const char* chars, size_t num_chars, bool negate);
-CharRange* grammatica_char_range_from_ords(GrammaticaContextHandle_t ctx, const int* ords, size_t num_ords, bool negate);
+CharRange* grammatica_char_range_create(GrammaticaContextHandle_t ctx, const CharRangePair* ranges, size_t n, bool negate);
+CharRange* grammatica_char_range_from_chars(GrammaticaContextHandle_t ctx, const char* chars, size_t n, bool negate);
+CharRange* grammatica_char_range_from_ords(GrammaticaContextHandle_t ctx, const int* ords, size_t n, bool negate);
 void grammatica_char_range_destroy(GrammaticaContextHandle_t ctx, CharRange* range);
 char* grammatica_char_range_render(GrammaticaContextHandle_t ctx, const CharRange* range, bool full, bool wrap);
 Grammar* grammatica_char_range_simplify(GrammaticaContextHandle_t ctx, const CharRange* range);
 char* grammatica_char_range_as_string(GrammaticaContextHandle_t ctx, const CharRange* range);
 bool grammatica_char_range_equals(GrammaticaContextHandle_t ctx, const CharRange* a, const CharRange* b);
 CharRange* grammatica_char_range_copy(GrammaticaContextHandle_t ctx, const CharRange* range);
-size_t grammatica_char_range_get_num_ranges(GrammaticaContextHandle_t ctx, const CharRange* range);
+size_t grammatica_char_range_get_ranges_n(GrammaticaContextHandle_t ctx, const CharRange* range);
 int grammatica_char_range_get_ranges(GrammaticaContextHandle_t ctx, const CharRange* range, CharRangePair* out_ranges, size_t max_ranges);
 bool grammatica_char_range_get_negate(GrammaticaContextHandle_t ctx, const CharRange* range);
 
 String* grammatica_string_create(GrammaticaContextHandle_t ctx, const char* value);
 void grammatica_string_destroy(GrammaticaContextHandle_t ctx, String* str);
-char* grammatica_string_render(GrammaticaContextHandle_t ctx, const String* str, bool full, bool wrap);
+char* grammatica_string_render(GrammaticaContextHandle_t ctx, const String* str);
 Grammar* grammatica_string_simplify(GrammaticaContextHandle_t ctx, const String* str);
 char* grammatica_string_as_string(GrammaticaContextHandle_t ctx, const String* str);
 bool grammatica_string_equals(GrammaticaContextHandle_t ctx, const String* a, const String* b);
@@ -89,25 +89,25 @@ DerivationRule* grammatica_derivation_rule_copy(GrammaticaContextHandle_t ctx, c
 const char* grammatica_derivation_rule_get_symbol(GrammaticaContextHandle_t ctx, const DerivationRule* rule);
 const Grammar* grammatica_derivation_rule_get_value(GrammaticaContextHandle_t ctx, const DerivationRule* rule);
 
-And* grammatica_and_create(GrammaticaContextHandle_t ctx, Grammar** subexprs, size_t num_subexprs, Quantifier quantifier);
+And* grammatica_and_create(GrammaticaContextHandle_t ctx, Grammar** subexprs, size_t subexprs_n, Quantifier quantifier);
 void grammatica_and_destroy(GrammaticaContextHandle_t ctx, And* and_expr);
 char* grammatica_and_render(GrammaticaContextHandle_t ctx, const And* and_expr, bool full, bool wrap);
 Grammar* grammatica_and_simplify(GrammaticaContextHandle_t ctx, const And* and_expr);
 char* grammatica_and_as_string(GrammaticaContextHandle_t ctx, const And* and_expr);
 bool grammatica_and_equals(GrammaticaContextHandle_t ctx, const And* a, const And* b, bool check_quantifier);
 And* grammatica_and_copy(GrammaticaContextHandle_t ctx, const And* and_expr);
-size_t grammatica_and_get_num_subexprs(GrammaticaContextHandle_t ctx, const And* and_expr);
+size_t grammatica_and_get_subexprs_n(GrammaticaContextHandle_t ctx, const And* and_expr);
 int grammatica_and_get_subexprs(GrammaticaContextHandle_t ctx, const And* and_expr, Grammar** out_subexprs, size_t max_subexprs);
 Quantifier grammatica_and_get_quantifier(GrammaticaContextHandle_t ctx, const And* and_expr);
 
-Or* grammatica_or_create(GrammaticaContextHandle_t ctx, Grammar** subexprs, size_t num_subexprs, Quantifier quantifier);
+Or* grammatica_or_create(GrammaticaContextHandle_t ctx, Grammar** subexprs, size_t subexprs_n, Quantifier quantifier);
 void grammatica_or_destroy(GrammaticaContextHandle_t ctx, Or* or_expr);
 char* grammatica_or_render(GrammaticaContextHandle_t ctx, const Or* or_expr, bool full, bool wrap);
 Grammar* grammatica_or_simplify(GrammaticaContextHandle_t ctx, const Or* or_expr);
 char* grammatica_or_as_string(GrammaticaContextHandle_t ctx, const Or* or_expr);
 bool grammatica_or_equals(GrammaticaContextHandle_t ctx, const Or* a, const Or* b, bool check_quantifier);
 Or* grammatica_or_copy(GrammaticaContextHandle_t ctx, const Or* or_expr);
-size_t grammatica_or_get_num_subexprs(GrammaticaContextHandle_t ctx, const Or* or_expr);
+size_t grammatica_or_get_subexprs_n(GrammaticaContextHandle_t ctx, const Or* or_expr);
 int grammatica_or_get_subexprs(GrammaticaContextHandle_t ctx, const Or* or_expr, Grammar** out_subexprs, size_t max_subexprs);
 Quantifier grammatica_or_get_quantifier(GrammaticaContextHandle_t ctx, const Or* or_expr);
 
@@ -120,32 +120,6 @@ bool grammatica_grammar_equals(GrammaticaContextHandle_t ctx, const Grammar* a, 
 Grammar* grammatica_grammar_copy(GrammaticaContextHandle_t ctx, const Grammar* grammar);
 
 void grammatica_free_string(GrammaticaContextHandle_t ctx, char* str);
-
-/* ========================================================================
- * Convenience Helper Functions
- *
- * These functions provide simpler, more user-friendly ways to create
- * common grammar patterns.
- * ======================================================================== */
-
-/* Create a string grammar from a C string literal */
-Grammar* grammatica_literal(GrammaticaContextHandle_t ctx, const char* str);
-
-/* Character class shortcuts */
-Grammar* grammatica_digit(GrammaticaContextHandle_t ctx);      /* [0-9] */
-Grammar* grammatica_alpha(GrammaticaContextHandle_t ctx);      /* [a-zA-Z] */
-Grammar* grammatica_alnum(GrammaticaContextHandle_t ctx);      /* [0-9a-zA-Z] */
-Grammar* grammatica_whitespace(GrammaticaContextHandle_t ctx); /* [ \t\n\r] */
-
-/* Quantifier shortcuts */
-Grammar* grammatica_optional(GrammaticaContextHandle_t ctx, const Grammar* g);      /* g? */
-Grammar* grammatica_zero_or_more(GrammaticaContextHandle_t ctx, const Grammar* g);  /* g* */
-Grammar* grammatica_one_or_more(GrammaticaContextHandle_t ctx, const Grammar* g);   /* g+ */
-Grammar* grammatica_repeat(GrammaticaContextHandle_t ctx, const Grammar* g, int n); /* g{n} */
-
-/* Composition helpers */
-Grammar* grammatica_sequence(GrammaticaContextHandle_t ctx, Grammar** grammars, size_t count);
-Grammar* grammatica_choice(GrammaticaContextHandle_t ctx, Grammar** grammars, size_t count);
 
 #ifdef __cplusplus
 }

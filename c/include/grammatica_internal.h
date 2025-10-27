@@ -12,6 +12,15 @@ extern "C" {
 #endif
 
 #define GRAMMATICA_MAGIC 0x47524D4D /* "GRMM" */
+#define INITIAL_ALLOC_CAPACITY 64
+
+/* Memory allocation tracking entry */
+typedef struct AllocationEntry_t {
+	void* ptr;
+	size_t size;
+	const char* file;
+	int line;
+} AllocationEntry;
 
 typedef struct GrammaticaContext_t {
 	uint32_t magic;
@@ -23,6 +32,12 @@ typedef struct GrammaticaContext_t {
 	GrammaticaErrorCode error_code;
 	pthread_mutex_t mutex;
 	int initialized;
+	
+	/* Memory tracking */
+	AllocationEntry* allocations;
+	size_t num_allocations;
+	size_t allocations_capacity;
+	bool track_allocations;  /* Enable/disable tracking */
 } GrammaticaContext;
 
 struct Grammar_t {
@@ -32,7 +47,7 @@ struct Grammar_t {
 
 struct CharRange_t {
 	CharRangePair* ranges;
-	size_t num_ranges;
+	size_t ranges_n;
 	bool negate;
 };
 
@@ -47,19 +62,34 @@ struct DerivationRule_t {
 
 struct And_t {
 	Grammar** subexprs;
-	size_t num_subexprs;
+	size_t subexprs_n;
 	Quantifier quantifier;
 };
 
 struct Or_t {
 	Grammar** subexprs;
-	size_t num_subexprs;
+	size_t subexprs_n;
 	Quantifier quantifier;
 };
 
 void grammatica_report_error(GrammaticaContextHandle_t ctx, const char* message);
 void grammatica_report_error_with_code(GrammaticaContextHandle_t ctx, GrammaticaErrorCode code, const char* message);
 void grammatica_report_notice(GrammaticaContextHandle_t ctx, const char* message);
+
+/* Memory tracking functions */
+void* grammatica_tracked_malloc(GrammaticaContextHandle_t ctx, size_t size, const char* file, int line);
+void* grammatica_tracked_calloc(GrammaticaContextHandle_t ctx, size_t nmemb, size_t size, const char* file, int line);
+void* grammatica_tracked_realloc(GrammaticaContextHandle_t ctx, void* ptr, size_t size, const char* file, int line);
+char* grammatica_tracked_strdup(GrammaticaContextHandle_t ctx, const char* s, const char* file, int line);
+void grammatica_tracked_free(GrammaticaContextHandle_t ctx, void* ptr);
+void grammatica_free_all_tracked(GrammaticaContextHandle_t ctx);
+
+/* Convenience macros for tracked allocations */
+#define GRAMMATICA_MALLOC(ctx, size) grammatica_tracked_malloc(ctx, size, __FILE__, __LINE__)
+#define GRAMMATICA_CALLOC(ctx, nmemb, size) grammatica_tracked_calloc(ctx, nmemb, size, __FILE__, __LINE__)
+#define GRAMMATICA_REALLOC(ctx, ptr, size) grammatica_tracked_realloc(ctx, ptr, size, __FILE__, __LINE__)
+#define GRAMMATICA_STRDUP(ctx, s) grammatica_tracked_strdup(ctx, s, __FILE__, __LINE__)
+#define GRAMMATICA_FREE(ctx, ptr) grammatica_tracked_free(ctx, ptr)
 
 static inline bool grammatica_context_is_valid(const GrammaticaContext* ctx) {
 	return ctx && ctx->magic == GRAMMATICA_MAGIC && ctx->initialized;

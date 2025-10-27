@@ -17,6 +17,8 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 set(GRAMMATICA_SOURCES
     src/constants.c
     src/utils.c
+    src/string_builder.c
+    src/arena.c
     src/grammar_base.c
     src/char_range.c
     src/string.c

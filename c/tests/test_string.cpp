@@ -63,7 +63,7 @@ TEST_P(StringRenderTest, Render) {
 	String* str = grammatica_string_create(ctx, test_case.input.c_str());
 	ASSERT_NE(str, nullptr);
 
-	char* result = grammatica_string_render(ctx, str, true, true);
+	char* result = grammatica_string_render(ctx, str);
 
 	if (test_case.expect_null) {
 		EXPECT_EQ(result, nullptr) << "Description: " << test_case.description;
@@ -207,6 +207,6 @@ TEST_F(StringTest, NullHandling) {
 	grammatica_string_destroy(ctx, NULL);
 
 	/* Rendering NULL should return NULL */
-	char* result = grammatica_string_render(ctx, NULL, true, true);
+	char* result = grammatica_string_render(ctx, NULL);
 	EXPECT_EQ(result, nullptr);
 }

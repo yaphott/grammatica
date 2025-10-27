@@ -13,13 +13,13 @@ static int char_range_pair_compare(const void* a, const void* b) {
 	return (unsigned char)pair_a->start - (unsigned char)pair_b->start;
 }
 
-static size_t merge_char_ranges(CharRangePair* ranges, size_t num_ranges) {
-	if (num_ranges <= 1) {
-		return num_ranges;
+static size_t merge_char_ranges(CharRangePair* ranges, size_t n) {
+	if (n <= 1) {
+		return n;
 	}
-	qsort(ranges, num_ranges, sizeof(CharRangePair), char_range_pair_compare);
+	qsort(ranges, n, sizeof(CharRangePair), char_range_pair_compare);
 	size_t write_idx = 0;
-	for (size_t i = 1; i < num_ranges; i++) {
+	for (size_t i = 1; i < n; i++) {
 		if ((unsigned char)ranges[i].start <= (unsigned char)ranges[write_idx].end + 1) {
 			if ((unsigned char)ranges[i].end > (unsigned char)ranges[write_idx].end) {
 				ranges[write_idx].end = ranges[i].end;
@@ -32,9 +32,9 @@ static size_t merge_char_ranges(CharRangePair* ranges, size_t num_ranges) {
 	return write_idx + 1;
 }
 
-static void ranges_to_ords(const CharRangePair* ranges, size_t num_ranges, bool* ord_set) {
+static void ranges_to_ords(const CharRangePair* ranges, size_t n, bool* ord_set) {
 	memset(ord_set, 0, 256 * sizeof(bool));
-	for (size_t i = 0; i < num_ranges; i++) {
+	for (size_t i = 0; i < n; i++) {
 		for (unsigned char c = (unsigned char)ranges[i].start; c <= (unsigned char)ranges[i].end; c++) {
 			ord_set[c] = true;
 			if (c == (unsigned char)ranges[i].end)
@@ -68,15 +68,15 @@ static size_t ords_to_ranges(const bool* ord_set, CharRangePair* out_ranges) {
 	return count;
 }
 
-CharRange* grammatica_char_range_create(GrammaticaContextHandle_t ctx, const CharRangePair* ranges, size_t num_ranges, bool negate) {
-	if (!ctx || !ranges || num_ranges == 0) {
-		if (ctx && num_ranges == 0) {
+CharRange* grammatica_char_range_create(GrammaticaContextHandle_t ctx, const CharRangePair* ranges, size_t n, bool negate) {
+	if (!ctx || !ranges || n == 0) {
+		if (ctx && n == 0) {
 			grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_INVALID_PARAMETER, "char_ranges must not be empty");
 		}
 		return NULL;
 	}
 	/* Validate ranges */
-	for (size_t i = 0; i < num_ranges; i++) {
+	for (size_t i = 0; i < n; i++) {
 		if ((unsigned char)ranges[i].end < (unsigned char)ranges[i].start) {
 			grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_INVALID_PARAMETER, "end must be greater than or equal to start");
 			return NULL;
@@ -84,7 +84,7 @@ CharRange* grammatica_char_range_create(GrammaticaContextHandle_t ctx, const Cha
 	}
 	/* Convert to ordinal set and back to merge ranges */
 	bool ord_set[256];
-	ranges_to_ords(ranges, num_ranges, ord_set);
+	ranges_to_ords(ranges, n, ord_set);
 	CharRangePair* merged_ranges = (CharRangePair*)malloc(256 * sizeof(CharRangePair));
 	if (!merged_ranges) {
 		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
@@ -101,7 +101,7 @@ CharRange* grammatica_char_range_create(GrammaticaContextHandle_t ctx, const Cha
 	if (!range->ranges && merged_count > 0) {
 		range->ranges = merged_ranges;
 	}
-	range->num_ranges = merged_count;
+	range->ranges_n = merged_count;
 	range->negate = negate;
 	return range;
 }
@@ -148,8 +148,8 @@ CharRange* grammatica_char_range_from_ords(GrammaticaContextHandle_t ctx, const 
 		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
-	size_t num_ranges = ords_to_ranges(ord_set, ranges);
-	CharRange* result = grammatica_char_range_create(ctx, ranges, num_ranges, negate);
+	size_t n = ords_to_ranges(ord_set, ranges);
+	CharRange* result = grammatica_char_range_create(ctx, ranges, n, negate);
 	free(ranges);
 	return result;
 }
@@ -194,19 +194,19 @@ char* grammatica_char_range_render(GrammaticaContextHandle_t ctx, const CharRang
 	if (!ctx || !range) {
 		return NULL;
 	}
-	if (range->num_ranges == 0) {
+	if (range->ranges_n == 0) {
 		return NULL;
 	}
 	/* Convert to ordinal set for rendering */
 	bool ord_set[256];
-	ranges_to_ords(range->ranges, range->num_ranges, ord_set);
+	ranges_to_ords(range->ranges, range->ranges_n, ord_set);
 	/* Convert back to ranges (already merged) */
 	CharRangePair* render_ranges = (CharRangePair*)malloc(256 * sizeof(CharRangePair));
 	if (!render_ranges) {
 		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
-	size_t num_render_ranges = ords_to_ranges(ord_set, render_ranges);
+	size_t render_ranges_n = ords_to_ranges(ord_set, render_ranges);
 	/* Build the string - use stack buffer for small strings */
 	char stack_buf[512];
 	char* heap_buf = NULL;
@@ -220,7 +220,7 @@ char* grammatica_char_range_render(GrammaticaContextHandle_t ctx, const CharRang
 	if (range->negate) {
 		result[pos++] = '^';
 	}
-	for (size_t i = 0; i < num_render_ranges; i++) {
+	for (size_t i = 0; i < render_ranges_n; i++) {
 		/* Check if we need more space (estimate) */
 		if (pos + 32 > buf_size) {
 			/* Switch to heap allocation if needed */
@@ -281,7 +281,7 @@ Grammar* grammatica_char_range_simplify(GrammaticaContextHandle_t ctx, const Cha
 	if (!ctx || !range) {
 		return NULL;
 	}
-	if (range->num_ranges == 0) {
+	if (range->ranges_n == 0) {
 		return NULL;
 	}
 
@@ -289,7 +289,7 @@ Grammar* grammatica_char_range_simplify(GrammaticaContextHandle_t ctx, const Cha
 	String* str = NULL;
 	CharRange* copy = NULL;
 
-	if (range->num_ranges == 1 && range->ranges[0].start == range->ranges[0].end) {
+	if (range->ranges_n == 1 && range->ranges[0].start == range->ranges[0].end) {
 		/* Single character - convert to String */
 		char value[2] = {range->ranges[0].start, '\0'};
 		str = grammatica_string_create(ctx, value);
@@ -344,7 +344,7 @@ char* grammatica_char_range_as_string(GrammaticaContextHandle_t ctx, const CharR
 
 	result = stack_buf;
 	pos += snprintf(result + pos, buf_size - pos, "CharRange(char_ranges=[");
-	for (size_t i = 0; i < range->num_ranges; i++) {
+	for (size_t i = 0; i < range->ranges_n; i++) {
 		/* Check if we need more space */
 		if (pos + 64 > buf_size && !using_heap) {
 			heap_buf = (char*)malloc(4096);
@@ -383,10 +383,10 @@ bool grammatica_char_range_equals(GrammaticaContextHandle_t ctx, const CharRange
 	if (!a || !b) {
 		return false;
 	}
-	if (a->negate != b->negate || a->num_ranges != b->num_ranges) {
+	if (a->negate != b->negate || a->ranges_n != b->ranges_n) {
 		return false;
 	}
-	for (size_t i = 0; i < a->num_ranges; i++) {
+	for (size_t i = 0; i < a->ranges_n; i++) {
 		if (a->ranges[i].start != b->ranges[i].start || a->ranges[i].end != b->ranges[i].end) {
 			return false;
 		}
@@ -398,21 +398,21 @@ CharRange* grammatica_char_range_copy(GrammaticaContextHandle_t ctx, const CharR
 	if (!ctx || !range) {
 		return NULL;
 	}
-	return grammatica_char_range_create(ctx, range->ranges, range->num_ranges, range->negate);
+	return grammatica_char_range_create(ctx, range->ranges, range->ranges_n, range->negate);
 }
 
-size_t grammatica_char_range_get_num_ranges(GrammaticaContextHandle_t ctx, const CharRange* range) {
+size_t grammatica_char_range_get_ranges_n(GrammaticaContextHandle_t ctx, const CharRange* range) {
 	if (!ctx || !range) {
 		return 0;
 	}
-	return range->num_ranges;
+	return range->ranges_n;
 }
 
 int grammatica_char_range_get_ranges(GrammaticaContextHandle_t ctx, const CharRange* range, CharRangePair* out_ranges, size_t max_ranges) {
 	if (!ctx || !range || !out_ranges) {
 		return -1;
 	}
-	size_t copy_count = range->num_ranges < max_ranges ? range->num_ranges : max_ranges;
+	size_t copy_count = range->ranges_n < max_ranges ? range->ranges_n : max_ranges;
 	memcpy(out_ranges, range->ranges, copy_count * sizeof(CharRangePair));
 	return (int)copy_count;
 }

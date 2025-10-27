@@ -7,42 +7,45 @@
 #include "grammatica_internal.h"
 #include "grammatica_utils.h"
 
+/* The caller owns the result */
 static char* escape_char_for_string(char c) {
 	if (char_is_always_safe(c)) {
 		char* result = (char*)malloc(2);
-		if (result) {
-			result[0] = c;
-			result[1] = '\0';
+		if (result == NULL) {
+			return NULL;
 		}
+		result[0] = c;
+		result[1] = '\0';
 		return result;
 	}
 	const char* special_escape = char_get_escape(c);
-	if (special_escape) {
+	if (special_escape != NULL) {
 		return strdup(special_escape);
 	}
 	if (char_is_string_literal_escape(c)) {
 		char* result = (char*)malloc(3);
-		if (result) {
-			result[0] = '\\';
-			result[1] = c;
-			result[2] = '\0';
+		if (result == NULL) {
+			return NULL;
 		}
+		result[0] = '\\';
+		result[1] = c;
+		result[2] = '\0';
 		return result;
 	}
 	return char_to_hex(c);
 }
 
 String* grammatica_string_create(GrammaticaContextHandle_t ctx, const char* value) {
-	if (!ctx || !value) {
+	if (ctx == NULL || value == NULL) {
 		return NULL;
 	}
 	String* str = (String*)calloc(1, sizeof(String));
-	if (!str) {
+	if (str == NULL) {
 		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	str->value = strdup(value);
-	if (!str->value) {
+	if (str->value == NULL) {
 		free(str);
 		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
@@ -59,59 +62,50 @@ void grammatica_string_destroy(GrammaticaContextHandle_t ctx, String* str) {
 	free(str);
 }
 
-char* grammatica_string_render(GrammaticaContextHandle_t ctx, const String* str, bool full, bool wrap) {
-	(void)full;
-	(void)wrap;
-	if (!ctx || !str) {
+char* grammatica_string_render(GrammaticaContextHandle_t ctx, const String* str) {
+	if (ctx == NULL || str == NULL) {
 		return NULL;
 	}
 	if (strlen(str->value) == 0) {
 		return NULL;
 	}
-	/* Build escaped string - use stack buffer for small strings */
-	char stack_buf[512];
-	char* heap_buf = NULL;
-	char* result;
-	size_t buf_size = sizeof(stack_buf);
-	size_t pos = 0;
-	bool using_heap = false;
-
-	result = stack_buf;
-	result[pos++] = '"';
+	
+	/* First pass: calculate needed size */
+	size_t needed = 2; /* Opening and closing quotes */
 	for (const char* p = str->value; *p; p++) {
-		/* Check if we need more space */
-		if (pos + 16 > buf_size) {
-			if (!using_heap) {
-				heap_buf = (char*)malloc(4096);
-				if (!heap_buf) {
-					grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
-					return NULL;
-				}
-				memcpy(heap_buf, stack_buf, pos);
-				result = heap_buf;
-				buf_size = 4096;
-				using_heap = true;
-			}
-		}
-
 		char* escaped = escape_char_for_string(*p);
-		if (!escaped) {
-			if (using_heap)
-				free(heap_buf);
+		if (escaped == NULL) {
 			return NULL;
 		}
-		pos += snprintf(result + pos, buf_size - pos, "%s", escaped);
+		needed += strlen(escaped);
+		free(escaped);
+	}
+	needed += 1; /* Null terminator */
+	
+	/* Allocate exactly what we need */
+	char* result = (char*)malloc(needed);
+	if (result == NULL) {
+		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
+		return NULL;
+	}
+	
+	/* Second pass: build the string */
+	size_t pos = 0;
+	result[pos++] = '"';
+	for (const char* p = str->value; *p; p++) {
+		char* escaped = escape_char_for_string(*p);
+		if (escaped == NULL) {
+			free(result);
+			return NULL;
+		}
+		strcpy(result + pos, escaped);
+		pos += strlen(escaped);
 		free(escaped);
 	}
 	result[pos++] = '"';
 	result[pos] = '\0';
-
-	/* Return heap buffer if we allocated one, otherwise duplicate stack buffer */
-	if (using_heap) {
-		return heap_buf;
-	} else {
-		return strdup(stack_buf);
-	}
+	
+	return result;
 }
 
 Grammar* grammatica_string_simplify(GrammaticaContextHandle_t ctx, const String* str) {
@@ -162,27 +156,27 @@ char* grammatica_string_as_string(GrammaticaContextHandle_t ctx, const String* s
 }
 
 bool grammatica_string_equals(GrammaticaContextHandle_t ctx, const String* a, const String* b) {
-	if (!ctx) {
+	if (ctx == NULL) {
 		return false;
 	}
 	if (a == b) {
 		return true;
 	}
-	if (!a || !b) {
+	if (a == NULL || b == NULL) {
 		return false;
 	}
 	return strcmp(a->value, b->value) == 0;
 }
 
 String* grammatica_string_copy(GrammaticaContextHandle_t ctx, const String* str) {
-	if (!ctx || !str) {
+	if (ctx == NULL || str == NULL) {
 		return NULL;
 	}
 	return grammatica_string_create(ctx, str->value);
 }
 
 const char* grammatica_string_get_value(GrammaticaContextHandle_t ctx, const String* str) {
-	if (!ctx || !str) {
+	if (ctx == NULL || str == NULL) {
 		return NULL;
 	}
 	return str->value;

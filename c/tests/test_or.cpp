@@ -148,8 +148,8 @@ TEST_F(OrTest, GetMethods) {
 	Or* or_expr = grammatica_or_create(ctx, subexprs, 2, {0, 1});
 	ASSERT_NE(or_expr, nullptr);
 
-	/* Test get_num_subexprs */
-	size_t num = grammatica_or_get_num_subexprs(ctx, or_expr);
+	/* Test get_subexprs_n */
+	size_t num = grammatica_or_get_subexprs_n(ctx, or_expr);
 	EXPECT_EQ(num, 2);
 
 	/* Test get_quantifier */

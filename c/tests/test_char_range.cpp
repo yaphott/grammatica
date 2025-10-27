@@ -243,9 +243,9 @@ TEST_F(CharRangeTest, GetMethods) {
 	/* Test get_negate */
 	EXPECT_TRUE(grammatica_char_range_get_negate(ctx, range));
 
-	/* Test get_num_ranges */
-	size_t num_ranges = grammatica_char_range_get_num_ranges(ctx, range);
-	EXPECT_EQ(num_ranges, 2);
+	/* Test get_n */
+	size_t ranges_n = grammatica_char_range_get_ranges_n(ctx, range);
+	EXPECT_EQ(ranges_n, 2);
 
 	/* Test get_ranges */
 	CharRangePair out_ranges[10];

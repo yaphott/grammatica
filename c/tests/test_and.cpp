@@ -138,8 +138,8 @@ TEST_F(AndTest, GetMethods) {
 	And* and_expr = grammatica_and_create(ctx, subexprs, 2, {0, 1});
 	ASSERT_NE(and_expr, nullptr);
 
-	/* Test get_num_subexprs */
-	size_t num = grammatica_and_get_num_subexprs(ctx, and_expr);
+	/* Test get_subexprs_n */
+	size_t num = grammatica_and_get_subexprs_n(ctx, and_expr);
 	EXPECT_EQ(num, 2);
 
 	/* Test get_quantifier */

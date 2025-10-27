@@ -40,9 +40,9 @@ class CharEscapeMapTest : public ::testing::TestWithParam<std::pair<char, const 
 
 TEST_P(CharEscapeMapTest, CharGetEscape) {
 	auto [ch, expected] = GetParam();
-	const char* result = char_get_escape(ch);
+	const unsigned char* result = char_get_escape(ch);
 	ASSERT_NE(result, nullptr);
-	EXPECT_STREQ(result, expected);
+	EXPECT_STREQ(reinterpret_cast<const char*>(result), expected);
 }
 
 INSTANTIATE_TEST_SUITE_P(CharEscapeMapTests, CharEscapeMapTest,
@@ -53,7 +53,7 @@ class CharNoEscapeTest : public ::testing::TestWithParam<char> {};
 
 TEST_P(CharNoEscapeTest, CharGetEscapeReturnsNull) {
 	char ch = GetParam();
-	const char* result = char_get_escape(ch);
+	const unsigned char* result = char_get_escape(ch);
 	EXPECT_EQ(result, nullptr);
 }
 

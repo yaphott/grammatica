@@ -10,7 +10,7 @@ char* char_to_cpoint(char c) {
 
 char* ord_to_cpoint(int ordinal) {
 	char* result = (char*)malloc(16);
-	if (!result) {
+	if (result == NULL) {
 		return NULL;
 	}
 	if (ordinal < 0x10000) {
@@ -27,7 +27,7 @@ char* char_to_hex(char c) {
 
 char* ord_to_hex(int ordinal) {
 	char* result = (char*)malloc(16);
-	if (!result) {
+	if (result == NULL) {
 		return NULL;
 	}
 	snprintf(result, 16, "\\x%02X", ordinal);
