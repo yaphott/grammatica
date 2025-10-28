@@ -12,7 +12,7 @@ Grammar* and_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** subexprs
 static bool and_needs_wrapped(const And* and_expr);
 
 And* grammatica_and_create(GrammaticaContextHandle_t ctx, Grammar** subexprs, size_t subexprs_n, Quantifier quantifier) {
-	if (!grammatica_context_is_valid(ctx) || !subexprs) {
+	if (!grammatica_context_is_valid(ctx) || subexprs == NULL) {
 		return NULL;
 	}
 	if (quantifier.lower < 0) {
@@ -30,7 +30,7 @@ And* grammatica_and_create(GrammaticaContextHandle_t ctx, Grammar** subexprs, si
 		}
 	}
 	And* and_expr = (And*)calloc(1, sizeof(And));
-	if (!and_expr) {
+	if (and_expr == NULL) {
 		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
@@ -46,12 +46,12 @@ And* grammatica_and_create(GrammaticaContextHandle_t ctx, Grammar** subexprs, si
 	return and_expr;
 }
 
-void grammatica_and_destroy(GrammaticaContextHandle_t ctx, And* and_expr) {
+void grammatica_and_destroy(And* and_expr) {
 	if (and_expr == NULL) {
 		return;
 	}
 	for (size_t i = 0; i < and_expr->subexprs_n; i++) {
-		grammatica_grammar_destroy(ctx, and_expr->subexprs[i]);
+		grammatica_grammar_destroy(and_expr->subexprs[i]);
 	}
 	free(and_expr->subexprs);
 	free(and_expr);
@@ -93,7 +93,7 @@ static bool and_needs_wrapped(const And* and_expr) {
 
 char* grammatica_and_render(GrammaticaContextHandle_t ctx, const And* and_expr, bool full, bool wrap) {
 	(void)full;
-	if (!grammatica_context_is_valid(ctx) || !and_expr) {
+	if (!grammatica_context_is_valid(ctx) || and_expr == NULL) {
 		return NULL;
 	}
 	if (and_expr->subexprs_n < 1) {
@@ -101,21 +101,22 @@ char* grammatica_and_render(GrammaticaContextHandle_t ctx, const And* and_expr, 
 	}
 	char* rendered_quantifier = render_quantifier(and_expr->quantifier);
 	char* result = (char*)malloc(8192);
-	if (!result) {
-		if (rendered_quantifier)
+	if (result == NULL) {
+		if (rendered_quantifier != NULL) {
 			free(rendered_quantifier);
+		}
 		return NULL;
 	}
 	size_t pos = 0;
 	bool found = false;
 	for (size_t i = 0; i < and_expr->subexprs_n; i++) {
 		char* rendered = grammatica_grammar_render(ctx, and_expr->subexprs[i], false, true);
-		if (rendered) {
+		if (rendered != NULL) {
 			if (found) {
 				pos += snprintf(result + pos, 8192 - pos, "%s", AND_SEPARATOR);
 			}
 			pos += snprintf(result + pos, 8192 - pos, "%s", rendered);
-			grammatica_free_string(ctx, rendered);
+			free(rendered);
 			found = true;
 		}
 	}
@@ -154,14 +155,14 @@ Grammar* and_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** original
 	And* and_expr = NULL;
 	Grammar* grammar = NULL;
 	Grammar* result = NULL;
-	
+
 	/* Simplify each subexpression */
 	subexprs = (Grammar**)malloc(original_num * sizeof(Grammar*));
 	if (!subexprs) {
 		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		goto cleanup;
 	}
-	
+
 	size_t n = 0;
 	for (size_t i = 0; i < original_num; i++) {
 		Grammar* simplified = grammatica_grammar_simplify(ctx, original_subexprs[i]);
@@ -169,19 +170,19 @@ Grammar* and_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** original
 			subexprs[n++] = simplified;
 		}
 	}
-	
+
 	/* Empty expression is no-op */
 	if (n < 1) {
 		goto cleanup;
 	}
-	
+
 	/* Single subexpression with default quantifier */
 	if (n == 1 && quantifier.lower == 1 && quantifier.upper == 1) {
 		result = subexprs[0];
 		subexprs[0] = NULL; /* Prevent cleanup from freeing it */
 		goto cleanup;
 	}
-	
+
 	/* And that is optional (0, 1) can recursively unwrap */
 	if (n == 1 && quantifier.lower == 0 && quantifier.upper == 1) {
 		if (subexprs[0]->type == GRAMMAR_TYPE_AND) {
@@ -197,7 +198,7 @@ Grammar* and_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** original
 							/* Cleanup already copied subexprs */
 							for (size_t j = 0; j < i; j++) {
 								if (sub_subexprs[j]) {
-									grammatica_grammar_destroy(ctx, sub_subexprs[j]);
+									grammatica_grammar_destroy(sub_subexprs[j]);
 								}
 							}
 							free(sub_subexprs);
@@ -205,13 +206,13 @@ Grammar* and_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** original
 							goto cleanup;
 						}
 					}
-					grammatica_grammar_destroy(ctx, subexprs[0]);
+					grammatica_grammar_destroy(subexprs[0]);
 					subexprs[0] = NULL;
 					result = and_simplify_subexprs(ctx, sub_subexprs, sub_num, quantifier);
 					/* Cleanup sub_subexprs array */
 					for (size_t i = 0; i < sub_num; i++) {
 						if (sub_subexprs[i]) {
-							grammatica_grammar_destroy(ctx, sub_subexprs[i]);
+							grammatica_grammar_destroy(sub_subexprs[i]);
 						}
 					}
 					free(sub_subexprs);
@@ -221,37 +222,37 @@ Grammar* and_simplify_subexprs(GrammaticaContextHandle_t ctx, Grammar** original
 			}
 		}
 	}
-	
+
 	/* Create And with simplified subexpressions */
 	and_expr = grammatica_and_create(ctx, subexprs, n, quantifier);
 	if (!and_expr) {
 		grammatica_report_error(ctx, "Failed to create And expression");
 		goto cleanup;
 	}
-	
+
 	grammar = (Grammar*)malloc(sizeof(Grammar));
 	if (!grammar) {
 		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		goto cleanup;
 	}
-	
+
 	grammar->type = GRAMMAR_TYPE_AND;
 	grammar->data = and_expr;
 	and_expr = NULL; /* Prevent cleanup from freeing it */
 	result = grammar;
 	grammar = NULL;
-	
+
 cleanup:
 	if (subexprs) {
 		for (size_t i = 0; i < n; i++) {
-			if (subexprs[i]) {
-				grammatica_grammar_destroy(ctx, subexprs[i]);
+			if (subexprs[i] != NULL) {
+				grammatica_grammar_destroy(subexprs[i]);
 			}
 		}
 		free(subexprs);
 	}
 	if (and_expr) {
-		grammatica_and_destroy(ctx, and_expr);
+		grammatica_and_destroy(and_expr);
 	}
 	if (grammar) {
 		free(grammar);
@@ -260,18 +261,18 @@ cleanup:
 }
 
 Grammar* grammatica_and_simplify(GrammaticaContextHandle_t ctx, const And* and_expr) {
-	if (!grammatica_context_is_valid(ctx) || !and_expr) {
+	if (!grammatica_context_is_valid(ctx) || and_expr == NULL) {
 		return NULL;
 	}
 	return and_simplify_subexprs(ctx, and_expr->subexprs, and_expr->subexprs_n, and_expr->quantifier);
 }
 
 char* grammatica_and_as_string(GrammaticaContextHandle_t ctx, const And* and_expr) {
-	if (!grammatica_context_is_valid(ctx) || !and_expr) {
+	if (!grammatica_context_is_valid(ctx) || and_expr == NULL) {
 		return NULL;
 	}
 	char* result = (char*)malloc(16384);
-	if (!result) {
+	if (result == NULL) {
 		return NULL;
 	}
 	size_t pos = 0;
@@ -281,9 +282,9 @@ char* grammatica_and_as_string(GrammaticaContextHandle_t ctx, const And* and_exp
 			pos += snprintf(result + pos, 16384 - pos, ", ");
 		}
 		char* subexpr_str = grammatica_grammar_as_string(ctx, and_expr->subexprs[i]);
-		if (subexpr_str) {
+		if (subexpr_str != NULL) {
 			pos += snprintf(result + pos, 16384 - pos, "%s", subexpr_str);
-			grammatica_free_string(ctx, subexpr_str);
+			free(subexpr_str);
 		}
 	}
 	if (and_expr->quantifier.upper == -1) {
@@ -303,7 +304,7 @@ bool grammatica_and_equals(GrammaticaContextHandle_t ctx, const And* a, const An
 	if (a == b) {
 		return true;
 	}
-	if (!a || !b) {
+	if (a == NULL || b == NULL) {
 		return false;
 	}
 	if (check_quantifier) {
@@ -334,7 +335,7 @@ And* grammatica_and_copy(GrammaticaContextHandle_t ctx, const And* and_expr) {
 		subexprs_copy[i] = grammatica_grammar_copy(ctx, and_expr->subexprs[i]);
 		if (!subexprs_copy[i]) {
 			for (size_t j = 0; j < i; j++) {
-				grammatica_grammar_destroy(ctx, subexprs_copy[j]);
+				grammatica_grammar_destroy(subexprs_copy[j]);
 			}
 			free(subexprs_copy);
 			return NULL;
@@ -363,7 +364,7 @@ int grammatica_and_get_subexprs(GrammaticaContextHandle_t ctx, const And* and_ex
 
 Quantifier grammatica_and_get_quantifier(GrammaticaContextHandle_t ctx, const And* and_expr) {
 	Quantifier result = {0, 0};
-	if (!grammatica_context_is_valid(ctx) || !and_expr) {
+	if (!grammatica_context_is_valid(ctx) || and_expr == NULL) {
 		return result;
 	}
 	return and_expr->quantifier;

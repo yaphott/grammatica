@@ -29,15 +29,15 @@ typedef struct GrammaticaContext_t {
 	GrammaticaNoticeHandler notice_handler;
 	void* notice_userdata;
 	char error_buffer[1024];
-	GrammaticaErrorCode error_code;
+	GrammaticaError_t error_code;
 	pthread_mutex_t mutex;
 	int initialized;
-	
-	/* Memory tracking */
-	AllocationEntry* allocations;
-	size_t num_allocations;
-	size_t allocations_capacity;
-	bool track_allocations;  /* Enable/disable tracking */
+
+	// /* Memory tracking */
+	// AllocationEntry* allocations;
+	// size_t num_allocations;
+	// size_t allocations_capacity;
+	// bool track_allocations; /* Enable/disable tracking */
 } GrammaticaContext;
 
 struct Grammar_t {
@@ -73,16 +73,8 @@ struct Or_t {
 };
 
 void grammatica_report_error(GrammaticaContextHandle_t ctx, const char* message);
-void grammatica_report_error_with_code(GrammaticaContextHandle_t ctx, GrammaticaErrorCode code, const char* message);
+void grammatica_report_error_with_code(GrammaticaContextHandle_t ctx, GrammaticaError_t code, const char* message);
 void grammatica_report_notice(GrammaticaContextHandle_t ctx, const char* message);
-
-/* Memory tracking functions */
-void* grammatica_tracked_malloc(GrammaticaContextHandle_t ctx, size_t size, const char* file, int line);
-void* grammatica_tracked_calloc(GrammaticaContextHandle_t ctx, size_t nmemb, size_t size, const char* file, int line);
-void* grammatica_tracked_realloc(GrammaticaContextHandle_t ctx, void* ptr, size_t size, const char* file, int line);
-char* grammatica_tracked_strdup(GrammaticaContextHandle_t ctx, const char* s, const char* file, int line);
-void grammatica_tracked_free(GrammaticaContextHandle_t ctx, void* ptr);
-void grammatica_free_all_tracked(GrammaticaContextHandle_t ctx);
 
 /* Convenience macros for tracked allocations */
 #define GRAMMATICA_MALLOC(ctx, size) grammatica_tracked_malloc(ctx, size, __FILE__, __LINE__)
@@ -130,6 +122,21 @@ static inline bool grammatica_context_is_valid(const GrammaticaContext* ctx) {
 		if (!(param)) {                                                                      \
 			grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_INVALID_PARAMETER, msg); \
 			return false;                                                                    \
+		}                                                                                    \
+	} while (0)
+
+#define VALIDATE_CONTEXT_RET_ERRCODE(ctx)        \
+	do {                                         \
+		if (!grammatica_context_is_valid(ctx)) { \
+			return GRAMMATICA_ERROR_INVALID_CONTEXT; \
+		}                                        \
+	} while (0)
+
+#define VALIDATE_PARAM_RET_ERRCODE(ctx, param, msg)                                          \
+	do {                                                                                     \
+		if (!(param)) {                                                                      \
+			grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_INVALID_PARAMETER, msg); \
+			return GRAMMATICA_ERROR_INVALID_PARAMETER;                                       \
 		}                                                                                    \
 	} while (0)
 

@@ -15,7 +15,6 @@ typedef void (*GrammaticaErrorHandler)(const char* message, void* userdata);
 
 typedef void (*GrammaticaNoticeHandler)(const char* message, void* userdata);
 
-/* Error codes for categorizing errors */
 typedef enum {
 	GRAMMATICA_ERROR_NONE = 0,          /* No error */
 	GRAMMATICA_ERROR_INVALID_CONTEXT,   /* Invalid or NULL context */
@@ -34,8 +33,8 @@ void grammatica_set_error_handler(GrammaticaContextHandle_t ctx, GrammaticaError
 void grammatica_set_notice_handler(GrammaticaContextHandle_t ctx, GrammaticaNoticeHandler handler, void* userdata);
 
 const char* grammatica_get_last_error(GrammaticaContextHandle_t ctx);
-GrammaticaErrorCode grammatica_get_last_error_code(GrammaticaContextHandle_t ctx);
-const char* grammatica_error_code_to_string(GrammaticaErrorCode code);
+GrammaticaError_t grammatica_get_last_error_code(GrammaticaContextHandle_t ctx);
+const char* grammatica_error_code_to_string(GrammaticaError_t code);
 void grammatica_clear_error(GrammaticaContextHandle_t ctx);
 
 typedef struct Grammar_t Grammar;
@@ -60,7 +59,7 @@ typedef struct {
 CharRange* grammatica_char_range_create(GrammaticaContextHandle_t ctx, const CharRangePair* ranges, size_t n, bool negate);
 CharRange* grammatica_char_range_from_chars(GrammaticaContextHandle_t ctx, const char* chars, size_t n, bool negate);
 CharRange* grammatica_char_range_from_ords(GrammaticaContextHandle_t ctx, const int* ords, size_t n, bool negate);
-void grammatica_char_range_destroy(GrammaticaContextHandle_t ctx, CharRange* range);
+void grammatica_char_range_destroy(CharRange* range);
 char* grammatica_char_range_render(GrammaticaContextHandle_t ctx, const CharRange* range, bool full, bool wrap);
 Grammar* grammatica_char_range_simplify(GrammaticaContextHandle_t ctx, const CharRange* range);
 char* grammatica_char_range_as_string(GrammaticaContextHandle_t ctx, const CharRange* range);
@@ -70,17 +69,16 @@ size_t grammatica_char_range_get_ranges_n(GrammaticaContextHandle_t ctx, const C
 int grammatica_char_range_get_ranges(GrammaticaContextHandle_t ctx, const CharRange* range, CharRangePair* out_ranges, size_t max_ranges);
 bool grammatica_char_range_get_negate(GrammaticaContextHandle_t ctx, const CharRange* range);
 
-String* grammatica_string_create(GrammaticaContextHandle_t ctx, const char* value);
-void grammatica_string_destroy(GrammaticaContextHandle_t ctx, String* str);
-char* grammatica_string_render(GrammaticaContextHandle_t ctx, const String* str);
-Grammar* grammatica_string_simplify(GrammaticaContextHandle_t ctx, const String* str);
-char* grammatica_string_as_string(GrammaticaContextHandle_t ctx, const String* str);
+String* grammatica_string_create(GrammaticaContextHandle_t ctx, const unsigned char* g);
+void grammatica_string_destroy(String* g);
+unsigned char* grammatica_string_render(GrammaticaContextHandle_t ctx, const String* g);
+Grammar* grammatica_string_simplify(GrammaticaContextHandle_t ctx, const String* g);
+unsigned char* grammatica_string_as_string(GrammaticaContextHandle_t ctx, const String* g);
 bool grammatica_string_equals(GrammaticaContextHandle_t ctx, const String* a, const String* b);
-String* grammatica_string_copy(GrammaticaContextHandle_t ctx, const String* str);
-const char* grammatica_string_get_value(GrammaticaContextHandle_t ctx, const String* str);
+String* grammatica_string_copy(GrammaticaContextHandle_t ctx, const String* g);
 
 DerivationRule* grammatica_derivation_rule_create(GrammaticaContextHandle_t ctx, const char* symbol, Grammar* value);
-void grammatica_derivation_rule_destroy(GrammaticaContextHandle_t ctx, DerivationRule* rule);
+void grammatica_derivation_rule_destroy(DerivationRule* rule);
 char* grammatica_derivation_rule_render(GrammaticaContextHandle_t ctx, const DerivationRule* rule, bool full, bool wrap);
 Grammar* grammatica_derivation_rule_simplify(GrammaticaContextHandle_t ctx, const DerivationRule* rule);
 char* grammatica_derivation_rule_as_string(GrammaticaContextHandle_t ctx, const DerivationRule* rule);
@@ -90,7 +88,7 @@ const char* grammatica_derivation_rule_get_symbol(GrammaticaContextHandle_t ctx,
 const Grammar* grammatica_derivation_rule_get_value(GrammaticaContextHandle_t ctx, const DerivationRule* rule);
 
 And* grammatica_and_create(GrammaticaContextHandle_t ctx, Grammar** subexprs, size_t subexprs_n, Quantifier quantifier);
-void grammatica_and_destroy(GrammaticaContextHandle_t ctx, And* and_expr);
+void grammatica_and_destroy(And* and_expr);
 char* grammatica_and_render(GrammaticaContextHandle_t ctx, const And* and_expr, bool full, bool wrap);
 Grammar* grammatica_and_simplify(GrammaticaContextHandle_t ctx, const And* and_expr);
 char* grammatica_and_as_string(GrammaticaContextHandle_t ctx, const And* and_expr);
@@ -101,7 +99,7 @@ int grammatica_and_get_subexprs(GrammaticaContextHandle_t ctx, const And* and_ex
 Quantifier grammatica_and_get_quantifier(GrammaticaContextHandle_t ctx, const And* and_expr);
 
 Or* grammatica_or_create(GrammaticaContextHandle_t ctx, Grammar** subexprs, size_t subexprs_n, Quantifier quantifier);
-void grammatica_or_destroy(GrammaticaContextHandle_t ctx, Or* or_expr);
+void grammatica_or_destroy(Or* or_expr);
 char* grammatica_or_render(GrammaticaContextHandle_t ctx, const Or* or_expr, bool full, bool wrap);
 Grammar* grammatica_or_simplify(GrammaticaContextHandle_t ctx, const Or* or_expr);
 char* grammatica_or_as_string(GrammaticaContextHandle_t ctx, const Or* or_expr);
@@ -112,14 +110,12 @@ int grammatica_or_get_subexprs(GrammaticaContextHandle_t ctx, const Or* or_expr,
 Quantifier grammatica_or_get_quantifier(GrammaticaContextHandle_t ctx, const Or* or_expr);
 
 GrammarType grammatica_grammar_get_type(GrammaticaContextHandle_t ctx, const Grammar* grammar);
-void grammatica_grammar_destroy(GrammaticaContextHandle_t ctx, Grammar* grammar);
+void grammatica_grammar_destroy(Grammar* grammar);
 char* grammatica_grammar_render(GrammaticaContextHandle_t ctx, const Grammar* grammar, bool full, bool wrap);
 Grammar* grammatica_grammar_simplify(GrammaticaContextHandle_t ctx, const Grammar* grammar);
 char* grammatica_grammar_as_string(GrammaticaContextHandle_t ctx, const Grammar* grammar);
 bool grammatica_grammar_equals(GrammaticaContextHandle_t ctx, const Grammar* a, const Grammar* b);
 Grammar* grammatica_grammar_copy(GrammaticaContextHandle_t ctx, const Grammar* grammar);
-
-void grammatica_free_string(GrammaticaContextHandle_t ctx, char* str);
 
 #ifdef __cplusplus
 }

@@ -26,13 +26,13 @@ DerivationRule* grammatica_derivation_rule_create(GrammaticaContextHandle_t ctx,
 	return rule;
 }
 
-void grammatica_derivation_rule_destroy(GrammaticaContextHandle_t ctx, DerivationRule* rule) {
-	if (!rule) {
+void grammatica_derivation_rule_destroy(DerivationRule* rule) {
+	if (rule == NULL) {
 		return;
 	}
 	free(rule->symbol);
-	if (rule->value) {
-		grammatica_grammar_destroy(ctx, rule->value);
+	if (rule->value != NULL) {
+		grammatica_grammar_destroy(rule->value);
 	}
 	free(rule);
 }
@@ -50,17 +50,17 @@ char* grammatica_derivation_rule_render(GrammaticaContextHandle_t ctx, const Der
 	}
 	char* result = (char*)malloc(strlen(rule->symbol) + strlen(DERIVATION_RULE_SEPARATOR) + strlen(rendered) + 1);
 	if (!result) {
-		grammatica_free_string(ctx, rendered);
+		free(rendered);
 		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	sprintf(result, "%s%s%s", rule->symbol, DERIVATION_RULE_SEPARATOR, rendered);
-	grammatica_free_string(ctx, rendered);
+	free(rendered);
 	return result;
 }
 
 Grammar* grammatica_derivation_rule_simplify(GrammaticaContextHandle_t ctx, const DerivationRule* rule) {
-	if (!ctx || !rule) {
+	if (ctx == NULL || rule == NULL) {
 		return NULL;
 	}
 
@@ -86,17 +86,19 @@ Grammar* grammatica_derivation_rule_simplify(GrammaticaContextHandle_t ctx, cons
 	return grammar; /* Success */
 
 cleanup:
-	if (new_rule)
-		grammatica_derivation_rule_destroy(ctx, new_rule);
-	else if (simplified)
-		grammatica_grammar_destroy(ctx, simplified);
-	if (grammar)
+	if (new_rule) {
+		grammatica_derivation_rule_destroy(new_rule);
+	} else if (simplified) {
+		grammatica_grammar_destroy(simplified);
+	}
+	if (grammar) {
 		free(grammar);
+	}
 	return NULL;
 }
 
 char* grammatica_derivation_rule_as_string(GrammaticaContextHandle_t ctx, const DerivationRule* rule) {
-	if (!ctx || !rule) {
+	if (ctx == NULL || rule == NULL) {
 		return NULL;
 	}
 	char* value_str = grammatica_grammar_as_string(ctx, rule->value);
@@ -107,23 +109,23 @@ char* grammatica_derivation_rule_as_string(GrammaticaContextHandle_t ctx, const 
 	size_t needed = snprintf(NULL, 0, "DerivationRule(symbol='%s', value=%s)", rule->symbol, value_str) + 1;
 	char* result = (char*)malloc(needed);
 	if (!result) {
-		grammatica_free_string(ctx, value_str);
+		free(value_str);
 		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY, "Memory allocation failed");
 		return NULL;
 	}
 	snprintf(result, needed, "DerivationRule(symbol='%s', value=%s)", rule->symbol, value_str);
-	grammatica_free_string(ctx, value_str);
+	free(value_str);
 	return result;
 }
 
 bool grammatica_derivation_rule_equals(GrammaticaContextHandle_t ctx, const DerivationRule* a, const DerivationRule* b) {
-	if (!ctx) {
+	if (ctx == NULL) {
 		return false;
 	}
 	if (a == b) {
 		return true;
 	}
-	if (!a || !b) {
+	if (a == NULL || b == NULL) {
 		return false;
 	}
 	if (strcmp(a->symbol, b->symbol) != 0) {
@@ -136,23 +138,22 @@ DerivationRule* grammatica_derivation_rule_copy(GrammaticaContextHandle_t ctx, c
 	if (!ctx || !rule) {
 		return NULL;
 	}
-
 	Grammar* value_copy = NULL;
 	DerivationRule* result = NULL;
-
 	value_copy = grammatica_grammar_copy(ctx, rule->value);
-	if (!value_copy) {
+	if (value_copy == NULL) {
 		goto cleanup;
 	}
 	result = grammatica_derivation_rule_create(ctx, rule->symbol, value_copy);
-	if (!result) {
+	if (result == NULL) {
 		goto cleanup;
 	}
 	return result; /* Success */
 
 cleanup:
-	if (value_copy)
-		grammatica_grammar_destroy(ctx, value_copy);
+	if (value_copy) {
+		grammatica_grammar_destroy(value_copy);
+	}
 	return NULL;
 }
 

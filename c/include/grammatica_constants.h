@@ -8,20 +8,20 @@
 extern "C" {
 #endif
 
-extern const unsigned char* const DIGITS;
-extern const unsigned char* const ASCII_LETTERS;
-extern const unsigned char* const PUNCTUATION;
-extern const unsigned char* const SPACE;
+extern const char* const DIGITS;
+extern const char* const ASCII_LETTERS;
+extern const char* const PUNCTUATION;
+extern const char* const SPACE;
 
-bool char_is_digit(unsigned char c);
-bool char_is_ascii_letter(unsigned char c);
-bool char_is_punctuation(unsigned char c);
-bool char_is_space(unsigned char c);
-bool char_is_always_safe(unsigned char c);
-bool char_is_string_literal_escape(unsigned char c);
-bool char_is_range_escape(unsigned char c);
+bool char_is_digit(const char c);
+bool char_is_ascii_letter(const char c);
+bool char_is_punctuation(const char c);
+bool char_is_space(const char c);
+bool char_is_always_safe(const char c);
+bool char_is_string_literal_escape(const char c);
+bool char_is_range_escape(const char c);
 
-const unsigned char* char_get_escape(unsigned char c);
+const char* char_get_escape(const char c);
 
 #ifdef __cplusplus
 }

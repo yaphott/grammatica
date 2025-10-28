@@ -21,28 +21,26 @@ GrammaticaContextHandle_t grammatica_init(void) {
 	ctx->notice_handler = NULL;
 	ctx->notice_userdata = NULL;
 	ctx->error_code = GRAMMATICA_ERROR_NONE;
-	/* Initialize memory tracking */
-	ctx->track_allocations = true;  /* Enabled by default */
-	ctx->allocations_capacity = INITIAL_ALLOC_CAPACITY;
-	ctx->allocations = (AllocationEntry*)malloc(ctx->allocations_capacity * sizeof(AllocationEntry));
-	if (!ctx->allocations) {
-		pthread_mutex_destroy(&ctx->mutex);
-		free(ctx);
-		return NULL;
-	}
-	ctx->num_allocations = 0;
+	// /* Initialize memory tracking */
+	// ctx->track_allocations = true; /* Enabled by default */
+	// ctx->allocations_capacity = INITIAL_ALLOC_CAPACITY;
+	// ctx->allocations = (AllocationEntry*)malloc(ctx->allocations_capacity * sizeof(AllocationEntry));
+	// if (!ctx->allocations) {
+	// 	pthread_mutex_destroy(&ctx->mutex);
+	// 	free(ctx);
+	// 	return NULL;
+	// }
+	// ctx->num_allocations = 0;
 	return ctx;
 }
 
 void grammatica_finish(GrammaticaContextHandle_t ctx) {
-	if (!ctx) {
+	if (ctx == NULL) {
 		return;
 	}
-	if (!grammatica_context_is_valid(ctx)) {
-		return;
-	}
-	/* Free all tracked allocations */
-	grammatica_free_all_tracked(ctx);
+	// if (!grammatica_context_is_valid(ctx)) {
+	// 	return;
+	// }
 	pthread_mutex_lock(&ctx->mutex);
 	ctx->magic = 0; /* Invalidate the context */
 	ctx->initialized = 0;
@@ -52,7 +50,7 @@ void grammatica_finish(GrammaticaContextHandle_t ctx) {
 }
 
 void grammatica_set_error_handler(GrammaticaContextHandle_t ctx, GrammaticaErrorHandler handler, void* userdata) {
-	if (!ctx) {
+	if (ctx == NULL) {
 		return;
 	}
 	pthread_mutex_lock(&ctx->mutex);
@@ -62,7 +60,7 @@ void grammatica_set_error_handler(GrammaticaContextHandle_t ctx, GrammaticaError
 }
 
 void grammatica_set_notice_handler(GrammaticaContextHandle_t ctx, GrammaticaNoticeHandler handler, void* userdata) {
-	if (!ctx) {
+	if (ctx == NULL) {
 		return;
 	}
 	pthread_mutex_lock(&ctx->mutex);
@@ -76,7 +74,7 @@ void grammatica_report_error(GrammaticaContextHandle_t ctx, const char* message)
 	grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_UNKNOWN, message);
 }
 
-void grammatica_report_error_with_code(GrammaticaContextHandle_t ctx, GrammaticaErrorCode code, const char* message) {
+void grammatica_report_error_with_code(GrammaticaContextHandle_t ctx, GrammaticaError_t code, const char* message) {
 	if (ctx == NULL) {
 		return;
 	}
@@ -104,6 +102,9 @@ void grammatica_report_notice(GrammaticaContextHandle_t ctx, const char* message
 }
 
 const char* grammatica_get_last_error(GrammaticaContextHandle_t ctx) {
+	if (ctx == NULL) {
+		return NULL;
+	}
 	if (!grammatica_context_is_valid(ctx)) {
 		return "Invalid context";
 	}
@@ -113,17 +114,17 @@ const char* grammatica_get_last_error(GrammaticaContextHandle_t ctx) {
 	return result;
 }
 
-GrammaticaErrorCode grammatica_get_last_error_code(GrammaticaContextHandle_t ctx) {
+GrammaticaError_t grammatica_get_last_error_code(GrammaticaContextHandle_t ctx) {
 	if (!grammatica_context_is_valid(ctx)) {
 		return GRAMMATICA_ERROR_INVALID_CONTEXT;
 	}
 	pthread_mutex_lock(&ctx->mutex);
-	GrammaticaErrorCode code = ctx->error_code;
+	GrammaticaError_t code = ctx->error_code;
 	pthread_mutex_unlock(&ctx->mutex);
 	return code;
 }
 
-const char* grammatica_error_code_to_string(GrammaticaErrorCode code) {
+const char* grammatica_error_code_to_string(GrammaticaError_t code) {
 	switch (code) {
 		case GRAMMATICA_ERROR_NONE:
 			return "No error";
@@ -158,31 +159,31 @@ void grammatica_clear_error(GrammaticaContextHandle_t ctx) {
 }
 
 GrammarType grammatica_grammar_get_type(GrammaticaContextHandle_t ctx, const Grammar* grammar) {
-	if (!grammatica_context_is_valid(ctx) || !grammar) {
+	if (!grammatica_context_is_valid(ctx) || grammar == NULL) {
 		return (GrammarType)-1;
 	}
 	return grammar->type;
 }
 
-void grammatica_grammar_destroy(GrammaticaContextHandle_t ctx, Grammar* grammar) {
-	if (!grammatica_context_is_valid(ctx) || !grammar) {
-		return;
-	}
+void grammatica_grammar_destroy(Grammar* grammar) {
+	// if (!grammatica_context_is_valid(ctx) || grammar == NULL) {
+	// 	return;
+	// }
 	switch (grammar->type) {
 		case GRAMMAR_TYPE_CHAR_RANGE:
-			grammatica_char_range_destroy(ctx, (CharRange*)grammar->data);
+			grammatica_char_range_destroy((CharRange*)grammar->data);
 			break;
 		case GRAMMAR_TYPE_STRING:
-			grammatica_string_destroy(ctx, (String*)grammar->data);
+			grammatica_string_destroy((String*)grammar->data);
 			break;
 		case GRAMMAR_TYPE_DERIVATION_RULE:
-			grammatica_derivation_rule_destroy(ctx, (DerivationRule*)grammar->data);
+			grammatica_derivation_rule_destroy((DerivationRule*)grammar->data);
 			break;
 		case GRAMMAR_TYPE_AND:
-			grammatica_and_destroy(ctx, (And*)grammar->data);
+			grammatica_and_destroy((And*)grammar->data);
 			break;
 		case GRAMMAR_TYPE_OR:
-			grammatica_or_destroy(ctx, (Or*)grammar->data);
+			grammatica_or_destroy((Or*)grammar->data);
 			break;
 	}
 	free(grammar);
@@ -310,19 +311,19 @@ Grammar* grammatica_grammar_copy(GrammaticaContextHandle_t ctx, const Grammar* g
 		/* Clean up copied data based on type */
 		switch (grammar->type) {
 			case GRAMMAR_TYPE_CHAR_RANGE:
-				grammatica_char_range_destroy(ctx, (CharRange*)copied_data);
+				grammatica_char_range_destroy((CharRange*)copied_data);
 				break;
 			case GRAMMAR_TYPE_STRING:
-				grammatica_string_destroy(ctx, (String*)copied_data);
+				grammatica_string_destroy((String*)copied_data);
 				break;
 			case GRAMMAR_TYPE_DERIVATION_RULE:
-				grammatica_derivation_rule_destroy(ctx, (DerivationRule*)copied_data);
+				grammatica_derivation_rule_destroy((DerivationRule*)copied_data);
 				break;
 			case GRAMMAR_TYPE_AND:
-				grammatica_and_destroy(ctx, (And*)copied_data);
+				grammatica_and_destroy((And*)copied_data);
 				break;
 			case GRAMMAR_TYPE_OR:
-				grammatica_or_destroy(ctx, (Or*)copied_data);
+				grammatica_or_destroy((Or*)copied_data);
 				break;
 		}
 		return NULL;
@@ -330,171 +331,4 @@ Grammar* grammatica_grammar_copy(GrammaticaContextHandle_t ctx, const Grammar* g
 	result->type = grammar->type;
 	result->data = copied_data;
 	return result;
-}
-
-void grammatica_free_string(GrammaticaContextHandle_t ctx, char* str) {
-	(void)ctx; /* Unused in simple implementation */
-	free(str);
-}
-
-/*
- * Memory Tracking Implementation
- */
-
-static bool track_allocation(GrammaticaContext* ctx, void* ptr, size_t size, const char* file, int line) {
-	if (!ctx->track_allocations || !ptr) {
-		return true;
-	}
-	pthread_mutex_lock(&ctx->mutex);
-	if (ctx->num_allocations >= ctx->allocations_capacity) {
-		size_t new_capacity = ctx->allocations_capacity * 2;
-		AllocationEntry* new_allocs = (AllocationEntry*)realloc(
-			ctx->allocations, 
-			new_capacity * sizeof(AllocationEntry)
-		);
-		if (!new_allocs) {
-			pthread_mutex_unlock(&ctx->mutex);
-			return false;
-		}
-		ctx->allocations = new_allocs;
-		ctx->allocations_capacity = new_capacity;
-	}
-	ctx->allocations[ctx->num_allocations].ptr = ptr;
-	ctx->allocations[ctx->num_allocations].size = size;
-	ctx->allocations[ctx->num_allocations].file = file;
-	ctx->allocations[ctx->num_allocations].line = line;
-	ctx->num_allocations++;
-	pthread_mutex_unlock(&ctx->mutex);
-	return true;
-}
-
-static bool untrack_allocation(GrammaticaContext* ctx, void* ptr) {
-	if (!ctx->track_allocations || !ptr) {
-		return true;
-	}
-	pthread_mutex_lock(&ctx->mutex);
-	for (size_t i = 0; i < ctx->num_allocations; i++) {
-		if (ctx->allocations[i].ptr == ptr) {
-			for (size_t j = i; j < ctx->num_allocations - 1; j++) {
-				ctx->allocations[j] = ctx->allocations[j + 1];
-			}
-			ctx->num_allocations--;
-			pthread_mutex_unlock(&ctx->mutex);
-			return true;
-		}
-	}
-	pthread_mutex_unlock(&ctx->mutex);
-	return false;  /* Not found */
-}
-
-void* grammatica_tracked_malloc(GrammaticaContextHandle_t ctx, size_t size, const char* file, int line) {
-	if (!grammatica_context_is_valid(ctx)) {
-		return NULL;
-	}
-	void* ptr = malloc(size);
-	if (!ptr) {
-		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY,
-			"Memory allocation failed");
-		return NULL;
-	}
-	if (!track_allocation(ctx, ptr, size, file, line)) {
-		free(ptr);
-		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY,
-			"Failed to track memory allocation");
-		return NULL;
-	}
-	return ptr;
-}
-
-void* grammatica_tracked_calloc(GrammaticaContextHandle_t ctx, size_t nmemb, size_t size, const char* file, int line) {
-	if (!grammatica_context_is_valid(ctx)) {
-		return NULL;
-	}
-	void* ptr = calloc(nmemb, size);
-	if (!ptr) {
-		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY,
-			"Memory allocation failed");
-		return NULL;
-	}
-	if (!track_allocation(ctx, ptr, nmemb * size, file, line)) {
-		free(ptr);
-		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY,
-			"Failed to track memory allocation");
-		return NULL;
-	}
-	return ptr;
-}
-
-void* grammatica_tracked_realloc(GrammaticaContextHandle_t ctx, void* ptr, size_t size, const char* file, int line) {
-	if (!grammatica_context_is_valid(ctx)) {
-		return NULL;
-	}
-	if (!ptr) {
-		return grammatica_tracked_malloc(ctx, size, file, line);
-	}
-	untrack_allocation(ctx, ptr);
-	void* new_ptr = realloc(ptr, size);
-	if (!new_ptr) {
-		track_allocation(ctx, ptr, 0, file, line);  /* Size unknown */
-		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY,
-			"Memory reallocation failed");
-		return NULL;
-	}
-	if (!track_allocation(ctx, new_ptr, size, file, line)) {
-		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY,
-			"Failed to track memory reallocation");
-	}
-	return new_ptr;
-}
-
-char* grammatica_tracked_strdup(GrammaticaContextHandle_t ctx, const char* s, const char* file, int line) {
-	if (!grammatica_context_is_valid(ctx) || !s) {
-		if (grammatica_context_is_valid(ctx) && !s) {
-			grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_INVALID_PARAMETER,
-				"Cannot duplicate NULL string");
-		}
-		return NULL;
-	}
-	size_t len = strlen(s) + 1;
-	char* ptr = (char*)malloc(len);
-	if (!ptr) {
-		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY,
-			"Memory allocation failed for string duplication");
-		return NULL;
-	}
-	memcpy(ptr, s, len);
-	if (!track_allocation(ctx, ptr, len, file, line)) {
-		free(ptr);
-		grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_OUT_OF_MEMORY,
-			"Failed to track string allocation");
-		return NULL;
-	}
-	return ptr;
-}
-
-void grammatica_tracked_free(GrammaticaContextHandle_t ctx, void* ptr) {
-	if (!ptr) {
-		return;
-	}
-	if (grammatica_context_is_valid(ctx)) {
-		untrack_allocation(ctx, ptr);
-	}
-	free(ptr);
-}
-
-void grammatica_free_all_tracked(GrammaticaContextHandle_t ctx) {
-	if (ctx == NULL || ctx->allocations == NULL) {
-		return;
-	}
-	pthread_mutex_lock(&ctx->mutex);
-	for (size_t i = 0; i < ctx->num_allocations; i++) {
-		if (ctx->allocations[i].ptr) {
-			free(ctx->allocations[i].ptr);
-		}
-	}
-	free(ctx->allocations);
-	ctx->allocations = NULL;
-	ctx->num_allocations = 0;
-	ctx->allocations_capacity = 0;
-	pthread_mutex_unlock(&ctx->mutex);
 }

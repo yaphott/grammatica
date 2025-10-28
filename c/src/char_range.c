@@ -10,7 +10,7 @@
 static int char_range_pair_compare(const void* a, const void* b) {
 	const CharRangePair* pair_a = (const CharRangePair*)a;
 	const CharRangePair* pair_b = (const CharRangePair*)b;
-	return (unsigned char)pair_a->start - (unsigned char)pair_b->start;
+	return (char)pair_a->start - (char)pair_b->start;
 }
 
 static size_t merge_char_ranges(CharRangePair* ranges, size_t n) {
@@ -20,8 +20,8 @@ static size_t merge_char_ranges(CharRangePair* ranges, size_t n) {
 	qsort(ranges, n, sizeof(CharRangePair), char_range_pair_compare);
 	size_t write_idx = 0;
 	for (size_t i = 1; i < n; i++) {
-		if ((unsigned char)ranges[i].start <= (unsigned char)ranges[write_idx].end + 1) {
-			if ((unsigned char)ranges[i].end > (unsigned char)ranges[write_idx].end) {
+		if ((char)ranges[i].start <= (char)ranges[write_idx].end + 1) {
+			if ((char)ranges[i].end > (char)ranges[write_idx].end) {
 				ranges[write_idx].end = ranges[i].end;
 			}
 		} else {
@@ -35,10 +35,11 @@ static size_t merge_char_ranges(CharRangePair* ranges, size_t n) {
 static void ranges_to_ords(const CharRangePair* ranges, size_t n, bool* ord_set) {
 	memset(ord_set, 0, 256 * sizeof(bool));
 	for (size_t i = 0; i < n; i++) {
-		for (unsigned char c = (unsigned char)ranges[i].start; c <= (unsigned char)ranges[i].end; c++) {
+		for (char c = (char)ranges[i].start; c <= (char)ranges[i].end; c++) {
 			ord_set[c] = true;
-			if (c == (unsigned char)ranges[i].end)
+			if (c == (char)ranges[i].end) {
 				break;
+			}
 		}
 	}
 }
@@ -77,7 +78,7 @@ CharRange* grammatica_char_range_create(GrammaticaContextHandle_t ctx, const Cha
 	}
 	/* Validate ranges */
 	for (size_t i = 0; i < n; i++) {
-		if ((unsigned char)ranges[i].end < (unsigned char)ranges[i].start) {
+		if ((char)ranges[i].end < (char)ranges[i].start) {
 			grammatica_report_error_with_code(ctx, GRAMMATICA_ERROR_INVALID_PARAMETER, "end must be greater than or equal to start");
 			return NULL;
 		}
@@ -120,7 +121,7 @@ CharRange* grammatica_char_range_from_chars(GrammaticaContextHandle_t ctx, const
 		return NULL;
 	}
 	for (size_t i = 0; i < num_chars; i++) {
-		ords[i] = (unsigned char)chars[i];
+		ords[i] = (char)chars[i];
 	}
 	CharRange* result = grammatica_char_range_from_ords(ctx, ords, num_chars, negate);
 	free(ords);
@@ -154,9 +155,8 @@ CharRange* grammatica_char_range_from_ords(GrammaticaContextHandle_t ctx, const 
 	return result;
 }
 
-void grammatica_char_range_destroy(GrammaticaContextHandle_t ctx, CharRange* range) {
-	(void)ctx;
-	if (!range) {
+void grammatica_char_range_destroy(CharRange* range) {
+	if (range == NULL) {
 		return;
 	}
 	free(range->ranges);
@@ -256,7 +256,7 @@ char* grammatica_char_range_render(GrammaticaContextHandle_t ctx, const CharRang
 				free(render_ranges);
 				return NULL;
 			}
-			if ((unsigned char)render_ranges[i].end == (unsigned char)render_ranges[i].start + 1) {
+			if ((char)render_ranges[i].end == (char)render_ranges[i].start + 1) {
 				pos += snprintf(result + pos, buf_size - pos, "%s%s", start_esc, end_esc);
 			} else {
 				pos += snprintf(result + pos, buf_size - pos, "%s-%s", start_esc, end_esc);
@@ -321,12 +321,15 @@ Grammar* grammatica_char_range_simplify(GrammaticaContextHandle_t ctx, const Cha
 	return grammar; /* Success */
 
 cleanup:
-	if (str)
-		grammatica_string_destroy(ctx, str);
-	if (copy)
-		grammatica_char_range_destroy(ctx, copy);
-	if (grammar)
+	if (str != NULL) {
+		grammatica_string_destroy(str);
+	}
+	if (copy != NULL) {
+		grammatica_char_range_destroy(copy);
+	}
+	if (grammar != NULL) {
 		free(grammar);
+	}
 	return NULL;
 }
 

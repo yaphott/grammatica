@@ -5,7 +5,6 @@
 #include "grammatica.h"
 #include "grammatica_group.h"
 
-/* Test fixture for GroupBase tests */
 class GroupBaseTest : public ::testing::Test {
    protected:
 	GrammaticaContextHandle_t ctx;
@@ -20,7 +19,6 @@ class GroupBaseTest : public ::testing::Test {
 	}
 };
 
-/* Parameterized test case structure for quantifier rendering */
 struct QuantifierRenderTestCase {
 	Quantifier quantifier;
 	const char* expected;
@@ -28,7 +26,6 @@ struct QuantifierRenderTestCase {
 
 class QuantifierRenderTest : public GroupBaseTest, public ::testing::WithParamInterface<QuantifierRenderTestCase> {};
 
-/* Test: Render quantifier with various values */
 TEST_P(QuantifierRenderTest, Render) {
 	QuantifierRenderTestCase tc = GetParam();
 
@@ -43,7 +40,8 @@ TEST_P(QuantifierRenderTest, Render) {
 	}
 }
 
-INSTANTIATE_TEST_SUITE_P(QuantifierRenderTests, QuantifierRenderTest,
+INSTANTIATE_TEST_SUITE_P(QuantifierRenderTests,
+                         QuantifierRenderTest,
                          ::testing::Values(QuantifierRenderTestCase{{1, 1}, nullptr},  // Default quantifier - no render
                                            QuantifierRenderTestCase{{0, 1}, "?"},      // Optional
                                            QuantifierRenderTestCase{{0, 2}, "{0,2}"},  // Custom range
@@ -54,7 +52,6 @@ INSTANTIATE_TEST_SUITE_P(QuantifierRenderTests, QuantifierRenderTest,
                                            QuantifierRenderTestCase{{2, -1}, "{2,}"}   // Two or more
                                            ));
 
-/* Test: Quantifier needs wrapping */
 TEST_F(GroupBaseTest, QuantifierNeedsWrap) {
 	/* Default quantifier (1, 1) does not need wrapping */
 	EXPECT_FALSE(quantifier_needs_wrap({1, 1}));
@@ -68,11 +65,10 @@ TEST_F(GroupBaseTest, QuantifierNeedsWrap) {
 	EXPECT_TRUE(quantifier_needs_wrap({2, -1}));
 }
 
-/* Test: And with quantifier normalization */
 TEST_F(GroupBaseTest, AndQuantifierNormalization) {
-	String* str1 = grammatica_string_create(ctx, "a");
-	String* str2 = grammatica_string_create(ctx, "a");
-	String* str3 = grammatica_string_create(ctx, "a");
+	String* str1 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
+	String* str2 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
+	String* str3 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
 	ASSERT_NE(str1, nullptr);
 	ASSERT_NE(str2, nullptr);
 	ASSERT_NE(str3, nullptr);
@@ -111,18 +107,17 @@ TEST_F(GroupBaseTest, AndQuantifierNormalization) {
 	EXPECT_EQ(q3.lower, 1);
 	EXPECT_EQ(q3.upper, -1);
 
-	grammatica_and_destroy(ctx, and1);
-	grammatica_and_destroy(ctx, and2);
-	grammatica_and_destroy(ctx, and3);
-	grammatica_string_destroy(ctx, str1);
-	grammatica_string_destroy(ctx, str2);
-	grammatica_string_destroy(ctx, str3);
+	grammatica_and_destroy(and1);
+	grammatica_and_destroy(and2);
+	grammatica_and_destroy(and3);
+	grammatica_string_destroy(str1);
+	grammatica_string_destroy(str2);
+	grammatica_string_destroy(str3);
 }
 
-/* Test: Or with quantifier normalization */
 TEST_F(GroupBaseTest, OrQuantifierNormalization) {
-	String* str1 = grammatica_string_create(ctx, "a");
-	String* str2 = grammatica_string_create(ctx, "a");
+	String* str1 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
+	String* str2 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
 	ASSERT_NE(str1, nullptr);
 	ASSERT_NE(str2, nullptr);
 
@@ -148,18 +143,17 @@ TEST_F(GroupBaseTest, OrQuantifierNormalization) {
 	EXPECT_EQ(q2.lower, 2);
 	EXPECT_EQ(q2.upper, -1);
 
-	grammatica_or_destroy(ctx, or1);
-	grammatica_or_destroy(ctx, or2);
-	grammatica_string_destroy(ctx, str1);
-	grammatica_string_destroy(ctx, str2);
+	grammatica_or_destroy(or1);
+	grammatica_or_destroy(or2);
+	grammatica_string_destroy(str1);
+	grammatica_string_destroy(str2);
 }
 
-/* Test: And rendering with wrapping */
 TEST_F(GroupBaseTest, AndRenderingWithWrapping) {
-	String* str1 = grammatica_string_create(ctx, "a");
-	String* str2 = grammatica_string_create(ctx, "b");
-	String* str3 = grammatica_string_create(ctx, "a");
-	String* str4 = grammatica_string_create(ctx, "b");
+	String* str1 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
+	String* str2 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("b"));
+	String* str3 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
+	String* str4 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("b"));
 
 	Grammar* grammar1 = grammatica_string_simplify(ctx, str1);
 	Grammar* grammar2 = grammatica_string_simplify(ctx, str2);
@@ -184,20 +178,19 @@ TEST_F(GroupBaseTest, AndRenderingWithWrapping) {
 	ASSERT_NE(rendered2, nullptr);
 	EXPECT_STREQ(rendered2, "(\"a\" \"b\")?");
 
-	grammatica_free_string(ctx, rendered1);
-	grammatica_free_string(ctx, rendered2);
-	grammatica_and_destroy(ctx, and1);
-	grammatica_and_destroy(ctx, and2);
-	grammatica_string_destroy(ctx, str1);
-	grammatica_string_destroy(ctx, str2);
-	grammatica_string_destroy(ctx, str3);
-	grammatica_string_destroy(ctx, str4);
+	free(rendered1);
+	free(rendered2);
+	grammatica_and_destroy(and1);
+	grammatica_and_destroy(and2);
+	grammatica_string_destroy(str1);
+	grammatica_string_destroy(str2);
+	grammatica_string_destroy(str3);
+	grammatica_string_destroy(str4);
 }
 
-/* Test: Or rendering with wrapping */
 TEST_F(GroupBaseTest, OrRenderingWithWrapping) {
-	String* str1 = grammatica_string_create(ctx, "a");
-	String* str2 = grammatica_string_create(ctx, "b");
+	String* str1 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
+	String* str2 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("b"));
 
 	Grammar* grammar1 = grammatica_string_simplify(ctx, str1);
 	Grammar* grammar2 = grammatica_string_simplify(ctx, str2);
@@ -216,19 +209,18 @@ TEST_F(GroupBaseTest, OrRenderingWithWrapping) {
 	ASSERT_NE(rendered2, nullptr);
 	EXPECT_STREQ(rendered2, "\"a\" | \"b\"");
 
-	grammatica_free_string(ctx, rendered1);
-	grammatica_free_string(ctx, rendered2);
-	grammatica_or_destroy(ctx, or1);
-	grammatica_string_destroy(ctx, str1);
-	grammatica_string_destroy(ctx, str2);
+	free(rendered1);
+	free(rendered2);
+	grammatica_or_destroy(or1);
+	grammatica_string_destroy(str1);
+	grammatica_string_destroy(str2);
 }
 
-/* Test: Quantifier rendering with And */
 TEST_F(GroupBaseTest, AndQuantifierRendering) {
-	String* str1 = grammatica_string_create(ctx, "a");
-	String* str2 = grammatica_string_create(ctx, "a");
-	String* str3 = grammatica_string_create(ctx, "a");
-	String* str4 = grammatica_string_create(ctx, "a");
+	String* str1 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
+	String* str2 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
+	String* str3 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
+	String* str4 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
 
 	Grammar* grammar1 = grammatica_string_simplify(ctx, str1);
 	Grammar* grammar2 = grammatica_string_simplify(ctx, str2);
@@ -263,26 +255,25 @@ TEST_F(GroupBaseTest, AndQuantifierRendering) {
 	ASSERT_NE(rendered4, nullptr);
 	EXPECT_STREQ(rendered4, "\"a\"{2,5}");
 
-	grammatica_free_string(ctx, rendered1);
-	grammatica_free_string(ctx, rendered2);
-	grammatica_free_string(ctx, rendered3);
-	grammatica_free_string(ctx, rendered4);
-	grammatica_and_destroy(ctx, and1);
-	grammatica_and_destroy(ctx, and2);
-	grammatica_and_destroy(ctx, and3);
-	grammatica_and_destroy(ctx, and4);
-	grammatica_string_destroy(ctx, str1);
-	grammatica_string_destroy(ctx, str2);
-	grammatica_string_destroy(ctx, str3);
-	grammatica_string_destroy(ctx, str4);
+	free(rendered1);
+	free(rendered2);
+	free(rendered3);
+	free(rendered4);
+	grammatica_and_destroy(and1);
+	grammatica_and_destroy(and2);
+	grammatica_and_destroy(and3);
+	grammatica_and_destroy(and4);
+	grammatica_string_destroy(str1);
+	grammatica_string_destroy(str2);
+	grammatica_string_destroy(str3);
+	grammatica_string_destroy(str4);
 }
 
-/* Test: Quantifier rendering with Or */
 TEST_F(GroupBaseTest, OrQuantifierRendering) {
-	String* str1 = grammatica_string_create(ctx, "a");
-	String* str2 = grammatica_string_create(ctx, "a");
-	String* str3 = grammatica_string_create(ctx, "a");
-	String* str4 = grammatica_string_create(ctx, "a");
+	String* str1 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
+	String* str2 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
+	String* str3 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
+	String* str4 = grammatica_string_create(ctx, reinterpret_cast<const unsigned char*>("a"));
 
 	Grammar* grammar1 = grammatica_string_simplify(ctx, str1);
 	Grammar* grammar2 = grammatica_string_simplify(ctx, str2);
@@ -317,16 +308,16 @@ TEST_F(GroupBaseTest, OrQuantifierRendering) {
 	ASSERT_NE(rendered4, nullptr);
 	EXPECT_STREQ(rendered4, "\"a\"{2}");
 
-	grammatica_free_string(ctx, rendered1);
-	grammatica_free_string(ctx, rendered2);
-	grammatica_free_string(ctx, rendered3);
-	grammatica_free_string(ctx, rendered4);
-	grammatica_or_destroy(ctx, or1);
-	grammatica_or_destroy(ctx, or2);
-	grammatica_or_destroy(ctx, or3);
-	grammatica_or_destroy(ctx, or4);
-	grammatica_string_destroy(ctx, str1);
-	grammatica_string_destroy(ctx, str2);
-	grammatica_string_destroy(ctx, str3);
-	grammatica_string_destroy(ctx, str4);
+	free(rendered1);
+	free(rendered2);
+	free(rendered3);
+	free(rendered4);
+	grammatica_or_destroy(or1);
+	grammatica_or_destroy(or2);
+	grammatica_or_destroy(or3);
+	grammatica_or_destroy(or4);
+	grammatica_string_destroy(str1);
+	grammatica_string_destroy(str2);
+	grammatica_string_destroy(str3);
+	grammatica_string_destroy(str4);
 }
