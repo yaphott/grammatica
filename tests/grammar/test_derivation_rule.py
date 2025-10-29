@@ -1,9 +1,7 @@
 import pytest
 
-from grammatica.grammar.derivation_rule import DerivationRule
-from grammatica.grammar.group.and_ import And
-from grammatica.grammar.group.or_ import Or
-from grammatica.grammar.string import String
+from grammatica.grammar import DerivationRule, String
+from grammatica.grammar.group import And, Or
 
 try:
     from .helpers import fmt_result

@@ -1,7 +1,7 @@
 import pytest
 
+from grammatica.grammar import String
 from grammatica.grammar.base import value_is_simple, value_to_string
-from grammatica.grammar.string import String
 
 try:
     from .helpers import (

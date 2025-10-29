@@ -5,8 +5,8 @@ from grammatica.constants import (
     CHAR_ESCAPE_MAP,
     STRING_LITERAL_ESCAPE_CHARS,
 )
-from grammatica.grammar.group.and_ import And
-from grammatica.grammar.string import String, merge_adjacent_string_grammars
+from grammatica.grammar import String, merge_adjacent_string_grammars
+from grammatica.grammar.group import And
 
 try:
     from .helpers import fmt_result

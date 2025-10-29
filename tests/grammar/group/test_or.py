@@ -1,8 +1,11 @@
 import pytest
 
-from grammatica.grammar.group.and_ import And
-from grammatica.grammar.group.or_ import Or, merge_adjacent_default_or_grammars
-from grammatica.grammar.string import String
+from grammatica.grammar import String
+from grammatica.grammar.group import (
+    And,
+    Or,
+    merge_adjacent_default_or_grammars,
+)
 
 try:
     from ..helpers import fmt_result

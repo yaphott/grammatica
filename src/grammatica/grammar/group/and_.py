@@ -11,7 +11,7 @@ from grammatica.grammar.group.base import GroupGrammar
 from grammatica.grammar.string import merge_adjacent_string_grammars
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterable
+    from collections.abc import Iterable, Iterator
 
     from grammatica.grammar.base import Grammar
 
@@ -123,11 +123,9 @@ class And(GroupGrammar):
         merged_n = merge_adjacent_default_and_grammars(subexprs, n)
         if merged_n < n:
             return And.simplify_subexprs(subexprs, quantifier)
-
         merged_n = merge_adjacent_string_grammars(subexprs, n)
         if merged_n < n:
             return And.simplify_subexprs(subexprs, quantifier)
-
         grouped, grouped_n = group_repeating_subexprs(subexprs, n)
         if grouped_n < n:
             return And.simplify_subexprs(grouped, quantifier)
@@ -156,7 +154,6 @@ def merge_adjacent_default_and_grammars(subexprs: list[Grammar], n: int) -> int:
     """
     if n < 2:
         return n
-
     last_idx = -1
     for i in range(n - 1, -1, -1):
         if isinstance(subexprs[i], And) and (
@@ -177,7 +174,6 @@ def merge_adjacent_default_and_grammars(subexprs: list[Grammar], n: int) -> int:
                 )
                 del subexprs[i + 2 : last_idx + 1]
             last_idx = -1
-
     if last_idx > 0:
         subexprs[0] = And(
             (
@@ -187,15 +183,10 @@ def merge_adjacent_default_and_grammars(subexprs: list[Grammar], n: int) -> int:
             )
         )
         del subexprs[1 : last_idx + 1]
-
     return n
 
 
-def _iter_group_spans(
-    n: int,
-    size: int,
-    offset: int,
-) -> Generator[tuple[int, int], None, None]:
+def _iter_group_spans(n: int, size: int, offset: int) -> Iterator[tuple[int, int]]:
     """Generate all possible index ranges that would produce slices of the provided size, starting at the provided offset.
 
     Args:

@@ -22,7 +22,7 @@ else:  # pragma: no cover
     from typing_extensions import override
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterable
+    from collections.abc import Iterable, Iterator
     from typing import Any
 
 
@@ -166,9 +166,7 @@ class CharRange(Grammar):
         return cls(char_ranges, negate=negate)
 
     @staticmethod
-    def _iter_ords_to_ord_ranges(
-        ords: Iterable[int],
-    ) -> Generator[tuple[int, int], None, None]:
+    def _iter_ords_to_ord_ranges(ords: Iterable[int]) -> Iterator[tuple[int, int]]:
         """Generate ranges of consecutive ordinals from an iterable of ordinals.
 
         Args:

@@ -1,6 +1,6 @@
 import pytest
 
-from grammatica.grammar.string import String
+from grammatica.grammar import String
 
 try:
     from ..helpers import NoOpGroupGrammar

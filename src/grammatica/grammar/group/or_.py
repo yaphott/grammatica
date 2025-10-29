@@ -119,7 +119,6 @@ def merge_adjacent_default_or_grammars(subexprs: list[Grammar], n: int) -> int:
     """
     if n < 2:
         return n
-
     last_idx = -1
     for i in range(n - 1, -1, -1):
         if isinstance(subexprs[i], Or) and (cast(Or, subexprs[i]).quantifier == (1, 1)):
@@ -138,7 +137,6 @@ def merge_adjacent_default_or_grammars(subexprs: list[Grammar], n: int) -> int:
                 )
                 del subexprs[i + 2 : last_idx + 1]
             last_idx = -1
-
     if last_idx > 0:
         subexprs[0] = Or(
             (
@@ -148,5 +146,4 @@ def merge_adjacent_default_or_grammars(subexprs: list[Grammar], n: int) -> int:
             )
         )
         del subexprs[1 : last_idx + 1]
-
     return n

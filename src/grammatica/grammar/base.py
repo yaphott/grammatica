@@ -56,6 +56,17 @@ class Grammar(ABC):
         """
         return {}
 
+    def copy(self) -> Grammar:
+        """Create a copy of the grammar.
+
+        Returns:
+            Grammar: Copy of the grammar.
+        """
+        cls = type(self)
+        kwargs = self.attrs_dict()
+        g = cls(**kwargs)
+        return g
+
     def as_string(self, indent: int | None = None) -> str:
         """Return a string representation of the grammar.
 
@@ -124,17 +135,6 @@ class Grammar(ABC):
 
     def __eq__(self, other: Any) -> bool:
         return self.equals(other)
-
-    def copy(self) -> Grammar:
-        """Create a copy of the grammar.
-
-        Returns:
-            Grammar: Copy of the grammar.
-        """
-        cls = type(self)
-        kwargs = self.attrs_dict()
-        g = cls(**kwargs)
-        return g
 
 
 def value_is_simple(value: Any) -> bool:

@@ -1,7 +1,7 @@
 """Base grammar classes and utility functions for handling grouped grammar expressions.
 
-Provides abstractions for building and rendering grouped grammar expressions, as well as utility
-functions for grouping and merging subexpressions.
+Provides abstractions for building and rendering grouped grammar expressions, as well as
+utility functions for grouping and merging subexpressions.
 """
 
 from __future__ import annotations
