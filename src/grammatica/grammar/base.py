@@ -40,7 +40,9 @@ class Grammar(ABC):
         """Simplify the grammar.
 
         Attempts to reduce redundancy, remove empty subexpressions, and optimize the grammar.
-        The resulting grammar and its parts are copies, and the original grammar is not modified.
+
+        Note:
+            The resulting grammar and its parts are copies, and the original grammar is not modified.
 
         Returns:
             Grammar | None: Simplified expression, or None if resolved to empty.

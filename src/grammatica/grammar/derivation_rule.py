@@ -16,6 +16,10 @@ class DerivationRule(Grammar):
     """Derivation rule that expands to a expression (grammar).
 
     Non-terminal symbol and an expression separated by a metasymbol (e.g. 'symbol ::= expression').
+
+    Args:
+        symbol (str): Symbol (non-terminal) for the derivation rule.
+        value (Grammar): Grammar the symbol derives into.
     """
 
     __slots__: tuple[str, ...] = ("symbol", "value")
@@ -24,12 +28,6 @@ class DerivationRule(Grammar):
     """Separator metasymbol to use for the derivation rule."""
 
     def __init__(self, symbol: str, value: Grammar) -> None:
-        """Derivation rule that expands to a grammar.
-
-        Args:
-            symbol (str): Symbol (non-terminal) for the derivation rule.
-            value (Grammar): Grammar the symbol derives into.
-        """
         super().__init__()
 
         self.symbol: str = symbol

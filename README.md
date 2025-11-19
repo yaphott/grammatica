@@ -38,17 +38,17 @@ If you discover an issue with Grammatica, please report it at [https://github.co
 
 ## Installing
 
-Install from [**PyPi**](https://pypi.org/project/grammatica/):
+<!-- Install from [**PyPi**](https://pypi.org/project/grammatica/):
 
 ```bash
 pip install grammatica
-```
+``` -->
 
-Install from [**Conda**](https://anaconda.org/yaphott/grammatica):
+<!-- Install from [**Conda**](https://anaconda.org/yaphott/grammatica):
 
 ```bash
 conda install -c yaphott grammatica
-```
+``` -->
 
 Install from [**GitHub**](https://github.com/yaphott/grammatica):
 

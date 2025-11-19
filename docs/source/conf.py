@@ -16,9 +16,10 @@ if TYPE_CHECKING:
 
     from sphinx.application import Sphinx
 
-try:
+
+if sys.version_info >= (3, 12):  # pragma: no cover
     from typing import override
-except ImportError:
+else:  # pragma: no cover
     from typing_extensions import override
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -213,8 +214,14 @@ html_copy_source = False
 # https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#configuration
 
 autodoc_member_order = "bysource"
-autodoc_typehints = "description"
 autodoc_typehints_description_target = "documented"
+autodoc_use_type_comments = False
+
+# -- Options for sphinx-autodoc-typehints --------------------------------------
+# https://github.com/tox-dev/sphinx-autodoc-typehints?tab=readme-ov-file#options
+
+typehints_use_rtype = False
+typehints_document_rtype_none = False
 
 # -- Options for Autosummary -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html#configuration
@@ -227,3 +234,11 @@ autosummary_generate = True
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 napoleon_include_init_with_doc = True
+always_use_bars_union = True
+napoleon_use_ivar = False
+napoleon_use_rtype = False
+napoleon_use_param = False
+napoleon_preprocess_types = True
+napoleon_use_admonition_for_examples = False
+napoleon_use_admonition_for_notes = True
+napoleon_use_admonition_for_references = True

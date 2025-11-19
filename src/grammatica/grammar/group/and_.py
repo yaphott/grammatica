@@ -23,7 +23,17 @@ GroupWeight: type[tuple] = namedtuple(
 
 
 class And(GroupGrammar):
-    """Logical AND operation between grammars."""
+    """Grouped grammar that represents a logical AND operation between grammars.
+
+    Args:
+        subexprs (Iterable[Grammar]): Grammars to group with AND logic.
+        quantifier (int | tuple[int, int | None]): Minimum and maximum repetitions the expression must match. Defaults to (1, 1).
+
+    Raises:
+        ValueError: Range lower bound is negative.
+        ValueError: Range upper bound is not positive or None (infinity).
+        ValueError: Range lower bound is greater than range upper bound.
+    """
 
     separator: str = " "
     """Separator to use for the grammar."""
@@ -33,12 +43,6 @@ class And(GroupGrammar):
         subexprs: Iterable[Grammar],
         quantifier: int | tuple[int, int | None] = (1, 1),
     ) -> None:
-        """Grouped grammar that represents a logical AND operation between grammars.
-
-        Args:
-            subexprs (Iterable[Grammar]): Grammars to group with AND logic.
-            quantifier (int | tuple[int, int | None]): Minimum and maximum repetitions the expression must match. Defaults to (1, 1).
-        """
         super().__init__(
             subexprs=subexprs,
             quantifier=quantifier,

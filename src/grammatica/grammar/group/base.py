@@ -24,7 +24,17 @@ if TYPE_CHECKING:
 
 
 class GroupGrammar(Grammar, ABC):
-    """Base class for grouped grammar expressions."""
+    """Base class for grouped grammar expressions.
+
+    Args:
+        subexprs (Iterable[Grammar]): Group of grammars.
+        quantifier (int | tuple[int, int | None]): Minimum and maximum repetitions the expression must match.
+
+    Raises:
+        ValueError: Range lower bound is negative.
+        ValueError: Range upper bound is not positive or None (infinity).
+        ValueError: Range lower bound is greater than range upper bound.
+    """
 
     __slots__: tuple[str, ...] = ("separator", "subexprs", "quantifier")
 
@@ -116,7 +126,7 @@ class GroupGrammar(Grammar, ABC):
         original_subexprs: list[Grammar],
         quantifier: tuple[int, int | None],
     ) -> Grammar | None:
-        """Simplify the provided subexpressions.
+        """Simplify the provided subexpressions for the grouped grammar.
 
         Args:
             original_subexprs (list[Grammar]): Subexpressions to simplify.

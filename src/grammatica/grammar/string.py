@@ -26,20 +26,19 @@ if TYPE_CHECKING:
 
 
 class String(Grammar):
-    """String literal that exactly matches a string."""
+    """Grammar that exactly matches a string.
+
+    Args:
+        value (Iterable[str]): Characters to match exactly.
+    """
 
     __slots__: tuple[str, ...] = ("value",)
 
     def __init__(self, value: Iterable[str]) -> None:
-        """Grammar that exactly matches a string.
-
-        Args:
-            value (Iterable[str]): String or sequence of characters for the string literal.
-        """
         super().__init__()
 
         self.value: str = str(value)
-        """String or sequence of characters for the string literal."""
+        """String to match exactly."""
 
     def render(self, full: bool = True, wrap: bool = True) -> str | None:
         if len(self.value) == 0:

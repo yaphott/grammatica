@@ -27,7 +27,19 @@ if TYPE_CHECKING:
 
 
 class CharRange(Grammar):
-    """Set of allowed or disallowed characters."""
+    """Grammar that defines a set of allowed or disallowed characters.
+
+    Args:
+        char_ranges (Iterable[tuple[str, str]]): Character ranges in the form of tuples (start, end).
+            Each range is inclusive, meaning both start and end characters are included.
+            For example, ('a', 'z') includes all lowercase letters from 'a' to 'z'.
+        negate (bool, optional): Negate the character range. Defaults to False.
+
+    Raises:
+        ValueError: Empty character range provided.
+        ValueError: Start or end of a character range is not a single character.
+        ValueError: End character is less than start character in a character range.
+    """
 
     __slots__: tuple[str, ...] = ("char_ranges", "negate")
 
@@ -36,14 +48,6 @@ class CharRange(Grammar):
         char_ranges: Iterable[tuple[str, str]],
         negate: bool = False,
     ) -> None:
-        """Grammar that defines a set of allowed or disallowed characters.
-
-        Args:
-            char_ranges (Iterable[tuple[str, str]]): Character ranges in the form of tuples (start, end).
-                Each range is inclusive, meaning both start and end characters are included.
-                For example, ('a', 'z') includes all lowercase letters from 'a' to 'z'.
-            negate (bool, optional): Negate the character range. Defaults to False.
-        """
         super().__init__()
 
         unsorted_char_ranges = list(char_ranges)
@@ -63,7 +67,12 @@ class CharRange(Grammar):
         self.char_ranges: list[tuple[str, str]] = list(
             map(self._ord_range_to_char_range, ord_ranges)
         )
+        """Character ranges in the form of tuples (start, end).
+            Each range is inclusive, meaning both start and end characters are included.
+            For example, ('a', 'z') includes all lowercase letters from 'a' to 'z'.
+        """
         self.negate: bool = negate
+        """Negate the character range."""
 
     def render(self, full: bool = True, wrap: bool = True) -> str | None:
         if len(self.char_ranges) == 0:
@@ -94,7 +103,7 @@ class CharRange(Grammar):
             return None
         if (n == 1) and (self.char_ranges[0][0] == self.char_ranges[0][1]):
             return String(self.char_ranges[0][0])
-        return CharRange(self.char_ranges, negate=self.negate)
+        return CharRange(self.char_ranges.copy(), negate=self.negate)
 
     @staticmethod
     def _escape(char: str) -> str:
@@ -116,14 +125,17 @@ class CharRange(Grammar):
 
     @classmethod
     def from_chars(cls, chars: Iterable[str], negate: bool = False) -> CharRange:
-        """Create an instance of `CharRange` from an iterable of characters.
+        """Create an instance of :class:`grammatica.grammar.CharRange` from an iterable of characters.
+
+        Note:
+            Duplicate characters in the input are ignored.
 
         Args:
             chars (Iterable[str]): Characters to include in the character ranges.
             negate (bool, optional): Negate the character ranges. Defaults to False.
 
         Returns:
-            CharRange: Instance of `CharRange` created from the provided characters.
+            CharRange: Instance created from the provided characters.
 
         Raises:
             ValueError: No characters provided.
@@ -149,14 +161,17 @@ class CharRange(Grammar):
 
     @classmethod
     def from_ords(cls, ords: Iterable[int], negate: bool = False) -> CharRange:
-        """Create an instance of `CharRange` from an iterable of ordinals.
+        """Create an instance of :class:`grammatica.grammar.CharRange` from an iterable of ordinals.
+
+        Note:
+            Duplicate ordinals in the input are ignored.
 
         Args:
             ords (Iterable[int]): Ordinals to include in the character ranges.
             negate (bool, optional): Negate the character ranges. Defaults to False.
 
         Returns:
-            CharRange: Instance of `CharRange` created from the provided ordinals.
+            CharRange: Instance created from the provided ordinals.
 
         Raises:
             ValueError: No ordinals provided.

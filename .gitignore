@@ -179,5 +179,8 @@ cython_debug/
 # VS Code
 .vscode/
 
+# Serena
+.serena/
+
 # Package build files
 src/*/_version.py
