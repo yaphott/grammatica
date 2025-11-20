@@ -1,3 +1,9 @@
+## v0.2.0 (2025-11-20)
+
+### Feat
+
+- trigger ci docs release
+
 ## v0.1.2 (2025-10-29)
 
 ### Fix
