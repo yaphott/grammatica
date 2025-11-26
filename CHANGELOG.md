@@ -1,3 +1,9 @@
+## v0.3.1 (2025-11-26)
+
+### Fix
+
+- update shebang and variable naming in run_tests.sh (#7)
+
 ## v0.3.0 (2025-11-20)
 
 ### Feat
