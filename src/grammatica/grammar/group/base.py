@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 class GroupGrammar(Grammar, ABC):
-    """Base class for grouped grammar expressions. abc
+    """Base class for grouped grammar expressions.
 
     Args:
         subexprs (Iterable[Grammar]): Group of grammars.
