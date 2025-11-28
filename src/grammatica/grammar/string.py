@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 
 class String(Grammar):
-    """Grammar that exactly matches a string.
+    """Grammar that exactly matches a string. test
 
     Args:
         value (Iterable[str]): Characters to match exactly.
@@ -77,7 +77,7 @@ class String(Grammar):
 
 
 def merge_adjacent_string_grammars(subexprs: list[Grammar], n: int) -> int:
-    """Merge adjacent String grammars in-place. abc
+    """Merge adjacent String grammars in-place.
 
     Args:
         subexprs (list[Grammar]): Subexpressions to merge.
