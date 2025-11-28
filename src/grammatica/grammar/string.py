@@ -77,7 +77,7 @@ class String(Grammar):
 
 
 def merge_adjacent_string_grammars(subexprs: list[Grammar], n: int) -> int:
-    """Merge adjacent String grammars in-place.
+    """Merge adjacent String grammars in-place. abc
 
     Args:
         subexprs (list[Grammar]): Subexpressions to merge.
