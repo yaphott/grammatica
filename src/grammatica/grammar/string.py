@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 
 class String(Grammar):
-    """Grammar that exactly matches a string. test
+    """Grammar that exactly matches a string.
 
     Args:
         value (Iterable[str]): Characters to match exactly.
