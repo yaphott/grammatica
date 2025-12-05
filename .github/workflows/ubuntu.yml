@@ -19,7 +19,7 @@ jobs:
     defaults:
       run:
         shell: bash -el {0}
-    timeout-minutes: 60
+    timeout-minutes: 15
     strategy:
       matrix:
         os: ["ubuntu-latest"]
@@ -58,7 +58,7 @@ jobs:
     defaults:
       run:
         shell: bash -el {0}
-    timeout-minutes: 60
+    timeout-minutes: 15
     name: Test Docs
     concurrency:
       # https://github.community/t/concurrecy-not-work-for-push/183068/7
