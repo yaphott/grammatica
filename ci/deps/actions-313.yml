@@ -1,0 +1,12 @@
+name: grammatica
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13
+  - hatchling>=1.27.0
+  - hatch-vcs>=0.4.0
+  - editables>=0.3
+
+  # Test dependencies
+  - pytest>=7.0.0
+  - pytest-cov>=6.0.0

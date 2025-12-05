@@ -1,0 +1,85 @@
+name: Bump version, update changelog, and tag
+description: Bump version, update changelog, and tag
+inputs:
+  destination-ref:
+    description: Destination branch, tag, or SHA.
+    default: ${{ github.ref }}
+  token:
+    description: Access token used to push changes.
+    default: ${{ github.token }}
+outputs:
+  previous-revision:
+    description: Previous revision (MAJOR.MINOR.PATCH).
+    value: ${{ steps.bump-version.outputs.previous_revision }}
+  previous-revision-short:
+    description: Previous revision short (MAJOR.MINOR).
+    value: ${{ steps.bump-version.outputs.previous_revision_short }}
+  revision:
+    description: Revision full (MAJOR.MINOR.PATCH).
+    value: ${{ steps.bump-version.outputs.revision }}
+  revision-short:
+    description: Revision short (MAJOR.MINOR).
+    value: ${{ steps.bump-version.outputs.revision_short }}
+  changelog-md:
+    description: Changelog for the new version.
+    value: ${{ steps.bump-version.outputs.changelog_md }}
+  release-sha:
+    description: SHA of the commit after pushing changes.
+    value: ${{ steps.push-changes.outputs.release_sha }}
+
+runs:
+  using: composite
+  steps:
+    - id: bump-version
+      name: Bump version, update changelog, and tag
+      run: |
+        PREVIOUS_REVISION="$(cz version --project)"
+        echo "previous_revision=${PREVIOUS_REVISION}" >> "$GITHUB_OUTPUT"
+        PREVIOUS_REVISION_SHORT="$(echo "$PREVIOUS_REVISION" | cut -d'.' -f1-2)"
+        echo "previous_revision_short=${PREVIOUS_REVISION_SHORT}" >> "$GITHUB_OUTPUT"
+
+        cz --no-raise 21 bump --yes --check-consistency --changelog-to-stdout > changelog_latest.md
+        {
+          echo 'changelog_md<<EOF'
+          cat changelog_latest.md
+          echo 'EOF'
+        } >> "$GITHUB_OUTPUT"
+
+        REVISION="$(cz version --project)"
+        echo "revision=${REVISION}" >> "$GITHUB_OUTPUT"
+        REVISION_SHORT="$(echo "$REVISION" | cut -d'.' -f1-2)"
+        echo "revision_short=${REVISION_SHORT}" >> "$GITHUB_OUTPUT"
+      shell: bash -el {0}
+
+    - id: push-changes
+      if: steps.bump-version.outputs.revision != steps.bump-version.outputs.previous_revision
+      name: Push changes
+      env:
+        DEST_REF: ${{ inputs.destination-ref }}
+        GITHUB_ACTOR: ${{ github.actor }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_TOKEN: ${{ inputs.token }}
+      run: |
+        GITHUB_DOMAIN="$(echo "$GITHUB_SERVER_URL" | sed -E 's|^.+://||')"
+        REMOTE_REPO="https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@${GITHUB_DOMAIN}/${GITHUB_REPOSITORY}.git"
+        git pull --rebase "$REMOTE_REPO" "$DEST_REF"
+        git push --follow-tags "$REMOTE_REPO" "HEAD:${DEST_REF}"
+        echo "release_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      shell: bash -el {0}
+
+    - name: Version details
+      env:
+        PREVIOUS_REVISION: ${{ steps.bump-version.outputs.previous_revision }}
+        PREVIOUS_REVISION_SHORT: ${{ steps.bump-version.outputs.previous_revision_short }}
+        REVISION: ${{ steps.bump-version.outputs.revision }}
+        REVISION_SHORT: ${{ steps.bump-version.outputs.revision_short }}
+        CHANGELOG_MD: ${{ steps.bump-version.outputs.changelog_md }}
+        RELEASE_SHA: ${{ steps.push-changes.outputs.release_sha }}
+      run: |
+        echo "previous_revision=${PREVIOUS_REVISION}"
+        echo "previous_revision_short=${PREVIOUS_REVISION_SHORT}"
+        echo "revision=${REVISION}"
+        echo "revision_short=${REVISION_SHORT}"
+        echo "changelog_md=${CHANGELOG_MD}"
+        echo "release_sha=${RELEASE_SHA}"
+      shell: bash -el {0}
