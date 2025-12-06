@@ -15,7 +15,6 @@ permissions:
 
 jobs:
   run-tests:
-    environment: run-tests
     runs-on: ${{ matrix.os }}
     defaults:
       run:
