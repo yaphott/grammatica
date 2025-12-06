@@ -15,7 +15,6 @@ permissions:
 
 jobs:
   run-tests:
-    environment: run-tests
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -251,7 +250,6 @@ jobs:
         with:
           ref: ${{ needs.bump-version.outputs.release_sha }}
           fetch-depth: 0
-          persist-credentials: false
 
       - name: Set up Conda
         uses: ./.github/actions/setup-conda
