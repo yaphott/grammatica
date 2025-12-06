@@ -22,6 +22,7 @@ dependencies:
   - sphinx=8.2.3
   - pydata-sphinx-theme=0.16.1
   - sphinx-autodoc-typehints=3.5.2
+  - sphinx-copybutton=0.5.2
 
   # Versioning, tagging, and changelogs
   - commitizen>=4.6.0
