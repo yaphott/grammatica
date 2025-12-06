@@ -5,7 +5,6 @@ dependencies:
   - python=3.12
   - hatchling>=1.27.0
   - hatch-vcs>=0.4.0
-  # - editables>=0.3
 
   # Build dependencies
   - anaconda-client
