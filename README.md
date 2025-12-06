@@ -7,11 +7,11 @@
 
 # Grammatica: GBNF grammar building toolkit
 
-|         |                                                                                                                                                                                                                                                                                                       |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Testing | [![Ubuntu](https://github.com/yaphott/grammatica/actions/workflows/ubuntu.yml/badge.svg?branch=main)](https://github.com/yaphott/grammatica/actions/workflows/ubuntu.yml) [![codecov](https://codecov.io/gh/yaphott/grammatica/graph/badge.svg?token=TODO)](https://codecov.io/gh/yaphott/grammatica) |
-| Package | [![PyPI - Version](https://img.shields.io/pypi/v/grammatica)](https://pypi.org/project/grammatica/) [![Conda Version](https://img.shields.io/conda/vn/yaphott/grammatica)](https://anaconda.org/yaphott/grammatica)                                                                                   |
-| Meta    | [![PyPI - License](https://img.shields.io/pypi/l/grammatica)](https://github.com/yaphott/grammatica/blob/main/LICENSE)                                                                                                                                                                                |
+|         |                                                                                                                                                                                                                                                                                                             |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Testing | [![Ubuntu](https://github.com/yaphott/grammatica/actions/workflows/ubuntu.yml/badge.svg?branch=main)](https://github.com/yaphott/grammatica/actions/workflows/ubuntu.yml) [![codecov](https://codecov.io/gh/yaphott/grammatica/graph/badge.svg?token=OK38N9YOEB)](https://codecov.io/gh/yaphott/grammatica) |
+| Package | [![PyPI - Version](https://img.shields.io/pypi/v/grammatica)](https://pypi.org/project/grammatica/) [![Conda Version](https://img.shields.io/conda/vn/yaphott/grammatica)](https://anaconda.org/yaphott/grammatica)                                                                                         |
+| Meta    | [![PyPI - License](https://img.shields.io/pypi/l/grammatica)](https://github.com/yaphott/grammatica/blob/main/LICENSE)                                                                                                                                                                                      |
 
 ## What is it?
 

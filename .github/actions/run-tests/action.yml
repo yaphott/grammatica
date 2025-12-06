@@ -4,10 +4,10 @@ inputs:
   suffix:
     description: Suffix to include when formatting result names.
     default: ""
-  # codecov-token:
-  #   description: Codecov token for repository.
-  #   required: true
-  #   default: ""
+  token:
+    description: Codecov token for the repository.
+    required: true
+    default: ""
 
 runs:
   using: composite
@@ -21,16 +21,18 @@ runs:
       with:
         name: ${{ inputs.suffix != '' && format('test-results-{0}', inputs.suffix) || 'test-results' }}
         path: test-data.xml
+        overwrite: true
 
     - name: Collect coverage
       run: coverage report -m
       shell: bash -el {0}
 
-    # - name: Upload coverage report to Codecov
-    #   uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
-    #   with:
-    #     token: ${{ inputs.codecov-token }}
-    #     files: ./coverage.xml
-    #     flags: unittests
-    #     name: grammatica
-    #     fail_ci_if_error: false
+    - name: Upload coverage report to Codecov
+      uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7
+      with:
+        token: ${{ inputs.token }}
+        files: ./coverage.xml
+        flags: unittests
+        name: grammatica
+        fail_ci_if_error: false
+        disable_telem: true
