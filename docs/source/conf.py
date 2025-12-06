@@ -146,6 +146,7 @@ extensions = [
     "sphinx.ext.linkcode",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
+    "sphinx_copybutton",
 ]
 
 source_encoding = "utf-8"
@@ -222,6 +223,12 @@ autodoc_use_type_comments = False
 
 typehints_use_rtype = False
 typehints_document_rtype_none = False
+
+# -- Options for sphinx-copybutton --------------------------
+# https://sphinx-copybutton.readthedocs.io/en/latest/use.html
+
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
 
 # -- Options for Autosummary -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html#configuration
