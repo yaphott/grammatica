@@ -29,16 +29,46 @@ if TYPE_CHECKING:
 class CharRange(Grammar):
     """Grammar that defines a set of allowed or disallowed characters.
 
+    Note:
+        Each character range is inclusive, meaning both start and end characters are included.
+        For example, ('a', 'z') includes all lowercase letters from 'a' to 'z'.
+
     Args:
         char_ranges (Iterable[tuple[str, str]]): Character ranges in the form of tuples (start, end).
-            Each range is inclusive, meaning both start and end characters are included.
-            For example, ('a', 'z') includes all lowercase letters from 'a' to 'z'.
         negate (bool, optional): Negate the character range. Defaults to False.
 
     Raises:
         ValueError: Empty character range provided.
         ValueError: Start or end of a character range is not a single character.
         ValueError: End character is less than start character in a character range.
+
+    Examples:
+        Create a character range grammar that matches a lowercase letter ``a-z``:
+
+        >>> from grammatica.grammar import CharRange
+        >>> lowercase_ascii = CharRange([("a", "z")])
+        >>> lowercase_ascii
+        CharRange(char_ranges=[('a', 'z')], negate=False)
+        >>> print(lowercase_ascii.render())
+        [a-z]
+
+        Create a character range grammar that matches a hexadecimal digit (``0-9``, ``A-F``, ``a-f``):
+
+        >>> from grammatica.grammar import CharRange
+        >>> hex_digits = CharRange([("0", "9"), ("A", "F"), ("a", "f")])
+        >>> hex_digits
+        CharRange(char_ranges=[('0', '9'), ('A', 'F'), ('a', 'f')], negate=False)
+        >>> print(hex_digits.render())
+        [0-9A-Fa-f]
+
+        Create a character range grammar that matches any non-digit character:
+
+        >>> from grammatica.grammar import CharRange
+        >>> non_digits = CharRange([("0", "9")], negate=True)
+        >>> non_digits
+        CharRange(char_ranges=[('0', '9')], negate=True)
+        >>> print(non_digits.render())
+        [^0-9]
     """
 
     __slots__: tuple[str, ...] = ("char_ranges", "negate")
@@ -139,6 +169,16 @@ class CharRange(Grammar):
 
         Raises:
             ValueError: No characters provided.
+
+        Examples:
+            Create a character range grammar that matches a lowercase letter ``a-z``:
+
+            >>> from grammatica.grammar import CharRange
+            >>> lowercase_ascii = CharRange.from_chars("abcdefghijklmnopqrstuvwxyz")
+            >>> lowercase_ascii
+            CharRange(char_ranges=[('a', 'z')], negate=False)
+            >>> print(lowercase_ascii.render())
+            [a-z]
         """
         return cls.from_ords(map(ord, chars), negate=negate)
 
@@ -175,6 +215,16 @@ class CharRange(Grammar):
 
         Raises:
             ValueError: No ordinals provided.
+
+        Examples:
+            Create a character range grammar that matches a lowercase letter ``a-z``:
+
+            >>> from grammatica.grammar import CharRange
+            >>> lowercase_ascii = CharRange.from_ords(range(ord("a"), ord("z") + 1))
+            >>> lowercase_ascii
+            CharRange(char_ranges=[('a', 'z')], negate=False)
+            >>> print(lowercase_ascii.render())
+            [a-z]
         """
         ord_ranges = cls._iter_ords_to_ord_ranges(ords)
         char_ranges = map(cls._ord_range_to_char_range, ord_ranges)

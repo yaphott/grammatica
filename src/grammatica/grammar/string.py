@@ -30,6 +30,34 @@ class String(Grammar):
 
     Args:
         value (Iterable[str]): Characters to match exactly.
+
+    Examples:
+        Match the simple string ``gandalf``:
+
+        >>> from grammatica.grammar import String
+        >>> g = String("gandalf")
+        >>> g
+        String(value='gandalf')
+        >>> print(g.render())
+        "gandalf"
+
+        Match a string containing a newline character (``\\n``, U+000A):
+
+        >>> from grammatica.grammar import String
+        >>> g = String("line\\nbreak")
+        >>> g
+        String(value='line\\nbreak')
+        >>> print(g.render())
+        "line\\nbreak"
+
+        Match a string containing the Chinese characters for fire and water:
+
+        >>> from grammatica.grammar import String
+        >>> g = String("\\u6C34\\u706B")
+        >>> g
+        String(value='水火')
+        >>> print(g.render())
+        "\\x6C34\\x706B"
     """
 
     __slots__: tuple[str, ...] = ("value",)
