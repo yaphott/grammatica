@@ -93,10 +93,10 @@ After building the documentation, you can serve it locally using Python's built-
 
 ```bash
 cd docs/build/html
-python -m http.server 8000
+python -m http.server 9000
 ```
 
-Then open <http://localhost:8000> in your browser.
+Then open <http://localhost:9000> in your browser.
 
 Alternatively, use the provided script from the project root:
 
@@ -104,7 +104,7 @@ Alternatively, use the provided script from the project root:
 python scripts/serve_locally.py
 ```
 
-This will serve the documentation at <http://127.0.0.1:8000> and automatically rebuild when you save changes.
+This will serve the documentation at <http://127.0.0.1:9000> and automatically rebuild when you save changes.
 
 ## Environment Variables
 
