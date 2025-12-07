@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest"]
-        python_version: ["310", "311", "312", "313"]
+        python_version: ["310", "311", "312", "313", "314"]
       fail-fast: false
     name: ${{ format('Test Python {0}', matrix.python_version) }}
     concurrency:
