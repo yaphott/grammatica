@@ -152,7 +152,7 @@ class And(GroupGrammar):
             >>> g.needs_wrapped()
             False
 
-            Wrap when there are multiple subexpressions if the parent and a non-default quantifier (default is :py:data:`(1, 1)`)
+            Wrap when there are multiple subexpressions if the parent has a non-default quantifier (default is :py:data:`(1, 1)`)
 
             >>> from grammatica.grammar import CharRange, String
             >>> from grammatica.grammar.group import And, Or
@@ -166,18 +166,6 @@ class And(GroupGrammar):
             ... )
             >>> g.needs_wrapped()
             True
-
-            >>> from grammatica.grammar import CharRange, String
-            >>> from grammatica.grammar.group import And, Or
-            >>> g = And(
-            ...     [
-            ...         String("I'll be on the "),
-            ...         Or([String("red"), String("green"), String("blue")]),
-            ...         String(" team."),
-            ...     ],
-            ... )
-            >>> g.needs_wrapped()
-            False
 
             Do not wrap when there is a single subexpression that is not a grouped grammar (subclass of :class:`grammatica.grammar.group.GroupGrammar`)
 
