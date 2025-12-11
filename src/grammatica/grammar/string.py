@@ -136,10 +136,6 @@ class String(Grammar):
             return "\\" + char
         return char_to_hex(char)
 
-    @override
-    def as_string(self, indent: int | None = None) -> str:
-        return super().as_string(indent=None)
-
     def attrs_dict(self) -> dict[str, Any]:
         return {"value": self.value}
 

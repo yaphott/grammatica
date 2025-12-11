@@ -68,11 +68,11 @@ class Grammar(ABC):
         g = cls(**kwargs)
         return g
 
-    def as_string(self, indent: int | None = None) -> str:
+    def as_string(self, **kwargs) -> str:
         """Return a string representation of the grammar.
 
         Args:
-            indent (int, optional): Number of spaces to indent each level. Defaults to None.
+            **kwargs: Keyword arguments for the current context.
 
         Returns:
             str: String representation of the grammar.
@@ -81,26 +81,13 @@ class Grammar(ABC):
             ValueError: Attribute type is not supported.
         """
         attrs = self.attrs_dict()
-        n = len(attrs)
+        kwargs["indent"] = None
         msg = f"{type(self).__name__}("
         for j, (name, value) in enumerate(attrs.items()):
-            if indent is None:
-                if j > 0:
-                    msg += ", "
-            else:
-                if j > 0:
-                    msg += ","
-                msg += "\n" + (" " * indent)
+            if j > 0:
+                msg += ", "
             msg += f"{name}="
-            if indent is None:
-                msg += value_to_string(value, indent=indent)
-            else:
-                msg += value_to_string(value, indent=indent).replace(
-                    "\n",
-                    "\n" + (" " * indent),
-                )
-                if j == n - 1:
-                    msg += "\n"
+            msg += value_to_string(value, **kwargs)
         msg += ")"
         return msg
 

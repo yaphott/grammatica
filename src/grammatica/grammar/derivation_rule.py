@@ -4,9 +4,15 @@ Classes and utilities for defining derivation rules.
 
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
 
-from grammatica.grammar.base import Grammar
+from grammatica.grammar.base import Grammar, value_to_string
+
+if sys.version_info >= (3, 12):  # pragma: no cover
+    from typing import override
+else:  # pragma: no cover
+    from typing_extensions import override
 
 if TYPE_CHECKING:
     from typing import Any
@@ -126,3 +132,42 @@ class DerivationRule(Grammar):
 
     def attrs_dict(self) -> dict[str, Any]:
         return {"symbol": self.symbol, "value": self.value}
+
+    @override
+    def as_string(self, indent: int | None = None, **kwargs) -> str:
+        """Return a string representation of the grammar.
+
+        Args:
+            indent (int, optional): Number of spaces to indent each level. Defaults to None.
+            **kwargs: Keyword arguments for the current context.
+
+        Returns:
+            str: String representation of the grammar.
+
+        Raises:
+            ValueError: Attribute type is not supported.
+        """
+        attrs = self.attrs_dict()
+        n = len(attrs)
+        kwargs["indent"] = indent
+        msg = f"{type(self).__name__}("
+        for j, (name, value) in enumerate(attrs.items()):
+            if indent is None:
+                if j > 0:
+                    msg += ", "
+            else:
+                if j > 0:
+                    msg += ","
+                msg += "\n" + (" " * indent)
+            msg += f"{name}="
+            if indent is None:
+                msg += value_to_string(value, **kwargs)
+            else:
+                msg += value_to_string(value, **kwargs).replace(
+                    "\n",
+                    "\n" + (" " * indent),
+                )
+                if j == n - 1:
+                    msg += "\n"
+        msg += ")"
+        return msg

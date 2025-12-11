@@ -320,10 +320,6 @@ class CharRange(Grammar):
             end = ord_
         yield start, end
 
-    @override
-    def as_string(self, indent: int | None = None) -> str:
-        return super().as_string(indent=None)
-
     def attrs_dict(self) -> dict[str, Any]:
         return {
             "char_ranges": self.char_ranges,
