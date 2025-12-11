@@ -9,6 +9,7 @@ import inspect
 import json
 import logging
 import pathlib
+import sys
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -32,6 +33,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 class Args:
     prefix: str | None
     raise_on_error: bool
+    output_format: Literal["text", "json"]
     verbosity: int
 
 
@@ -49,6 +51,13 @@ def parse_args() -> Args:
         help="Raise an exception on the first error encountered.",
     )
     parser.add_argument(
+        "--output-format",
+        type=str,
+        choices=["text", "json"],
+        default="text",
+        help="Format of the output report.",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         action="count",
@@ -60,6 +69,7 @@ def parse_args() -> Args:
     return Args(
         prefix=args.prefix,
         raise_on_error=args.raise_on_error,
+        output_format=args.output_format,
         verbosity=args.verbosity,
     )
 
@@ -237,7 +247,27 @@ def main():
         raise_on_error=args.raise_on_error,
         verbose=log_level <= logging.INFO,
     )
-    print(json.dumps(result) + "\n", end="")
+    if args.output_format == "json":
+        print(json.dumps(result) + "\n", end="")
+        sys.exit(0)
+
+    for i, (module_name, res) in enumerate(result.items()):
+        if i > 0:
+            print()
+        print(f"Module: {module_name}")
+        print(f"  File: {res['file']}")
+        print(f"  Doctests run: {res['n_tries']}")
+        print(f"  Doctests failed: {res['n_failures']}")
+        print(f"  Referenced sections and subsections:")
+        for section, subsection in res["referenced_sections"]:
+            if subsection:
+                print(f"    - {section} / {subsection}")
+            else:
+                print(f"    - {section}")
+        print(f"  Public APIs tested:")
+        for api in res["public_apis"]:
+            print(f"    - {api}")
+    sys.exit(0)
 
 
 if __name__ == "__main__":
