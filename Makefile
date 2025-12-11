@@ -15,7 +15,7 @@ install-dev :
 
 test :
 	@echo 'Running unit tests'
-	PYTHONDEVMODE=1 PYTHONWARNDEFAULTENCODING=1 ${PYTHON} -m pytest -r fEs -s ${PYTEST_ARGS} ${PYTEST_TARGET}
+	PYTHONDEVMODE=1 PYTHONWARNDEFAULTENCODING=1 ${PYTHON} -m pytest -r fEs -s -n ${PYTEST_WORKERS} --dist=worksteal ${PYTEST_ARGS} ${PYTEST_TARGET}
 	@echo 'Done'
 
 coverage :
