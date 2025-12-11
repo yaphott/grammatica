@@ -157,6 +157,32 @@ class GroupGrammar(Grammar, ABC):
         return False
 
     @override
+    def equals(self, other: Any, check_quantifier: bool = True, **kwargs) -> bool:
+        """Check equality with another value.
+
+        Args:
+            other (Any): Value to compare against.
+            check_quantifier (bool, optional): Include the quantifier in the comparison. Defaults to True.
+            **kwargs: Keyword arguments for the current context.
+
+        Returns:
+            bool: True if the values are equal, False otherwise.
+        """
+        if self is other:
+            return True
+        if not isinstance(other, type(self)):
+            return False
+        attrs = self.attrs_dict()
+        other_attrs = other.attrs_dict()
+        if not check_quantifier:
+            return {k: attrs[k] for k in sorted(attrs) if (k != "quantifier")} == {
+                k: other_attrs[k] for k in sorted(other_attrs) if (k != "quantifier")
+            }
+        return {k: attrs[k] for k in sorted(attrs)} == {
+            k: other_attrs[k] for k in sorted(other_attrs)
+        }
+
+    @override
     def attrs_dict(self) -> dict[str, Any]:
         return {
             "subexprs": self.subexprs,

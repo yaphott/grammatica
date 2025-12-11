@@ -97,12 +97,12 @@ class Grammar(ABC):
     def __str__(self) -> str:
         return self.as_string(indent=None)
 
-    def equals(self, other: Any, check_quantifier: bool = True) -> bool:
+    def equals(self, other: Any, **kwargs) -> bool:
         """Check equality with another value.
 
         Args:
             other (Any): Value to compare against.
-            check_quantifier (bool, optional): Include the quantifier in the comparison. Defaults to True.
+            **kwargs: Keyword arguments for the current context.
 
         Returns:
             bool: True if the values are equal, False otherwise.
@@ -113,10 +113,6 @@ class Grammar(ABC):
             return False
         attrs = self.attrs_dict()
         other_attrs = other.attrs_dict()
-        if not check_quantifier:
-            return {k: attrs[k] for k in sorted(attrs) if (k != "quantifier")} == {
-                k: other_attrs[k] for k in sorted(other_attrs) if (k != "quantifier")
-            }
         return {k: attrs[k] for k in sorted(attrs)} == {
             k: other_attrs[k] for k in sorted(other_attrs)
         }
