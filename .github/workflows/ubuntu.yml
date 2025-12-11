@@ -86,6 +86,10 @@ jobs:
         working-directory: ./docs
         shell: bash -el {0}
 
+      - name: Run docstring tests
+        run: python3 scripts/run_doctests.py --raise-on-error
+        shell: bash -el {0}
+
   bump-version:
     needs: [run-tests, build-docs]
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && !startsWith(github.event.head_commit.message, 'bump:') }}

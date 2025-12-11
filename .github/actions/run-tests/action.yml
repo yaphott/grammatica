@@ -36,7 +36,3 @@ runs:
         name: grammatica
         fail_ci_if_error: false
         disable_telem: true
-
-    - name: Run docstring tests
-      run: python3 scripts/test_docstrings.py --raise-on-error
-      shell: bash -el {0}
