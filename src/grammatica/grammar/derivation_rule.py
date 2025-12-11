@@ -4,6 +4,7 @@ Classes and utilities for defining derivation rules.
 
 from __future__ import annotations
 
+import logging
 import sys
 from typing import TYPE_CHECKING
 
@@ -16,6 +17,9 @@ else:  # pragma: no cover
 
 if TYPE_CHECKING:
     from typing import Any
+
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 class DerivationRule(Grammar):
@@ -40,7 +44,7 @@ class DerivationRule(Grammar):
         )
     """
 
-    __slots__: tuple[str, ...] = ("symbol", "value")
+    __slots__: tuple[str, ...] = ("_symbol", "value")
 
     separator: str = " ::= "
     """Separator metasymbol to use for the derivation rule."""
@@ -48,10 +52,37 @@ class DerivationRule(Grammar):
     def __init__(self, symbol: str, value: Grammar) -> None:
         super().__init__()
 
-        self.symbol: str = symbol
-        """Symbol (non-terminal) for the derivation rule."""
+        self._symbol: str
+        self.symbol = symbol
+
         self.value: Grammar = value
         """Grammar the symbol derives into."""
+
+    @property
+    def symbol(self) -> str:
+        """str: Symbol (non-terminal) for the derivation rule."""
+        return self._symbol
+
+    @symbol.setter
+    def symbol(self, value: str) -> None:
+        if not value:
+            raise ValueError("Derivation rule symbol cannot be empty")
+        prefix, trailing = value[0], value[1:]
+        if not prefix.isalpha():
+            raise ValueError(
+                "Derivation rule symbol must start with an alphabetic character (a-z, A-Z)"
+            )
+        if trailing and not trailing.replace("-", "").isalnum():
+            raise ValueError(
+                "Derivation rule symbol must contain only alphanumeric characters (a-z, A-Z, 0-9) and hyphens (-) after the first character"
+            )
+        self._symbol = value.casefold()
+        if self._symbol != value:
+            logger.warning(
+                "Derivation rule symbols are case insensitive, used %r instead of %r",
+                self._symbol,
+                value,
+            )
 
     def render(self, full: bool = True, wrap: bool = True, **kwargs) -> str | None:
         """Render the grammar as a regular expression.
