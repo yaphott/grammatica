@@ -25,6 +25,11 @@ coverage :
 	${PYTHON} -m coverage html
 	@echo 'Done'
 
+doctest :
+	@echo 'Running doctests'
+	${PYTHON} scripts/run_doctests.py --raise-on-error -v
+	@echo 'Done'
+
 lint :
 	@echo 'Linting code'
 	${PYTHON} -m pylint src
