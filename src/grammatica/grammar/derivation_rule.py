@@ -118,13 +118,13 @@ class DerivationRule(Grammar):
             bool ::= ("true" | "false")
         """
         if not full:
-            return self.symbol
+            return self._symbol
         kwargs["full"] = False
         kwargs["wrap"] = wrap
         rendered = self.value.render(**kwargs)
         if not rendered:
             return None
-        expr = f"{self.symbol}{self.separator}{rendered}"
+        expr = f"{self._symbol}{self.separator}{rendered}"
         return expr
 
     def simplify(self) -> DerivationRule | None:
@@ -159,10 +159,10 @@ class DerivationRule(Grammar):
         simplified = self.value.simplify()
         if simplified is None:
             return None
-        return DerivationRule(self.symbol, simplified)
+        return DerivationRule(self._symbol, simplified)
 
     def attrs_dict(self) -> dict[str, Any]:
-        return {"symbol": self.symbol, "value": self.value}
+        return {"symbol": self._symbol, "value": self.value}
 
     @override
     def as_string(self, indent: int | None = None, **kwargs) -> str:
