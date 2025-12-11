@@ -182,6 +182,8 @@ doctest_optionflags = [
     "IGNORE_EXCEPTION_DETAIL",
     # Allows you to use ... in place of a value in an expected output string
     "ELLIPSIS",
+    # Reject 1 where True is expected
+    "DONT_ACCEPT_TRUE_FOR_1",
 ]
 filterwarnings = []
 junit_family = "xunit2"
