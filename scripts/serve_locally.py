@@ -7,7 +7,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-PROJECT_DIR: Path = Path(__file__).parent.parent
+PROJECT_DIR: Path = Path(__file__).resolve().parent.parent
 
 logger: logging.Logger = logging.getLogger(__name__)
 
