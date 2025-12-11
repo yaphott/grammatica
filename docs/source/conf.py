@@ -201,7 +201,7 @@ html_theme_options = {
         {
             "name": "Londowski",
             "url": "https://londowski.com/",
-            "icon": "fa-solid fa-l",
+            "icon": "fa-custom fa-londowski",
         },
     ],
 }
