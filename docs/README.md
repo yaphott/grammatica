@@ -10,6 +10,7 @@ The documentation is built using [Sphinx](https://www.sphinx-doc.org/en/master/)
 - `sphinx`
 - `pydata-sphinx-theme`
 - `sphinx-autodoc-typehints`
+- `sphinx-design`
 - `sphinx-copybutton`
 
 ## Installation
