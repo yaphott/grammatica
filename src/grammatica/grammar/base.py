@@ -1,7 +1,7 @@
 """Base grammar classes and utility functions for handling grammar expressions.
 
-Provides abstractions for building and rendering grammar expressions, as well as utility functions for
-string conversion and determining the simplicity of values.
+Provides abstractions for building and rendering grammar expressions, as well as utility
+functions for string conversion and determining the simplicity of values.
 """
 
 from __future__ import annotations
@@ -23,12 +23,11 @@ class Grammar(ABC):
     __slots__: tuple[str, ...] = ()
 
     @abstractmethod
-    def render(self, full: bool = True, wrap: bool = True) -> str | None:
+    def render(self, **kwargs) -> str | None:
         """Render the grammar as a regular expression.
 
         Args:
-            full (bool, optional): Render the full expression. Defaults to True.
-            wrap (bool, optional): Wrap the expression in parentheses. Defaults to True.
+            **kwargs: Keyword arguments for the current context.
 
         Returns:
             str | None: Rendered expression, or None if resolved to empty.

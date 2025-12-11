@@ -32,32 +32,10 @@ class String(Grammar):
         value (Iterable[str]): Characters to match exactly.
 
     Examples:
-        Match the simple string ``gandalf``:
-
         >>> from grammatica.grammar import String
         >>> g = String("gandalf")
         >>> g
         String(value='gandalf')
-        >>> print(g.render())
-        "gandalf"
-
-        Match a string containing a newline character (``\\n``, U+000A):
-
-        >>> from grammatica.grammar import String
-        >>> g = String("line\\nbreak")
-        >>> g
-        String(value='line\\nbreak')
-        >>> print(g.render())
-        "line\\nbreak"
-
-        Match a string containing the Chinese characters for fire and water:
-
-        >>> from grammatica.grammar import String
-        >>> g = String("\\u6C34\\u706B")
-        >>> g
-        String(value='水火')
-        >>> print(g.render())
-        "\\x6C34\\x706B"
     """
 
     __slots__: tuple[str, ...] = ("value",)
@@ -68,12 +46,74 @@ class String(Grammar):
         self.value: str = str(value)
         """String to match exactly."""
 
-    def render(self, full: bool = True, wrap: bool = True) -> str | None:
+    def render(self, **kwargs) -> str | None:
+        """Render the grammar as a regular expression.
+
+        Args:
+            **kwargs: Keyword arguments for the current context.
+
+        Returns:
+            str | None: Rendered expression, or None if resolved to empty.
+
+        Examples:
+            Some characters are always safe and do not require escaping
+
+            >>> from grammatica.grammar import String
+            >>> g = String("gandalf")
+            >>> print(g.render())
+            "gandalf"
+
+            Characters such as whitespace are escaped using a backslash (``\\``):
+
+            >>> from grammatica.grammar import String
+            >>> g = String("line\\nbreak")
+            >>> print(g.render())
+            "line\\nbreak"
+
+            Otherwise characters are escaped to their hexadecimal representation
+
+            >>> from grammatica.grammar import String
+            >>> g = String("\\u6C34\\u706B")
+            >>> print(g.render())
+            "\\x6C34\\x706B"
+
+            Empty strings are rendered as :py:obj:`None`
+
+            >>> from grammatica.grammar import String
+            >>> g = String("")
+            >>> g.render() is None
+            True
+        """
         if len(self.value) == 0:
             return None
         return '"' + "".join(map(self._escape, self.value)) + '"'
 
     def simplify(self) -> String | None:
+        """Simplify the grammar.
+
+        Attempts to reduce redundancy, remove empty subexpressions, and optimize the grammar.
+
+        Returns:
+            String | None: Copy of the grammar, or None if resolved to empty.
+
+        Examples:
+            Non-empty strings remain unchanged
+
+            >>> from grammatica.grammar import String
+            >>> original = String("hello")
+            >>> simplified = original.simplify()
+            >>> original == simplified
+            True
+            >>> original is not simplified
+            True
+
+            Empty strings are simplified to :py:obj:`None`
+
+            >>> from grammatica.grammar import String
+            >>> g = String("")
+            >>> g.simplify() is None
+            True
+        """
         if len(self.value) == 0:
             return None
         return String(self.value)

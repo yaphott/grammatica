@@ -22,38 +22,16 @@ class DerivationRule(Grammar):
         value (Grammar): Grammar the symbol derives into.
 
     Examples:
-        Create a derivation rule where the symbol ``digits`` derives into a :class:`grammatica.grammar.CharRange` grammar that matches digits ``0-9``:
-
         >>> from grammatica.grammar import DerivationRule, CharRange
-        >>> digits_grammar = CharRange([("0", "9")])
-        >>> digits_rule = DerivationRule("digits", digits_grammar)
-        >>> print(digits_rule.as_string(indent=4))
+        >>> rule = DerivationRule(
+        ...     "digits",
+        ...     CharRange([("0", "9")]),
+        ... )
+        >>> print(rule.as_string(indent=4))
         DerivationRule(
             symbol='digits',
             value=CharRange(char_ranges=[('0', '9')], negate=False)
         )
-        >>> print(digits_rule.render())
-        digits ::= [0-9]
-
-        Create a derivation rule where the symbol ``bool`` derives into an :class:`grammatica.grammar.group.Or` grammar that matches either ``true`` or ``false``:
-
-        >>> from grammatica.grammar import DerivationRule, String
-        >>> from grammatica.grammar.group import Or
-        >>> bool_grammar = Or([String("true"), String("false")])
-        >>> bool_rule = DerivationRule("bool", bool_grammar)
-        >>> print(bool_rule.as_string(indent=4))
-        DerivationRule(
-            symbol='bool',
-            value=Or(
-                subexprs=[
-                    String(value='true'),
-                    String(value='false')
-                ],
-                quantifier=(1, 1)
-            )
-        )
-        >>> print(bool_rule.render())
-        bool ::= ("true" | "false")
     """
 
     __slots__: tuple[str, ...] = ("symbol", "value")
@@ -69,16 +47,78 @@ class DerivationRule(Grammar):
         self.value: Grammar = value
         """Grammar the symbol derives into."""
 
-    def render(self, full: bool = True, wrap: bool = True) -> str | None:
+    def render(self, full: bool = True, wrap: bool = True, **kwargs) -> str | None:
+        """Render the grammar as a regular expression.
+
+        Args:
+            full (bool, optional): Render the full derivation rule. Defaults to True.
+            wrap (bool, optional): Wrap the expression in parentheses. Defaults to True.
+            **kwargs: Keyword arguments for the current context.
+
+        Returns:
+            str | None: Rendered expression, or None if resolved to empty.
+
+        Examples:
+            Create a derivation rule where the symbol ``digits`` derives into a :class:`grammatica.grammar.CharRange` grammar that matches digits ``0-9``:
+
+            >>> from grammatica.grammar import DerivationRule, CharRange
+            >>> rule = DerivationRule(
+            ...     "digits",
+            ...     CharRange([("0", "9")]),
+            ... )
+            >>> print(rule.render())
+            digits ::= [0-9]
+
+            Create a derivation rule where the symbol ``bool`` derives into an :class:`grammatica.grammar.group.Or` grammar that matches either ``true`` or ``false``:
+
+            >>> from grammatica.grammar import DerivationRule, String
+            >>> from grammatica.grammar.group import Or
+            >>> rule = DerivationRule(
+            ...     "bool",
+            ...     Or([String("true"), String("false")]),
+            ... )
+            >>> print(rule.render())
+            bool ::= ("true" | "false")
+        """
         if not full:
             return self.symbol
-        rendered = self.value.render(full=False, wrap=wrap)
+        kwargs["full"] = False
+        kwargs["wrap"] = wrap
+        rendered = self.value.render(**kwargs)
         if not rendered:
             return None
         expr = f"{self.symbol}{self.separator}{rendered}"
         return expr
 
     def simplify(self) -> DerivationRule | None:
+        """Simplify the grammar.
+
+        Attempts to reduce redundancy, remove empty subexpressions, and optimize the grammar.
+
+        Note:
+            The resulting grammar and its parts are copies, and the original grammar is not modified.
+
+        Returns:
+            DerivationRule | None: Simplified expression, or None if resolved to empty.
+
+        Examples:
+            >>> from grammatica.grammar import CharRange, DerivationRule, String
+            >>> from grammatica.grammar.group import And
+            >>> hero = And([String("Samwise"), String(" "), String("Gamgee")])
+            >>> rule = DerivationRule("hero", hero)
+            >>> simplified_rule = rule.simplify()
+            >>> simplified_rule
+            DerivationRule(symbol='hero', value=String(value='Samwise Gamgee'))
+
+            Expressions that simplify to :py:class:`None` result in the entire derivation rule simplifying to :py:class:`None`
+
+            >>> from grammatica.grammar import String
+            >>> empty_string = String("")
+            >>> rule = DerivationRule("empty", empty_string)
+            >>> simplified_rule = rule.simplify()
+            >>> simplified_rule is None
+            True
+        """
         simplified = self.value.simplify()
         if simplified is None:
             return None

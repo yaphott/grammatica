@@ -72,14 +72,24 @@ class GroupGrammar(Grammar, ABC):
         self.quantifier: tuple[int, int | None] = (lower, upper)
         """Minimum and maximum repetitions the expression must match."""
 
-    def render(self, full: bool = True, wrap: bool = True) -> str | None:
+    def render(self, wrap: bool = True, **kwargs) -> str | None:
+        """Render the grammar as a regular expression.
+
+        Args:
+            wrap (bool, optional): Wrap the expression in parentheses. Defaults to True.
+            **kwargs: Keyword arguments for the current context.
+
+        Returns:
+            str | None: Rendered expression, or None if resolved to empty.
+        """
         if len(self.subexprs) < 1:
             return None
         rendered_quantifier = self.render_quantifier()
         expr = ""
         found = False
         for subexpr in self.subexprs:
-            rendered = subexpr.render(full=False)
+            kwargs["full"] = False
+            rendered = subexpr.render(**kwargs)
             if rendered is not None:
                 if found:
                     expr += self.separator
