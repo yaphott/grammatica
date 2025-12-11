@@ -171,9 +171,6 @@ html_theme_options = {
         "image_dark": "_static/logo-dark.svg",
     },
     "collapse_navigation": True,
-    "external_links": [
-        {"name": "Londowski", "url": "https://londowski.com/"},
-    ],
     "header_links_before_dropdown": 4,
     "navbar_align": "left",
     "navbar_start": ["navbar-logo"],
