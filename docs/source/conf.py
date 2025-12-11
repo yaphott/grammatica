@@ -143,6 +143,7 @@ needs_sphinx = "8.2.3"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.linkcode",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
@@ -226,6 +227,12 @@ typehints_document_rtype_none = False
 
 copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
 copybutton_prompt_is_regexp = True
+
+# -- Options for Intersphinx -------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+}
 
 # -- Options for Autosummary -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html#configuration
