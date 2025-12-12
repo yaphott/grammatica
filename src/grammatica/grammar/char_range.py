@@ -43,7 +43,7 @@ class CharRange(Grammar):
         ValueError: End character is less than start character in a character range.
 
     Examples:
-        Create a character range grammar that matches a lowercase letter ``a-z``:
+        Create a character range grammar that matches a lowercase letter ``a-z``
 
         >>> from grammatica.grammar import CharRange
         >>> lowercase_ascii = CharRange([("a", "z")])
@@ -52,7 +52,7 @@ class CharRange(Grammar):
         >>> print(lowercase_ascii.render())
         [a-z]
 
-        Create a character range grammar that matches a hexadecimal digit ``0-9`` or ``A-F``:
+        Create a character range grammar that matches a hexadecimal digit ``0-9`` or ``A-F``
 
         >>> from grammatica.grammar import CharRange
         >>> hex_digit = CharRange([("0", "9"), ("A", "F")])
@@ -61,7 +61,7 @@ class CharRange(Grammar):
         >>> print(hex_digit.render())
         [0-9A-F]
 
-        Create a character range grammar that matches any non-digit character:
+        Create a character range grammar that matches any non-digit character
 
         >>> from grammatica.grammar import CharRange
         >>> non_digit = CharRange([("0", "9")], negate=True)
@@ -114,26 +114,19 @@ class CharRange(Grammar):
             str | None: Rendered GBNF string, or None if character ranges are empty.
 
         Examples:
-            Render a character range that matches a digit ``0-9``:
+            Render a character range that matches an alphanumeric character
 
             >>> from grammatica.grammar import CharRange
-            >>> digit = CharRange([("0", "9")])
-            >>> digit.render()
-            '[0-9]'
+            >>> alphanum = CharRange([("0", "9"), ("A", "Z"), ("a", "z")])
+            >>> alphanum.render()
+            '[0-9A-Za-z]'
 
-            Render a negated character range that matches a non-digit:
-
-            >>> from grammatica.grammar import CharRange
-            >>> non_digit = CharRange([("0", "9")], negate=True)
-            >>> non_digit.render()
-            '[^0-9]'
-
-            Render a character range that matches a hex_digit digit ``0-9`` or ``A-F``:
+            Negate a character range by specifying `negate=True` to match any non-alphanumeric character
 
             >>> from grammatica.grammar import CharRange
-            >>> hex_digit = CharRange([("0", "9"), ("A", "F")])
-            >>> hex_digit.render()
-            '[0-9A-F]'
+            >>> alphanum = CharRange([("0", "9"), ("A", "Z"), ("a", "z")], negate=True)
+            >>> alphanum.render()
+            '[^0-9A-Za-z]'
         """
         if len(self.char_ranges) == 0:
             return None
@@ -160,7 +153,7 @@ class CharRange(Grammar):
     def simplify(self) -> CharRange | String | None:
         """Simplify the grammar.
 
-        Attempts to reduce redundancy, remove empty subexpressions, and optimize the grammar.
+        Attempts to reduce redundancy and optimize the grammar.
 
         Note:
             The resulting grammar and its parts are copies, and the original grammar is not modified.
@@ -169,7 +162,7 @@ class CharRange(Grammar):
             CharRange | String | None: Simplified expression, or None if resolved to empty.
 
         Examples:
-            Simplify a single-character range to a ``String``:
+            Simplify a single-character range to a ``String``
 
             >>> from grammatica.grammar import CharRange
             >>> single_char = CharRange([("a", "a")])
@@ -177,7 +170,7 @@ class CharRange(Grammar):
             >>> simplified
             String(value='a')
 
-            Multiple-character range remains as ``CharRange``:
+            Multiple-character range remains as ``CharRange``
 
             >>> from grammatica.grammar import CharRange
             >>> multi_char = CharRange([("a", "z")])
@@ -185,7 +178,7 @@ class CharRange(Grammar):
             >>> simplified
             CharRange(char_ranges=[('a', 'z')], negate=False)
 
-            Empty character ranges resolve to py:class:`None`:
+            Empty character ranges resolve to :py:class:`None`
 
             >>> from grammatica.grammar import CharRange
             >>> empty_range = CharRange([("a", "a")])
@@ -237,14 +230,12 @@ class CharRange(Grammar):
             ValueError: No characters provided.
 
         Examples:
-            Create a character range grammar that matches a lowercase letter ``a-z``:
+            Create a character range grammar that matches a lowercase letter ``a-z``
 
             >>> from grammatica.grammar import CharRange
             >>> lowercase_ascii = CharRange.from_chars("abcdefghijklmnopqrstuvwxyz")
             >>> lowercase_ascii
             CharRange(char_ranges=[('a', 'z')], negate=False)
-            >>> print(lowercase_ascii.render())
-            [a-z]
         """
         return cls.from_ords(map(ord, chars), negate=negate)
 
@@ -283,7 +274,7 @@ class CharRange(Grammar):
             ValueError: No ordinals provided.
 
         Examples:
-            Create a character range grammar that matches a lowercase letter ``a-z``:
+            Create a character range grammar that matches a lowercase letter ``a-z``
 
             >>> from grammatica.grammar import CharRange
             >>> lowercase_ascii = CharRange.from_ords(range(ord("a"), ord("z") + 1))

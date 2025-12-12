@@ -138,6 +138,11 @@ class GroupGrammar(Grammar, ABC):
     ) -> Grammar | None:
         """Simplify the provided subexpressions for the grouped grammar.
 
+        Simplifying grouped grammars is a complex operation, and requires recursively employing multiple strategies.
+
+        Note:
+            The resulting grammar and its parts are copies, and the original grammar is not modified.
+
         Args:
             original_subexprs (list[Grammar]): Subexpressions to simplify.
             quantifier (tuple[int, int | None]): Quantifier for the expression.

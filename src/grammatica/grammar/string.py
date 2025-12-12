@@ -63,7 +63,7 @@ class String(Grammar):
             >>> print(g.render())
             "gandalf"
 
-            Characters such as whitespace are escaped using a backslash (``\\``):
+            Characters such as whitespace are escaped using a backslash (``\\``)
 
             >>> from grammatica.grammar import String
             >>> g = String("line\\nbreak")
@@ -91,7 +91,7 @@ class String(Grammar):
     def simplify(self) -> String | None:
         """Simplify the grammar.
 
-        Attempts to reduce redundancy, remove empty subexpressions, and optimize the grammar.
+        Attempts to reduce redundancy and optimize the grammar.
 
         Returns:
             String | None: Copy of the grammar, or None if resolved to empty.

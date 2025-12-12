@@ -4,11 +4,17 @@ Classes and utilities for logical AND operations.
 
 from __future__ import annotations
 
+import sys
 from collections import namedtuple
 from typing import TYPE_CHECKING, cast
 
 from grammatica.grammar.group.base import GroupGrammar
 from grammatica.grammar.string import merge_adjacent_string_grammars
+
+if sys.version_info >= (3, 12):  # pragma: no cover
+    from typing import override
+else:  # pragma: no cover
+    from typing_extensions import override
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
@@ -236,11 +242,204 @@ class And(GroupGrammar):
             return wrap
         return self.quantifier != (1, 1)
 
+    @override
+    def simplify(self) -> Grammar | None:
+        """Simplify the grammar.
+
+        Attempts to reduce redundancy and optimize the grammar.
+        Simplifying grouped grammars is a complex operation, and requires recursively employing multiple strategies.
+
+        Note:
+            The resulting grammar and its parts are copies, and the original grammar is not modified.
+
+        Returns:
+            Grammar | None: Simplified expression, or None if resolved to empty.
+
+        See Also:
+            :meth:`grammatica.grammar.group.And.simplify_subexprs`: Low-level simplification of subexpressions for ``And`` grouped grammars.
+
+        Examples:
+            All child subexpressions are simplified
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         And([String("a"), String("b")]),
+            ...         And([String("c")]),
+            ...     ],
+            ... )
+            >>> g.simplify()
+            String(value='abc')
+
+            Empty subexpressions simplify to :py:obj:`None`
+
+            >>> from grammatica.grammar.group import And
+            >>> g = And([])
+            >>> g.simplify() is None
+            True
+
+            Subexpressions that simplify to :py:obj:`None` are removed
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And([String("hello"), String("")])
+            >>> g.simplify()
+            String(value='hello')
+
+            If all subexpressions have a ``(0, n)`` quantifier and are equivalent (excluding their quantifer), and the
+            parent has either a :py:data:`(1, 1)` (default) or ``(0, n)`` quantifier, they can be simplified to a single
+            grouped subexpression with an updated quantifier
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         And([String("x")], quantifier=(0, 3)),
+            ...         And([String("x")], quantifier=(0, 4)),
+            ...     ],
+            ...     quantifier=(1, 1),
+            ... )
+            >>> g.simplify()
+            And(subexprs=[String(value='x')], quantifier=(0, 7))
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         And([String("x")], quantifier=(0, 3)),
+            ...         And([String("x")], quantifier=(0, 4)),
+            ...     ],
+            ...     quantifier=(0, 2),
+            ... )
+            >>> g.simplify()
+            And(subexprs=[String(value='x')], quantifier=(0, 14))
+
+            Unwrap grouped grammars with a single subexpression and default quantifier (default is :py:data:`(1, 1)`)
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And([String("only one")])
+            >>> g.simplify()
+            String(value='only one')
+
+            Grouped grammars with consecutive subexpressions that are grouped, have the same type, and have default
+            quantifiers (default is :py:data:`(1, 1)`) are merged
+
+            >>> from grammatica.grammar import CharRange, String
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         And(
+            ...             [
+            ...                 CharRange([('a', 'c')]),
+            ...                 String("d"),
+            ...             ],
+            ...         ),
+            ...         And(
+            ...             [
+            ...                 CharRange([('e', 'g')]),
+            ...                 String("h"),
+            ...             ],
+            ...         ),
+            ...     ],
+            ... )
+            >>> simplified = g.simplify()
+            >>> print(simplified.as_string(indent=4))
+            And(
+                subexprs=[
+                    CharRange(char_ranges=[('a', 'c')], negate=False),
+                    String(value='d'),
+                    CharRange(char_ranges=[('e', 'g')], negate=False),
+                    String(value='h')
+                ],
+                quantifier=(1, 1)
+            )
+
+            Neighboring :class:`grammatica.grammar.String` subexpressions are merged
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And([String("a"), String("b"), String("c")])
+            >>> g.simplify()
+            String(value='abc')
+
+            Repeating sequences of subexpressions are grouped into a single subexpression with an appropriate quantifier
+
+            >>> from grammatica.grammar import CharRange
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         CharRange([("a", "z")]),
+            ...         CharRange([("a", "z")]),
+            ...         CharRange([("a", "z")]),
+            ...     ],
+            ... )
+            >>> simplified = g.simplify()
+            >>> print(simplified.as_string(indent=4))
+            And(
+                subexprs=[
+                    CharRange(char_ranges=[('a', 'z')], negate=False)
+                ],
+                quantifier=(3, 3)
+            )
+
+            When an ``And`` grouped grammar that is optional (``(0, n)``) containing subexpressions that are all optional
+            (``(0, n)``) does not need to then be optional itself
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         And([String("frodo")], quantifier=(0, 1)),
+            ...         And([String("sam")], quantifier=(0, 1)),
+            ...     ],
+            ...     quantifier=(0, 1),
+            ... )
+            >>> simplified = g.simplify()
+            >>> print(simplified.as_string(indent=4))
+            And(
+                subexprs=[
+                    And(
+                        subexprs=[
+                            String(value='frodo')
+                        ],
+                        quantifier=(0, 1)
+                    ),
+                    And(
+                        subexprs=[
+                            String(value='sam')
+                        ],
+                        quantifier=(0, 1)
+                    )
+                ],
+                quantifier=(1, 1)
+            )
+
+            Some advanced simplification strategies are not shown in the examples above.
+        """
+        return super().simplify()
+
     @staticmethod
     def simplify_subexprs(
         original_subexprs: list[Grammar],
         quantifier: tuple[int, int | None],
     ) -> Grammar | None:
+        """Simplify the provided subexpressions for the grouped grammar.
+
+        Note:
+            The resulting grammar and its parts are copies, and the original grammar is not modified.
+
+        Args:
+            original_subexprs (list[Grammar]): Subexpressions to simplify.
+            quantifier (tuple[int, int | None]): Quantifier for the expression.
+
+        Returns:
+            Grammar | None: Simplified expression. If the expression is empty, return None.
+
+        See Also:
+            :meth:`grammatica.grammar.group.And.simplify`: High-level simplification of ``And`` grouped grammars.
+        """
         subexprs: list[Grammar] = []
         n = 0
         for subexpr in original_subexprs:

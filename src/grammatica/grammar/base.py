@@ -38,7 +38,7 @@ class Grammar(ABC):
     def simplify(self) -> Grammar | None:
         """Simplify the grammar.
 
-        Attempts to reduce redundancy, remove empty subexpressions, and optimize the grammar.
+        Attempts to reduce redundancy and optimize the grammar.
 
         Note:
             The resulting grammar and its parts are copies, and the original grammar is not modified.

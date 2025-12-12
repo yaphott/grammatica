@@ -96,7 +96,8 @@ class DerivationRule(Grammar):
             str | None: Rendered expression, or None if resolved to empty.
 
         Examples:
-            Create a derivation rule where the symbol ``digits`` derives into a :class:`grammatica.grammar.CharRange` grammar that matches digits ``0-9``:
+            Create a derivation rule where the symbol ``digits`` derives into a :class:`grammatica.grammar.CharRange`
+            grammar that matches digits ``0-9``
 
             >>> from grammatica.grammar import DerivationRule, CharRange
             >>> rule = DerivationRule(
@@ -106,7 +107,8 @@ class DerivationRule(Grammar):
             >>> print(rule.render())
             digits ::= [0-9]
 
-            Create a derivation rule where the symbol ``bool`` derives into an :class:`grammatica.grammar.group.Or` grammar that matches either ``true`` or ``false``:
+            Create a derivation rule where the symbol ``bool`` derives into an :class:`grammatica.grammar.group.Or`
+            grammar that matches either ``true`` or ``false``
 
             >>> from grammatica.grammar import DerivationRule, String
             >>> from grammatica.grammar.group import Or
@@ -130,7 +132,7 @@ class DerivationRule(Grammar):
     def simplify(self) -> DerivationRule | None:
         """Simplify the grammar.
 
-        Attempts to reduce redundancy, remove empty subexpressions, and optimize the grammar.
+        Attempts to reduce redundancy and optimize the grammar.
 
         Note:
             The resulting grammar and its parts are copies, and the original grammar is not modified.
