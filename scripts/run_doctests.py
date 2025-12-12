@@ -242,11 +242,28 @@ def main():
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
-    result = validate_all(
-        prefix=args.prefix,
-        raise_on_error=args.raise_on_error,
-        verbose=log_level <= logging.INFO,
-    )
+    try:
+        result = validate_all(
+            prefix=args.prefix,
+            raise_on_error=args.raise_on_error,
+            verbose=log_level <= logging.INFO,
+        )
+    except doctest.DocTestFailure as e:
+        file_path = Path(e.test.filename).resolve()
+        line_no = e.test.lineno + e.example.lineno + 1
+        logger.error(
+            "DocTest failed for %s at %s:%d",
+            e.test.name,
+            file_path,
+            line_no,
+            exc_info=e,
+        )
+        print(f"Doctest Failure at {file_path.relative_to(PROJECT_DIR)}:{line_no}")
+        print(f"Name: {e.test.name}")
+        print(f"Expected: {e.example.want.removesuffix('\n')}")
+        print(f"Actual: {e.got.removesuffix('\n')}")
+        sys.exit(1)
+
     if args.output_format == "json":
         print(json.dumps(result) + "\n", end="")
         sys.exit(0)
