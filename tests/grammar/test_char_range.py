@@ -173,8 +173,8 @@ def test_char_range_render(test_case):
         (
             f"Description: {test_case['description']!r}",
             f"Grammar: {fmt_result(test_case['grammar'])!s}",
-            f"Expected: {fmt_result(test_case['expected'])!r}",
-            f"Actual: {fmt_result(actual)!r}",
+            f"Expected: {fmt_result(test_case['expected'])!s}",
+            f"Actual: {fmt_result(actual)!s}",
         )
     )
 
