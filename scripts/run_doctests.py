@@ -248,6 +248,19 @@ def main():
             raise_on_error=args.raise_on_error,
             verbose=log_level <= logging.INFO,
         )
+    except doctest.UnexpectedException as e:
+        file_path = Path(e.test.filename).resolve()
+        line_no = e.test.lineno + e.example.lineno + 1
+        logger.error(
+            "DocTest failed for %s at %s:%d",
+            e.test.name,
+            file_path,
+            line_no,
+            exc_info=e,
+        )
+        print(f"Doctest Failure at {file_path.relative_to(PROJECT_DIR)}:{line_no}")
+        print(f"Name: {e.test.name}")
+        sys.exit(1)
     except doctest.DocTestFailure as e:
         file_path = Path(e.test.filename).resolve()
         line_no = e.test.lineno + e.example.lineno + 1
