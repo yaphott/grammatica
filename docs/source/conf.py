@@ -242,7 +242,7 @@ intersphinx_mapping = {
 # from grammatica.grammar import ...
 # """
 
-# -- Options for Autosummary -------------------------------------------------
+# -- Options for Autosummary ---------------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html#configuration
 
 autosummary_generate = True
