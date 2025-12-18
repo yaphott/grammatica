@@ -71,7 +71,7 @@ class Or(GroupGrammar):
             >>> print(g.render())
             ("yes" | "no")
 
-            Optional (matching zero or one times) subexpressions render with a ``?`` quantifier
+            Matching **zero or one times** renders a ``?`` quantifier
 
             >>> from grammatica.grammar import String
             >>> from grammatica.grammar.group import Or
@@ -79,7 +79,15 @@ class Or(GroupGrammar):
             >>> print(g.render())
             ("maybe" | "perhaps")?
 
-            Subexpressions matching n or more times (n > 1) render with a ``{n,}`` quantifier
+            Matching **one or more times** renders a ``+`` quantifier
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import Or
+            >>> g = Or([String("ha"), String("ho")], quantifier=(1, None))
+            >>> print(g.render())
+            ("ha" | "ho")+
+
+            Matching **n or more times** (n > 1) renders a ``{n,}`` quantifier
 
             >>> from grammatica.grammar import String
             >>> from grammatica.grammar.group import Or
@@ -87,21 +95,13 @@ class Or(GroupGrammar):
             >>> print(g.render())
             ("ha" | "ho"){3,}
 
-            Subexpressions matching zero or more times render with a ``*`` quantifier
+            Matching **zero or more times** renders a ``*`` quantifier
 
             >>> from grammatica.grammar import String
             >>> from grammatica.grammar.group import Or
             >>> g = Or([String("ha"), String("ho")], quantifier=(0, None))
             >>> print(g.render())
             ("ha" | "ho")*
-
-            Subexpressions matching one or more times render with a ``+`` quantifier
-
-            >>> from grammatica.grammar import String
-            >>> from grammatica.grammar.group import Or
-            >>> g = Or([String("ha"), String("ho")], quantifier=(1, None))
-            >>> print(g.render())
-            ("ha" | "ho")+
 
             Empty subexpressions render to :py:obj:`None`
 
@@ -264,7 +264,7 @@ class Or(GroupGrammar):
             >>> g.simplify()
             String(value='hello')
 
-            Unwrap grouped grammars with a single subexpression and default quantifier (default is :py:data:`(1, 1)`)
+            Unwrap grouped grammars having a single subexpression and default quantifier (default is :py:data:`(1, 1)`)
 
             >>> from grammatica.grammar import String
             >>> from grammatica.grammar.group import Or
@@ -272,7 +272,7 @@ class Or(GroupGrammar):
             >>> g.simplify()
             String(value='only one')
 
-            Any grouped grammar with only a single subexpression is the same as an ``And`` grammar with a single subexpression
+            Any grouped grammar that has a single subexpression is equivalent to an ``And`` grammar having the same subexpression
 
             >>> from grammatica.grammar import String
             >>> from grammatica.grammar.group import Or
