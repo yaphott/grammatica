@@ -65,11 +65,6 @@ cd docs
 make clean
 ```
 
-This will remove:
-
-- All files in the `build/` directory
-- Auto-generated API reference files in `source/api_reference/api/`
-
 ### Other Build Formats
 
 Sphinx supports various output formats. To see all available options:
@@ -105,7 +100,7 @@ Alternatively, use the provided script from the project root:
 python scripts/serve_locally.py
 ```
 
-This will serve the documentation at <http://127.0.0.1:9000> and automatically rebuild when you save changes.
+This will serve the documentation at <http://127.0.0.1:9000>.
 
 ## Environment Variables
 
