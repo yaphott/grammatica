@@ -143,9 +143,13 @@ needs_sphinx = "8.2.3"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
+    "sphinx.ext.doctest",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.linkcode",
     "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
+    "sphinx_design",
+    "sphinx_copybutton",
 ]
 
 source_encoding = "utf-8"
@@ -170,9 +174,6 @@ html_theme_options = {
         "image_dark": "_static/logo-dark.svg",
     },
     "collapse_navigation": True,
-    "external_links": [
-        {"name": "Londowski", "url": "https://londowski.com/"},
-    ],
     "header_links_before_dropdown": 4,
     "navbar_align": "left",
     "navbar_start": ["navbar-logo"],
@@ -200,7 +201,7 @@ html_theme_options = {
         {
             "name": "Londowski",
             "url": "https://londowski.com/",
-            "icon": "fa-solid fa-l",
+            "icon": "fa-custom fa-londowski",
         },
     ],
 }
@@ -223,7 +224,19 @@ autodoc_use_type_comments = False
 typehints_use_rtype = False
 typehints_document_rtype_none = False
 
-# -- Options for Autosummary -------------------------------------------------
+# -- Options for sphinx-copybutton --------------------------
+# https://sphinx-copybutton.readthedocs.io/en/latest/use.html
+
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
+
+# -- Options for Intersphinx -------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+}
+
+# -- Options for Autosummary ---------------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html#configuration
 
 autosummary_generate = True

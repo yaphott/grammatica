@@ -1,7 +1,7 @@
 """Base grammar classes and utility functions for handling grammar expressions.
 
-Provides abstractions for building and rendering grammar expressions, as well as utility functions for
-string conversion and determining the simplicity of values.
+Provides abstractions for building and rendering grammar expressions, as well as utility
+functions for string conversion and determining the simplicity of values.
 """
 
 from __future__ import annotations
@@ -23,12 +23,11 @@ class Grammar(ABC):
     __slots__: tuple[str, ...] = ()
 
     @abstractmethod
-    def render(self, full: bool = True, wrap: bool = True) -> str | None:
+    def render(self, **kwargs) -> str | None:
         """Render the grammar as a regular expression.
 
         Args:
-            full (bool, optional): Render the full expression. Defaults to True.
-            wrap (bool, optional): Wrap the expression in parentheses. Defaults to True.
+            **kwargs: Keyword arguments for the current context.
 
         Returns:
             str | None: Rendered expression, or None if resolved to empty.
@@ -39,7 +38,7 @@ class Grammar(ABC):
     def simplify(self) -> Grammar | None:
         """Simplify the grammar.
 
-        Attempts to reduce redundancy, remove empty subexpressions, and optimize the grammar.
+        Attempts to reduce redundancy and optimize the grammar.
 
         Note:
             The resulting grammar and its parts are copies, and the original grammar is not modified.
@@ -69,11 +68,11 @@ class Grammar(ABC):
         g = cls(**kwargs)
         return g
 
-    def as_string(self, indent: int | None = None) -> str:
+    def as_string(self, **kwargs) -> str:
         """Return a string representation of the grammar.
 
         Args:
-            indent (int, optional): Number of spaces to indent each level. Defaults to None.
+            **kwargs: Keyword arguments for the current context.
 
         Returns:
             str: String representation of the grammar.
@@ -82,26 +81,13 @@ class Grammar(ABC):
             ValueError: Attribute type is not supported.
         """
         attrs = self.attrs_dict()
-        n = len(attrs)
+        kwargs["indent"] = None
         msg = f"{type(self).__name__}("
         for j, (name, value) in enumerate(attrs.items()):
-            if indent is None:
-                if j > 0:
-                    msg += ", "
-            else:
-                if j > 0:
-                    msg += ","
-                msg += "\n" + (" " * indent)
+            if j > 0:
+                msg += ", "
             msg += f"{name}="
-            if indent is None:
-                msg += value_to_string(value, indent=indent)
-            else:
-                msg += value_to_string(value, indent=indent).replace(
-                    "\n",
-                    "\n" + (" " * indent),
-                )
-                if j == n - 1:
-                    msg += "\n"
+            msg += value_to_string(value, **kwargs)
         msg += ")"
         return msg
 
@@ -111,12 +97,12 @@ class Grammar(ABC):
     def __str__(self) -> str:
         return self.as_string(indent=None)
 
-    def equals(self, other: Any, check_quantifier: bool = True) -> bool:
+    def equals(self, other: Any, **kwargs) -> bool:
         """Check equality with another value.
 
         Args:
             other (Any): Value to compare against.
-            check_quantifier (bool, optional): Include the quantifier in the comparison. Defaults to True.
+            **kwargs: Keyword arguments for the current context.
 
         Returns:
             bool: True if the values are equal, False otherwise.
@@ -127,10 +113,6 @@ class Grammar(ABC):
             return False
         attrs = self.attrs_dict()
         other_attrs = other.attrs_dict()
-        if not check_quantifier:
-            return {k: attrs[k] for k in sorted(attrs) if (k != "quantifier")} == {
-                k: other_attrs[k] for k in sorted(other_attrs) if (k != "quantifier")
-            }
         return {k: attrs[k] for k in sorted(attrs)} == {
             k: other_attrs[k] for k in sorted(other_attrs)
         }

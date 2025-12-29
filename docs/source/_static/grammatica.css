@@ -70,7 +70,12 @@ h6 {
   opacity: 0.9;
 }
 
-button.btn.version-switcher__button,
-button.btn.version-switcher__button:hover {
+html[data-theme="light"] button.btn.version-switcher__button,
+html[data-theme="light"] button.btn.version-switcher__button:hover {
   color: black;
+}
+
+html[data-theme="dark"] button.btn.version-switcher__button,
+html[data-theme="dark"] button.btn.version-switcher__button:hover {
+  color: white;
 }

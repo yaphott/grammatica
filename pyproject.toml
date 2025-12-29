@@ -53,7 +53,9 @@ issues = "https://github.com/yaphott/grammatica/issues"
 doc = [
     "sphinx==8.2.3",
     "pydata-sphinx-theme==0.16.1",
-    "sphinx-autodoc-typehints==3.1.0",
+    "sphinx-autodoc-typehints==3.5.2",
+    "sphinx-design==0.6.1",
+    "sphinx-copybutton==0.5.2",
 ]
 dev = [
     "black>=22.10.0",
@@ -61,7 +63,12 @@ dev = [
     "isort>=5.2.1",
     "mypy>=1.0",
 ]
-test = ["pytest>=7.0.0", "pytest-cov>=6.0.0"]
+test = [
+    "psutil>=7.1.3",
+    "pytest>=9.0.1",
+    "pytest-cov>=7.0.0",
+    "pytest-xdist>=3.8.0",
+]
 
 [tool.hatch.build]
 sources = ["src"]
@@ -180,6 +187,8 @@ doctest_optionflags = [
     "IGNORE_EXCEPTION_DETAIL",
     # Allows you to use ... in place of a value in an expected output string
     "ELLIPSIS",
+    # Reject 1 where True is expected
+    "DONT_ACCEPT_TRUE_FOR_1",
 ]
 filterwarnings = []
 junit_family = "xunit2"

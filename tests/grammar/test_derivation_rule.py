@@ -13,6 +13,32 @@ except ImportError:
     from helpers import fmt_result
 
 
+def test_derivation_rule_case_insensitive_symbol():
+    rule = DerivationRule("Test-Symbol", String("value"))
+    assert rule.symbol == "test-symbol"
+
+
+def test_derivation_rule_validation_empty_symbol():
+    with pytest.raises(ValueError, match="Derivation rule symbol cannot be empty"):
+        DerivationRule("", String("value"))
+
+
+def test_derivation_rule_validation_invalid_symbol_prefix():
+    with pytest.raises(
+        ValueError,
+        match="Derivation rule symbol must start with an alphabetic character \\(a-z, A-Z\\)",
+    ):
+        DerivationRule("1invalid", String("value"))
+
+
+def test_derivation_rule_validation_invalid_symbol_characters():
+    with pytest.raises(
+        ValueError,
+        match="Derivation rule symbol must contain only alphanumeric characters \\(a-z, A-Z, 0-9\\) and hyphens \\(-\\) after the first character",
+    ):
+        DerivationRule("invalid_symbol", String("value"))
+
+
 @pytest.mark.parametrize(
     "test_case",
     [
@@ -160,7 +186,7 @@ def test_derivation_rule_simplify(test_case):
 
 
 def test_derivation_rule_attrs_dict():
-    symbol = "test_symbol"
+    symbol = "test-symbol"
     grammar = String("test_value")
     rule = DerivationRule(symbol, grammar)
     actual = rule.attrs_dict()
@@ -170,3 +196,25 @@ def test_derivation_rule_attrs_dict():
     }
     assert actual == expected
     assert actual["value"] is grammar
+
+
+@pytest.mark.parametrize(
+    "grammar, indent, expected",
+    [
+        (
+            DerivationRule(
+                "bool",
+                Or([String("true"), String("false")]),
+            ),
+            None,
+            "DerivationRule(symbol='bool', value=Or(subexprs=[String(value='true'), String(value='false')], quantifier=(1, 1)))",
+        ),
+        (
+            DerivationRule("bool", Or([String("true"), String("false")])),
+            2,
+            "DerivationRule(\n  symbol='bool',\n  value=Or(\n    subexprs=[\n      String(value='true'),\n      String(value='false')\n    ],\n    quantifier=(1, 1)\n  )\n)",
+        ),
+    ],
+)
+def test_derivation_rule_as_string(grammar, indent, expected):
+    assert grammar.as_string(indent=indent) == expected

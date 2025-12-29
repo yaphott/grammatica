@@ -38,7 +38,7 @@ If you discover an issue with Grammatica, please report it at [https://github.co
 
 ## Installing
 
-Install from [**PyPi**](https://pypi.org/project/grammatica/):
+Install from [**PyPI**](https://pypi.org/project/grammatica/):
 
 ```bash
 pip install grammatica

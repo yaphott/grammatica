@@ -29,16 +29,46 @@ if TYPE_CHECKING:
 class CharRange(Grammar):
     """Grammar that defines a set of allowed or disallowed characters.
 
+    Note:
+        Each character range is inclusive, meaning both start and end characters are included.
+        For example, ('a', 'z') includes all lowercase letters from 'a' to 'z'.
+
     Args:
         char_ranges (Iterable[tuple[str, str]]): Character ranges in the form of tuples (start, end).
-            Each range is inclusive, meaning both start and end characters are included.
-            For example, ('a', 'z') includes all lowercase letters from 'a' to 'z'.
         negate (bool, optional): Negate the character range. Defaults to False.
 
     Raises:
         ValueError: Empty character range provided.
         ValueError: Start or end of a character range is not a single character.
         ValueError: End character is less than start character in a character range.
+
+    Examples:
+        Create a character range grammar that matches a lowercase letter ``a-z``
+
+        >>> from grammatica.grammar import CharRange
+        >>> lowercase_ascii = CharRange([("a", "z")])
+        >>> lowercase_ascii
+        CharRange(char_ranges=[('a', 'z')], negate=False)
+        >>> print(lowercase_ascii.render())
+        [a-z]
+
+        Create a character range grammar that matches a hexadecimal digit ``0-9`` or ``A-F``
+
+        >>> from grammatica.grammar import CharRange
+        >>> hex_digit = CharRange([("0", "9"), ("A", "F")])
+        >>> hex_digit
+        CharRange(char_ranges=[('0', '9'), ('A', 'F')], negate=False)
+        >>> print(hex_digit.render())
+        [0-9A-F]
+
+        Create a character range grammar that matches any non-digit character
+
+        >>> from grammatica.grammar import CharRange
+        >>> non_digit = CharRange([("0", "9")], negate=True)
+        >>> non_digit
+        CharRange(char_ranges=[('0', '9')], negate=True)
+        >>> print(non_digit.render())
+        [^0-9]
     """
 
     __slots__: tuple[str, ...] = ("char_ranges", "negate")
@@ -74,7 +104,30 @@ class CharRange(Grammar):
         self.negate: bool = negate
         """Negate the character range."""
 
-    def render(self, full: bool = True, wrap: bool = True) -> str | None:
+    def render(self, **kwargs) -> str | None:
+        """Render the character range grammar as a GBNF string.
+
+        Args:
+            **kwargs: Keyword arguments for the current context.
+
+        Returns:
+            str | None: Rendered GBNF string, or None if character ranges are empty.
+
+        Examples:
+            Render a character range that matches an alphanumeric character
+
+            >>> from grammatica.grammar import CharRange
+            >>> alphanum = CharRange([("0", "9"), ("A", "Z"), ("a", "z")])
+            >>> alphanum.render()
+            '[0-9A-Za-z]'
+
+            Negate a character range by specifying `negate=True` to match any non-alphanumeric character
+
+            >>> from grammatica.grammar import CharRange
+            >>> alphanum = CharRange([("0", "9"), ("A", "Z"), ("a", "z")], negate=True)
+            >>> alphanum.render()
+            '[^0-9A-Za-z]'
+        """
         if len(self.char_ranges) == 0:
             return None
         # TODO: Should character ranges be validated before rendering? They're currently only validated upon construction.
@@ -98,6 +151,42 @@ class CharRange(Grammar):
         return expr
 
     def simplify(self) -> CharRange | String | None:
+        """Simplify the grammar.
+
+        Attempts to reduce redundancy and optimize the grammar.
+
+        Note:
+            The resulting grammar and its parts are copies, and the original grammar is not modified.
+
+        Returns:
+            CharRange | String | None: Simplified expression, or None if resolved to empty.
+
+        Examples:
+            Simplify a single-character range to a ``String``
+
+            >>> from grammatica.grammar import CharRange
+            >>> single_char = CharRange([("a", "a")])
+            >>> simplified = single_char.simplify()
+            >>> simplified
+            String(value='a')
+
+            Multiple-character range remains as ``CharRange``
+
+            >>> from grammatica.grammar import CharRange
+            >>> multi_char = CharRange([("a", "z")])
+            >>> simplified = multi_char.simplify()
+            >>> simplified
+            CharRange(char_ranges=[('a', 'z')], negate=False)
+
+            Empty character ranges resolve to :py:class:`None`
+
+            >>> from grammatica.grammar import CharRange
+            >>> empty_range = CharRange([("a", "a")])
+            >>> empty_range.char_ranges.clear()  # Manually clear to simulate empty ranges
+            >>> simplified = empty_range.simplify()
+            >>> simplified is None
+            True
+        """
         n = len(self.char_ranges)
         if n == 0:
             return None
@@ -139,6 +228,14 @@ class CharRange(Grammar):
 
         Raises:
             ValueError: No characters provided.
+
+        Examples:
+            Create a character range grammar that matches a lowercase letter ``a-z``
+
+            >>> from grammatica.grammar import CharRange
+            >>> lowercase_ascii = CharRange.from_chars("abcdefghijklmnopqrstuvwxyz")
+            >>> lowercase_ascii
+            CharRange(char_ranges=[('a', 'z')], negate=False)
         """
         return cls.from_ords(map(ord, chars), negate=negate)
 
@@ -175,6 +272,14 @@ class CharRange(Grammar):
 
         Raises:
             ValueError: No ordinals provided.
+
+        Examples:
+            Create a character range grammar that matches a lowercase letter ``a-z``
+
+            >>> from grammatica.grammar import CharRange
+            >>> lowercase_ascii = CharRange.from_ords(range(ord("a"), ord("z") + 1))
+            >>> lowercase_ascii
+            CharRange(char_ranges=[('a', 'z')], negate=False)
         """
         ord_ranges = cls._iter_ords_to_ord_ranges(ords)
         char_ranges = map(cls._ord_range_to_char_range, ord_ranges)
@@ -205,10 +310,6 @@ class CharRange(Grammar):
                 start = ord_
             end = ord_
         yield start, end
-
-    @override
-    def as_string(self, indent: int | None = None) -> str:
-        return super().as_string(indent=None)
 
     def attrs_dict(self) -> dict[str, Any]:
         return {

@@ -13,11 +13,11 @@ class NoOpGrammar(Grammar):
     def __init__(self):
         pass
 
-    def render(self, wrap=False):
-        return self.render()
+    def render(self, **kwargs):
+        return None
 
     def simplify(self):
-        return self.simplify()
+        return None
 
     def attrs_dict(self):
         return {}
@@ -27,11 +27,11 @@ class NoOpGrammarAlt(Grammar):
     def __init__(self):
         pass
 
-    def render(self, wrap=False):
-        return self.render()
+    def render(self, **kwargs):
+        return None
 
     def simplify(self):
-        return self.simplify()
+        return None
 
     def attrs_dict(self):
         return {}

@@ -4,11 +4,17 @@ Classes and utilities for logical AND operations.
 
 from __future__ import annotations
 
+import sys
 from collections import namedtuple
 from typing import TYPE_CHECKING, cast
 
 from grammatica.grammar.group.base import GroupGrammar
 from grammatica.grammar.string import merge_adjacent_string_grammars
+
+if sys.version_info >= (3, 12):  # pragma: no cover
+    from typing import override
+else:  # pragma: no cover
+    from typing_extensions import override
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
@@ -33,6 +39,32 @@ class And(GroupGrammar):
         ValueError: Range lower bound is negative.
         ValueError: Range upper bound is not positive or None (infinity).
         ValueError: Range lower bound is greater than range upper bound.
+
+    Examples:
+        >>> from grammatica.grammar import String
+        >>> from grammatica.grammar.group import And, Or
+        >>> g = And(
+        ...     [
+        ...         Or([String("Bilbo"), String("Frodo")]),
+        ...         String(" Baggins"),
+        ...     ],
+        ... )
+        >>> print(g.as_string(indent=4))
+        And(
+            subexprs=[
+                Or(
+                    subexprs=[
+                        String(value='Bilbo'),
+                        String(value='Frodo')
+                    ],
+                    quantifier=(1, 1)
+                ),
+                String(value=' Baggins')
+            ],
+            quantifier=(1, 1)
+        )
+        >>> print(g.render())
+        ("Bilbo" | "Frodo") " Baggins"
     """
 
     separator: str = " "
@@ -48,7 +80,177 @@ class And(GroupGrammar):
             quantifier=quantifier,
         )
 
+    def render(self, wrap: bool = True, **kwargs) -> str | None:
+        """Render the grammar as a regular expression.
+
+        Args:
+            wrap (bool, optional): Wrap the expression in parentheses. Defaults to True.
+            **kwargs: Keyword arguments for the current context.
+
+        Returns:
+            str | None: Rendered expression, or None if resolved to empty.
+
+        Examples:
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And, Or
+            >>> g = And(
+            ...     [
+            ...         String("Sentiment: "),
+            ...         Or(
+            ...             [
+            ...                 String("negative"),
+            ...                 String("neutral"),
+            ...                 String("positive"),
+            ...             ],
+            ...         ),
+            ...     ],
+            ... )
+            >>> print(g.render())
+            "Sentiment: " ("negative" | "neutral" | "positive")
+
+            Matching **zero or one times** renders a ``?`` quantifier
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         String("maybe"),
+            ...     ],
+            ...     quantifier=(0, 1),
+            ... )
+            >>> print(g.render())
+            "maybe"?
+
+            Matching **one or more times** renders a ``+`` quantifier
+
+            >>> from grammatica.grammar import CharRange
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         CharRange([("a", "z")]),
+            ...     ],
+            ...     quantifier=(1, None),
+            ... )
+            >>> print(g.render())
+            [a-z]+
+
+            Matching **n or more times** (n > 1) renders a ``{n,}`` quantifier
+
+            >>> from grammatica.grammar import CharRange
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         CharRange([("a", "z")]),
+            ...     ],
+            ...     quantifier=(3, None),
+            ... )
+            >>> print(g.render())
+            [a-z]{3,}
+
+            Matching **zero or more times** renders a ``*`` quantifier
+
+            >>> from grammatica.grammar import CharRange
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         CharRange([("a", "z")]),
+            ...     ],
+            ...     quantifier=(0, None),
+            ... )
+            >>> print(g.render())
+            [a-z]*
+
+            Empty subexpressions render to :py:obj:`None`
+
+            >>> from grammatica.grammar.group import And
+            >>> g = And([])
+            >>> print(g.render())
+            None
+        """
+        return super().render(wrap=wrap, **kwargs)
+
     def needs_wrapped(self) -> bool:
+        """Check if the expression needs to be wrapped in parentheses.
+
+        Returns:
+            bool: True if the expression needs to be wrapped, False otherwise.
+
+        Examples:
+            Empty subexpressions do not require wrapping
+
+            >>> from grammatica.grammar.group import And
+            >>> g = And([])
+            >>> g.needs_wrapped()
+            False
+
+            Wrap when there are multiple subexpressions if the parent has a non-default quantifier (default is :py:data:`(1, 1)`)
+
+            >>> from grammatica.grammar import CharRange, String
+            >>> from grammatica.grammar.group import And, Or
+            >>> g = And(
+            ...     [
+            ...         String("I'll be on the "),
+            ...         Or([String("red"), String("green"), String("blue")]),
+            ...         String(" team."),
+            ...     ],
+            ...     quantifier=(1, None),
+            ... )
+            >>> g.needs_wrapped()
+            True
+
+            Do not wrap when there is a single subexpression that is not a grouped
+            grammar (subclass of :class:`grammatica.grammar.group.GroupGrammar`)
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And([String("samwise")])
+            >>> g.needs_wrapped()
+            False
+
+            >>> from grammatica.grammar import CharRange
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         CharRange([("a", "z")]),
+            ...     ],
+            ...     quantifier=(1, None),
+            ... )
+            >>> g.needs_wrapped()
+            False
+
+            Do not wrap when there is a single grouped subexpression that is a
+            grouped grammar (subclass of :class:`grammatica.grammar.group.GroupGrammar`)
+            and the parent has a default quantifier (default is :py:data:`(1, 1)`)
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And, Or
+            >>> g = And(
+            ...     [
+            ...         Or([String("frodo"), String("samwise")]),
+            ...     ],
+            ... )
+            >>> g.needs_wrapped()
+            False
+
+            Otherwise, iterate subexpressions recursively until one of the above conditions is met
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And, Or
+            >>> g = And(
+            ...     [
+            ...         And(
+            ...             [
+            ...                 String("I'll be on the "),
+            ...                 Or([String("red"), String("green"), String("blue")]),
+            ...                 String(" team."),
+            ...             ],
+            ...         ),
+            ...     ],
+            ...     quantifier=(1, None),
+            ... )
+            >>> g.needs_wrapped()
+            True
+        """
         n = len(self.subexprs)
         if n < 1:
             return False
@@ -68,11 +270,204 @@ class And(GroupGrammar):
             return wrap
         return self.quantifier != (1, 1)
 
+    @override
+    def simplify(self) -> Grammar | None:
+        """Simplify the grammar.
+
+        Attempts to reduce redundancy and optimize the grammar.
+        Simplifying grouped grammars is a complex operation, and requires recursively employing multiple strategies.
+
+        Note:
+            The resulting grammar and its parts are copies, and the original grammar is not modified.
+
+        Returns:
+            Grammar | None: Simplified expression, or None if resolved to empty.
+
+        See Also:
+            :meth:`grammatica.grammar.group.And.simplify_subexprs`: Low-level simplification of subexpressions for ``And`` grouped grammars.
+
+        Examples:
+            All child subexpressions are simplified
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         And([String("a"), String("b")]),
+            ...         And([String("c")]),
+            ...     ],
+            ... )
+            >>> g.simplify()
+            String(value='abc')
+
+            Empty subexpressions simplify to :py:obj:`None`
+
+            >>> from grammatica.grammar.group import And
+            >>> g = And([])
+            >>> g.simplify() is None
+            True
+
+            Subexpressions that simplify to :py:obj:`None` are removed
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And([String("hello"), String("")])
+            >>> g.simplify()
+            String(value='hello')
+
+            If all subexpressions have a ``(0, n)`` (optional) quantifier and are equivalent (excluding their quantifer),
+            and the parent has either a :py:data:`(1, 1)` (default) or ``(0, n)`` (optional) quantifier, they can be
+            simplified to a single grouped subexpression with an updated quantifier
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         And([String("x")], quantifier=(0, 3)),
+            ...         And([String("x")], quantifier=(0, 4)),
+            ...     ],
+            ...     quantifier=(1, 1),
+            ... )
+            >>> g.simplify()
+            And(subexprs=[String(value='x')], quantifier=(0, 7))
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         And([String("x")], quantifier=(0, 3)),
+            ...         And([String("x")], quantifier=(0, 4)),
+            ...     ],
+            ...     quantifier=(0, 2),
+            ... )
+            >>> g.simplify()
+            And(subexprs=[String(value='x')], quantifier=(0, 14))
+
+            Unwrap grouped grammars having a single subexpression and default quantifier (default is :py:data:`(1, 1)`)
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And([String("only one")])
+            >>> g.simplify()
+            String(value='only one')
+
+            Grouped grammars having consecutive subexpressions that are grouped, have the same type, and have default
+            quantifiers (default is :py:data:`(1, 1)`) are merged
+
+            >>> from grammatica.grammar import CharRange, String
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         And(
+            ...             [
+            ...                 CharRange([('a', 'c')]),
+            ...                 String("d"),
+            ...             ],
+            ...         ),
+            ...         And(
+            ...             [
+            ...                 CharRange([('e', 'g')]),
+            ...                 String("h"),
+            ...             ],
+            ...         ),
+            ...     ],
+            ... )
+            >>> simplified = g.simplify()
+            >>> print(simplified.as_string(indent=4))
+            And(
+                subexprs=[
+                    CharRange(char_ranges=[('a', 'c')], negate=False),
+                    String(value='d'),
+                    CharRange(char_ranges=[('e', 'g')], negate=False),
+                    String(value='h')
+                ],
+                quantifier=(1, 1)
+            )
+
+            Neighboring :class:`grammatica.grammar.String` subexpressions are merged
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And([String("a"), String("b"), String("c")])
+            >>> g.simplify()
+            String(value='abc')
+
+            Repeating sequences of subexpressions are grouped into a single subexpression with an appropriate quantifier
+
+            >>> from grammatica.grammar import CharRange
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         CharRange([("a", "z")]),
+            ...         CharRange([("a", "z")]),
+            ...         CharRange([("a", "z")]),
+            ...     ],
+            ... )
+            >>> simplified = g.simplify()
+            >>> print(simplified.as_string(indent=4))
+            And(
+                subexprs=[
+                    CharRange(char_ranges=[('a', 'z')], negate=False)
+                ],
+                quantifier=(3, 3)
+            )
+
+            When an ``And`` grouped grammar has a ``(0, n)`` (n>=1) quantifier, and has subexpressions that are all
+            grouped grammars with ``(0, m)`` (m>=1) quantifiers, the parent can be instead use a ``(1, n)`` quantifier
+
+            >>> from grammatica.grammar import String
+            >>> from grammatica.grammar.group import And
+            >>> g = And(
+            ...     [
+            ...         And([String("ha")], quantifier=(0, 1)),
+            ...         And([String("ho")], quantifier=(0, 1)),
+            ...     ],
+            ...     quantifier=(0, 3),
+            ... )
+            >>> simplified = g.simplify()
+            >>> print(simplified.as_string(indent=4))
+            And(
+                subexprs=[
+                    And(
+                        subexprs=[
+                            String(value='ha')
+                        ],
+                        quantifier=(0, 1)
+                    ),
+                    And(
+                        subexprs=[
+                            String(value='ho')
+                        ],
+                        quantifier=(0, 1)
+                    )
+                ],
+                quantifier=(1, 3)
+            )
+
+            Some advanced simplification strategies are not shown in the examples above.
+        """
+        return super().simplify()
+
     @staticmethod
     def simplify_subexprs(
         original_subexprs: list[Grammar],
         quantifier: tuple[int, int | None],
     ) -> Grammar | None:
+        """Simplify the provided subexpressions for the grouped grammar.
+
+        Note:
+            The resulting grammar and its parts are copies, and the original grammar is not modified.
+
+        Args:
+            original_subexprs (list[Grammar]): Subexpressions to simplify.
+            quantifier (tuple[int, int | None]): Quantifier for the expression.
+
+        Returns:
+            Grammar | None: Simplified expression. If the expression is empty, return None.
+
+        See Also:
+            :meth:`grammatica.grammar.group.And.simplify`: High-level simplification of ``And`` grouped grammars.
+        """
         subexprs: list[Grammar] = []
         n = 0
         for subexpr in original_subexprs:

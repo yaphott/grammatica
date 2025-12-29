@@ -53,6 +53,10 @@ jobs:
           suffix: python-${{ matrix.python_version }}
           token: ${{ secrets.CODECOV_TOKEN }}
 
+      - name: Run doctests
+        run: python3 scripts/run_doctests.py --raise-on-error
+        shell: bash -el {0}
+
   build-docs:
     runs-on: ubuntu-latest
     defaults:
@@ -308,13 +312,19 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           PACKAGE_NAME: grammatica
           RELEASE_SHA: ${{ needs.bump-version.outputs.release_sha }}
+          REVISION: ${{ needs.bump-version.outputs.revision }}
           READONLY_TOKEN: ${{ steps.readonly-app-token.outputs.token }}
         run: |
+          IS_STABLE=false
+          if [[ "$REVISION" != *"dev"* ]]; then
+            IS_STABLE=true
+          fi
           gh workflow run update-docs.yml \
             --repo yaphott/londowski.com \
             --ref refs/heads/main \
             -f repository="$GITHUB_REPOSITORY" \
             -f package-name="$PACKAGE_NAME" \
             -f ref="$RELEASE_SHA" \
+            -f stable="$IS_STABLE" \
             -f token="$READONLY_TOKEN"
         shell: bash -el {0}

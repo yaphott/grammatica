@@ -12,6 +12,11 @@ except ImportError:
     from helpers import NoOpGroupGrammar
 
 
+def test_group_grammar_equals_same_instance():
+    grammar = NoOpGroupGrammar([])
+    assert grammar.equals(grammar)
+
+
 @pytest.mark.parametrize(
     "quantifier, expected",
     [

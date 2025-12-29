@@ -10,7 +10,7 @@ import sys
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from grammatica.grammar.base import Grammar
+from grammatica.grammar.base import Grammar, value_to_string
 
 if sys.version_info >= (3, 12):  # pragma: no cover
     from typing import override
@@ -72,14 +72,24 @@ class GroupGrammar(Grammar, ABC):
         self.quantifier: tuple[int, int | None] = (lower, upper)
         """Minimum and maximum repetitions the expression must match."""
 
-    def render(self, full: bool = True, wrap: bool = True) -> str | None:
+    def render(self, wrap: bool = True, **kwargs) -> str | None:
+        """Render the grammar as a regular expression.
+
+        Args:
+            wrap (bool, optional): Wrap the expression in parentheses. Defaults to True.
+            **kwargs: Keyword arguments for the current context.
+
+        Returns:
+            str | None: Rendered expression, or None if resolved to empty.
+        """
         if len(self.subexprs) < 1:
             return None
         rendered_quantifier = self.render_quantifier()
         expr = ""
         found = False
         for subexpr in self.subexprs:
-            rendered = subexpr.render(full=False)
+            kwargs["full"] = False
+            rendered = subexpr.render(**kwargs)
             if rendered is not None:
                 if found:
                     expr += self.separator
@@ -128,6 +138,11 @@ class GroupGrammar(Grammar, ABC):
     ) -> Grammar | None:
         """Simplify the provided subexpressions for the grouped grammar.
 
+        Simplifying grouped grammars is a complex operation, and requires recursively employing multiple strategies.
+
+        Note:
+            The resulting grammar and its parts are copies, and the original grammar is not modified.
+
         Args:
             original_subexprs (list[Grammar]): Subexpressions to simplify.
             quantifier (tuple[int, int | None]): Quantifier for the expression.
@@ -147,8 +162,73 @@ class GroupGrammar(Grammar, ABC):
         return False
 
     @override
+    def equals(self, other: Any, check_quantifier: bool = True, **kwargs) -> bool:
+        """Check equality with another value.
+
+        Args:
+            other (Any): Value to compare against.
+            check_quantifier (bool, optional): Include the quantifier in the comparison. Defaults to True.
+            **kwargs: Keyword arguments for the current context.
+
+        Returns:
+            bool: True if the values are equal, False otherwise.
+        """
+        if self is other:
+            return True
+        if not isinstance(other, type(self)):
+            return False
+        attrs = self.attrs_dict()
+        other_attrs = other.attrs_dict()
+        if not check_quantifier:
+            return {k: attrs[k] for k in sorted(attrs) if (k != "quantifier")} == {
+                k: other_attrs[k] for k in sorted(other_attrs) if (k != "quantifier")
+            }
+        return {k: attrs[k] for k in sorted(attrs)} == {
+            k: other_attrs[k] for k in sorted(other_attrs)
+        }
+
+    @override
     def attrs_dict(self) -> dict[str, Any]:
         return {
             "subexprs": self.subexprs,
             "quantifier": self.quantifier,
         } | super().attrs_dict()
+
+    @override
+    def as_string(self, indent: int | None = None, **kwargs) -> str:
+        """Return a string representation of the grammar.
+
+        Args:
+            indent (int, optional): Number of spaces to indent each level. Defaults to None.
+            **kwargs: Keyword arguments for the current context.
+
+        Returns:
+            str: String representation of the grammar.
+
+        Raises:
+            ValueError: Attribute type is not supported.
+        """
+        attrs = self.attrs_dict()
+        n = len(attrs)
+        kwargs["indent"] = indent
+        msg = f"{type(self).__name__}("
+        for j, (name, value) in enumerate(attrs.items()):
+            if indent is None:
+                if j > 0:
+                    msg += ", "
+            else:
+                if j > 0:
+                    msg += ","
+                msg += "\n" + (" " * indent)
+            msg += f"{name}="
+            if indent is None:
+                msg += value_to_string(value, **kwargs)
+            else:
+                msg += value_to_string(value, **kwargs).replace(
+                    "\n",
+                    "\n" + (" " * indent),
+                )
+                if j == n - 1:
+                    msg += "\n"
+        msg += ")"
+        return msg
