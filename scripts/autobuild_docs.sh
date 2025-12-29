@@ -6,7 +6,6 @@ if [ -z "$(which inotifywait)" ]; then
     exit 1
 fi
 
-# File and directory paths are relative to the project root
 REL_EXCLUDED_FILES=()
 N_REL_EXCLUDED_FILES="${#REL_EXCLUDED_FILES[@]}"
 
@@ -53,7 +52,7 @@ N_ALWAYS_EXCLUDED_DIRS="${#ALWAYS_EXCLUDED_DIRS[@]}"
 PROJECT_DIR="$(dirname "$(dirname "$(realpath "$0")")")"
 cd "$PROJECT_DIR"
 
-[[ -z "$DEBOUNCE_SECONDS" ]] && export DEBOUNCE_SECONDS=2
+[[ -z "$DEBOUNCE_SECONDS" ]] && export DEBOUNCE_SECONDS=1.0
 
 function kill_pid() {
     local target_pid="$1"
@@ -72,7 +71,6 @@ python3 ./scripts/serve_locally.py &
 server_pid="$!"
 echo "Server started with PID ${server_pid}"
 trap 'kill_pid "$server_pid" || true' EXIT
-
 
 rel_excluded_files_pattern=''
 if [[ "$N_REL_EXCLUDED_FILES" -gt 0 ]]; then
@@ -192,9 +190,9 @@ inotifywait --recursive \
     --format '%e %w%f' \
     --event create,delete,modify,move ./docs/ \
     --exclude "$excluded_pattern" \
-    | while read changed; do
+ | while read -r changed; do
     echo "$changed"
-    while read -t "$DEBOUNCE_SECONDS" changed; do
+    while read -t "$DEBOUNCE_SECONDS" -r changed; do
         echo "$changed"
     done
     echo "No more changes detected"
@@ -204,6 +202,7 @@ inotifywait --recursive \
     cd docs
     make clean && make html
     cd ..
+
     python3 ./scripts/serve_locally.py &
     server_pid="$!"
     echo "Server started (PID: ${server_pid})"
