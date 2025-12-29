@@ -273,8 +273,8 @@ def main():
         )
         print(f"Doctest Failure at {file_path.relative_to(PROJECT_DIR)}:{line_no}")
         print(f"Name: {e.test.name}")
-        print(f"Expected: {e.example.want.removesuffix('\n')}")
-        print(f"Actual: {e.got.removesuffix('\n')}")
+        print("Expected: " + e.example.want.removesuffix("\n"))
+        print("Actual: " + e.got.removesuffix("\n"))
         sys.exit(1)
 
     if args.output_format == "json":
