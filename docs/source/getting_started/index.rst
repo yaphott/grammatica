@@ -7,15 +7,15 @@ Getting Started
 Installation
 ------------
 
-.. grid:: 2
+.. grid:: 1 1 1 1
     :gutter: 4
 
     .. grid-item-card:: Installing from PyPI
         :class-card: install-card
-        :columns: 12
+        :columns: 12 12 12 6
         :padding: 3
 
-        Grammatica can be installed via pip from `PyPI <https://pypi.org/project/grammatica/>`__.
+        Grammatica can be installed with pip from `PyPI <https://pypi.org/project/grammatica/>`__.
 
         ++++
 
@@ -25,7 +25,7 @@ Installation
 
     .. grid-item-card:: Installing from source
         :class-card: install-card
-        :columns: 12
+        :columns: 12 12 12 6
         :padding: 3
 
         You can also install Grammatica from source by cloning the `repository <https://github.com/yaphott/grammatica>`__.
