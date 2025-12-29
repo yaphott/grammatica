@@ -196,3 +196,25 @@ def test_derivation_rule_attrs_dict():
     }
     assert actual == expected
     assert actual["value"] is grammar
+
+
+@pytest.mark.parametrize(
+    "grammar, indent, expected",
+    [
+        (
+            DerivationRule(
+                "bool",
+                Or([String("true"), String("false")]),
+            ),
+            None,
+            "DerivationRule(symbol='bool', value=Or(subexprs=[String(value='true'), String(value='false')], quantifier=(1, 1)))",
+        ),
+        (
+            DerivationRule("bool", Or([String("true"), String("false")])),
+            2,
+            "DerivationRule(\n  symbol='bool',\n  value=Or(\n    subexprs=[\n      String(value='true'),\n      String(value='false')\n    ],\n    quantifier=(1, 1)\n  )\n)",
+        ),
+    ],
+)
+def test_derivation_rule_as_string(grammar, indent, expected):
+    assert grammar.as_string(indent=indent) == expected
