@@ -8,6 +8,7 @@ Grammatica is a library for generating and manipulating GBNF (GGML BNF) grammars
    :maxdepth: 2
    :caption: Contents:
 
+   getting_started/index
    api_reference/index
 
 Indices and tables
