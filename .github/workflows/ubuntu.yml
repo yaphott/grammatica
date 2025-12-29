@@ -54,7 +54,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Run doctests
-        run: python3 scripts/run_doctests.py --raise-on-error -v
+        run: python3 scripts/run_doctests.py --raise-on-error
         shell: bash -el {0}
 
   build-docs:
