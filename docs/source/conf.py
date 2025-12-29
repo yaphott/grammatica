@@ -236,12 +236,6 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
 }
 
-# -- Options for Doctest -------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/extensions/doctest.html
-# doctest_global_setup = """
-# from grammatica.grammar import ...
-# """
-
 # -- Options for Autosummary ---------------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html#configuration
 
