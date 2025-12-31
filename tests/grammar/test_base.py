@@ -137,7 +137,7 @@ def test_grammar_equals(test_case):
 
 def test_grammar_equals_same_instance():
     grammar = NoOpGrammar()
-    assert grammar.equals(grammar)
+    assert grammar == grammar
 
 
 # TODO: More direct way to test would be to have a child of Grammar that defines some attrs

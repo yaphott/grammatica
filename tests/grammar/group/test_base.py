@@ -14,7 +14,7 @@ except ImportError:
 
 def test_group_grammar_equals_same_instance():
     grammar = NoOpGroupGrammar([])
-    assert grammar.equals(grammar)
+    assert grammar == grammar
 
 
 @pytest.mark.parametrize(
