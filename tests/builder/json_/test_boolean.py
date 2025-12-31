@@ -13,6 +13,7 @@ except ImportError:
     sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
     from tests.helpers import fmt_result
 
+
 @pytest.mark.parametrize(
     "test_case",
     [
@@ -95,6 +96,7 @@ def test_json_boolean_literal_as_string(test_case):
         )
     )
 
+
 def test_json_boolean_grammar():
     component = JSONBoolean()
     actual = component.grammar()
@@ -119,6 +121,7 @@ def test_json_boolean_attrs_dict():
             f"Actual: {fmt_result(actual)!s}",
         )
     )
+
 
 def test_json_boolean_as_string():
     component = JSONBoolean()
