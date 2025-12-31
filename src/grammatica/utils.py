@@ -56,44 +56,59 @@ def _value_is_simple(value: Any) -> bool:
     return False
 
 
-def _collection_to_string(value: Collection[Any], indent: int | None) -> str:
+def _collection_to_string(
+    value: tuple[Any, ...] | list[Any] | set[Any] | frozenset[Any],
+    indent: int | None,
+) -> str:
+    value_n = len(value)
+
     prefix: str
     suffix: str
+    allow_trailing_comma: bool
     if isinstance(value, tuple):
+        if value_n < 1:
+            return "()"
         prefix, suffix = "(", ")"
+        allow_trailing_comma = len(value) == 1
     elif isinstance(value, list):
+        if value_n < 1:
+            return "[]"
         prefix, suffix = "[", "]"
+        allow_trailing_comma = False
     elif isinstance(value, set):
-        if not value:
+        if value_n < 1:
             return "set()"
         prefix, suffix = "{", "}"
+        allow_trailing_comma = False
     else:  # frozenset
-        if not value:
+        if value_n < 1:
             return "frozenset()"
         prefix, suffix = "frozenset({", "})"
+        allow_trailing_comma = False
+
     msg = prefix
-    if all(map(_value_is_simple, value)):
-        for j, subvalue in enumerate(value):
-            if j > 0:
+    if (indent is None) or all(map(_value_is_simple, value)):
+        # Render as a single line
+        for i, subvalue in enumerate(value):
+            if i > 0:
                 msg += ", "
             msg += value_to_string(subvalue, indent=None)
+            if allow_trailing_comma and (i >= value_n - 1):
+                msg += ","
     else:
-        value_n = len(value)
-        for j, subvalue in enumerate(value):
-            if indent is None:
-                if j > 0:
-                    msg += ", "
-                msg += value_to_string(subvalue, indent=indent)
-            else:
-                if j > 0:
+        # Render as multiple lines
+        for i, subvalue in enumerate(value):
+            if i > 0:
+                msg += ","
+            msg += "\n" + (" " * indent)
+            msg += value_to_string(subvalue, indent=indent).replace(
+                "\n",
+                "\n" + (" " * indent),
+            )
+            if i >= value_n - 1:
+                if allow_trailing_comma:
                     msg += ","
-                msg += "\n" + (" " * indent)
-                msg += value_to_string(subvalue, indent=indent).replace(
-                    "\n",
-                    "\n" + (" " * indent),
-                )
-                if j == value_n - 1:
-                    msg += "\n"
+                msg += "\n"
     msg += suffix
     return msg
 
