@@ -1,7 +1,6 @@
-"""Base grammar classes and utility functions for handling grouped grammar expressions.
+"""Base grammar classes for handling grouped grammar expressions.
 
-Provides abstractions for building and rendering grouped grammar expressions, as well as
-utility functions for grouping and merging subexpressions.
+Provides abstractions for building and rendering grouped grammar expressions.
 """
 
 from __future__ import annotations
@@ -10,7 +9,8 @@ import sys
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from grammatica.grammar.base import Grammar, value_to_string
+from grammatica.grammar.base import Grammar
+from grammatica.utils import value_to_string
 
 if sys.version_info >= (3, 12):  # pragma: no cover
     from typing import override

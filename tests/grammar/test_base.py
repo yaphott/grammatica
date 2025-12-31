@@ -1,10 +1,9 @@
 import pytest
 
 from grammatica.grammar import String
-from grammatica.grammar.base import value_is_simple, value_to_string
 
 try:
-    from .helpers import (
+    from ..helpers import (
         NoOpGrammar,
         NoOpGrammarAlt,
         NoOpGroupGrammar,
@@ -15,7 +14,7 @@ except ImportError:
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from helpers import (
+    from tests.helpers import (
         NoOpGrammar,
         NoOpGrammarAlt,
         NoOpGroupGrammar,
@@ -169,93 +168,3 @@ def test_grammar_str_and_repr():
         == grammar.as_string(indent=None)
         == "NoOpGroupGrammar(subexprs=[String(value='a'), String(value='b')], quantifier=(1, 1))"
     )
-
-
-@pytest.mark.parametrize(
-    "value, expected",
-    [
-        (None, True),
-        (42, True),
-        (3.14, True),
-        ("string", True),
-        (True, True),
-        (False, True),
-        ([], False),
-        (tuple(), False),
-        ({}, False),
-        (set(), False),
-        (frozenset(), False),
-        (String("test"), False),
-    ],
-)
-def test_value_is_simple(value, expected):
-    assert value_is_simple(value) == expected
-
-
-@pytest.mark.parametrize(
-    "value, indent, expected",
-    [
-        # None
-        (None, None, "None"),
-        # Boolean
-        (False, None, "False"),
-        (True, None, "True"),
-        # Number
-        (0, None, "0"),
-        (42, None, "42"),
-        (0.0, None, "0.0"),
-        (3.14, None, "3.14"),
-        # String
-        ("", None, "''"),
-        ("test", None, "'test'"),
-        # List
-        ([], None, "[]"),
-        ([], 2, "[]"),
-        ([1, 2], None, "[1, 2]"),
-        ([1, 2], 2, "[1, 2]"),
-        # Tuple
-        (tuple(), None, "()"),
-        (tuple(), 2, "()"),
-        ((1, 2), None, "(1, 2)"),
-        ((1, 2), 2, "(1, 2)"),
-        # Set
-        (set(), None, "set()"),
-        (set(), 2, "set()"),
-        ({1, 2}, None, "{1, 2}"),
-        ({1, 2}, 2, "{1, 2}"),
-        (frozenset(), None, "frozenset()"),
-        (frozenset(), 2, "frozenset()"),
-        (frozenset({1, 2}), None, "frozenset({1, 2})"),
-        (frozenset({1, 2}), 2, "frozenset({1, 2})"),
-        # Dict
-        ({}, None, "{}"),
-        ({}, 2, "{}"),
-        ({"key": "value"}, None, "{'key': 'value'}"),
-        # Grammar
-        (String("a"), None, "String(value='a')"),
-        ([String("a"), String("b")], None, "[String(value='a'), String(value='b')]"),
-        ([String("a"), String("b")], 2, "[\n  String(value='a'),\n  String(value='b')\n]"),
-        ((String("a"), String("b")), None, "(String(value='a'), String(value='b'))"),
-        ((String("a"), String("b")), 2, "(\n  String(value='a'),\n  String(value='b')\n)"),
-        (
-            {"a": String("a"), "b": String("b")},
-            None,
-            "{'a': String(value='a'), 'b': String(value='b')}",
-        ),
-        (
-            {"a": String("a"), "b": String("b")},
-            2,
-            "{\n  'a': String(value='a'),\n  'b': String(value='b')\n}",
-        ),
-    ],
-)
-def test_value_to_string(value, indent, expected):
-    assert value_to_string(value, indent=indent) == expected
-
-
-def test_value_to_string_unsupported_type():
-    class CustomType:
-        pass
-
-    with pytest.raises(ValueError, match=r"Unsupported value type: CustomType"):
-        value_to_string(CustomType(), indent=None)

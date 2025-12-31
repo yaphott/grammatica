@@ -1,7 +1,6 @@
-"""Base grammar classes and utility functions for handling grammar expressions.
+"""Base grammar classes for handling grammar expressions.
 
-Provides abstractions for building and rendering grammar expressions, as well as utility
-functions for string conversion and determining the simplicity of values.
+Provides abstractions for building and rendering grammar expressions.
 """
 
 from __future__ import annotations
@@ -9,12 +8,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+from grammatica.utils import value_to_string
+
 if TYPE_CHECKING:
-    from typing import (
-        Any,
-        Collection,
-        Mapping,
-    )
+    from typing import Any
 
 
 class Grammar(ABC):
@@ -119,118 +116,3 @@ class Grammar(ABC):
 
     def __eq__(self, other: Any) -> bool:
         return self.equals(other)
-
-
-def value_is_simple(value: Any) -> bool:
-    """Determine if a value is simple (None, bool, int, float, or str).
-
-    Args:
-        value (Any): Value to check.
-
-    Returns:
-        bool: True if the value is simple, False otherwise.
-    """
-    if value is None:
-        return True
-    if isinstance(value, (int, float)):
-        return True
-    if isinstance(value, str):
-        return True
-    return False
-
-
-def _collection_to_string(value: Collection[Any], indent: int | None) -> str:
-    prefix: str
-    suffix: str
-    if isinstance(value, tuple):
-        prefix, suffix = "(", ")"
-    elif isinstance(value, list):
-        prefix, suffix = "[", "]"
-    elif isinstance(value, set):
-        if not value:
-            return "set()"
-        prefix, suffix = "{", "}"
-    else:  # frozenset
-        if not value:
-            return "frozenset()"
-        prefix, suffix = "frozenset({", "})"
-    msg = prefix
-    if all(map(value_is_simple, value)):
-        for j, subvalue in enumerate(value):
-            if j > 0:
-                msg += ", "
-            msg += value_to_string(subvalue, indent=None)
-    else:
-        value_n = len(value)
-        for j, subvalue in enumerate(value):
-            if indent is None:
-                if j > 0:
-                    msg += ", "
-                msg += value_to_string(subvalue, indent=indent)
-            else:
-                if j > 0:
-                    msg += ","
-                msg += "\n" + (" " * indent)
-                msg += value_to_string(subvalue, indent=indent).replace(
-                    "\n",
-                    "\n" + (" " * indent),
-                )
-                if j == value_n - 1:
-                    msg += "\n"
-    msg += suffix
-    return msg
-
-
-def _mapping_to_string(value: Mapping[Any, Any], indent: int | None) -> str:
-    msg = "{"
-    for j, k in enumerate(tuple(value)):
-        subkey, subvalue = k, value[k]
-        if indent is None:
-            if j > 0:
-                msg += ", "
-        else:
-            if j > 0:
-                msg += ","
-            msg += "\n" + (" " * indent)
-        msg += value_to_string(subkey, indent=indent) + ": "
-        if indent is None:
-            msg += value_to_string(subvalue, indent=indent)
-        else:
-            msg += value_to_string(subvalue, indent=indent).replace(
-                "\n",
-                "\n" + (" " * indent),
-            )
-            if j == len(value) - 1:
-                msg += "\n"
-    msg += "}"
-    return msg
-
-
-def value_to_string(value: Any, indent: int | None) -> str:
-    """Create a string representation of a value.
-
-    Args:
-        value (Any): Value to represent as a string.
-        indent (int | None): Indentation level, or None for no indentation.
-
-    Returns:
-        str: String representation of the value.
-
-    Raises:
-        ValueError: Value type is unsupported.
-    """
-    if value is None:
-        return "None"
-    if isinstance(value, bool):
-        return "True" if value else "False"
-    if isinstance(value, (int, float)):
-        return str(value)
-    if isinstance(value, str):
-        return repr(value)
-    if isinstance(value, (tuple, list, set, frozenset)):
-        return _collection_to_string(value, indent=indent)
-    if isinstance(value, dict):
-        return _mapping_to_string(value, indent=indent)
-    if isinstance(value, Grammar):
-        return value.as_string(indent=indent)
-    raise ValueError(f"Unsupported value type: {type(value).__name__}")

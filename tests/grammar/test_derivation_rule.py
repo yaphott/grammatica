@@ -4,13 +4,13 @@ from grammatica.grammar import DerivationRule, String
 from grammatica.grammar.group import And, Or
 
 try:
-    from .helpers import fmt_result
+    from ..helpers import fmt_result
 except ImportError:
     import sys
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    from helpers import fmt_result
+    from tests.helpers import fmt_result
 
 
 def test_derivation_rule_case_insensitive_symbol():

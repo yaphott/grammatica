@@ -8,7 +8,8 @@ import logging
 import sys
 from typing import TYPE_CHECKING
 
-from grammatica.grammar.base import Grammar, value_to_string
+from grammatica.grammar.base import Grammar
+from grammatica.utils import value_to_string
 
 if sys.version_info >= (3, 12):  # pragma: no cover
     from typing import override

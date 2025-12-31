@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from grammatica.grammar.base import Grammar, value_to_string
+from grammatica.grammar.base import Grammar
 from grammatica.grammar.group.base import GroupGrammar
+from grammatica.utils import value_to_string
 
 if TYPE_CHECKING:
     from typing import Any
@@ -57,7 +58,7 @@ class NoOpGroupGrammar(GroupGrammar):
     def needs_wrapped(self):
         return False
 
-    def attrs_dict(self):
+    def attrs_dict(self):  # pylint: disable=W0246
         return super().attrs_dict()
 
 

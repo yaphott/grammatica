@@ -8,13 +8,13 @@ from grammatica.grammar.group import (
 )
 
 try:
-    from ..helpers import fmt_result
+    from ...helpers import fmt_result
 except ImportError:
     import sys
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
-    from helpers import fmt_result
+    from tests.helpers import fmt_result
 
 
 @pytest.mark.parametrize(

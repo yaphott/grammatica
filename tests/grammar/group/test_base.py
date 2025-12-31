@@ -3,13 +3,13 @@ import pytest
 from grammatica.grammar import String
 
 try:
-    from ..helpers import NoOpGroupGrammar
+    from ...helpers import NoOpGroupGrammar
 except ImportError:
     import sys
     from os import path
 
     sys.path.append(path.dirname(path.dirname(path.dirname(path.abspath(__file__)))))
-    from helpers import NoOpGroupGrammar
+    from tests.helpers import NoOpGroupGrammar
 
 
 def test_group_grammar_equals_same_instance():
