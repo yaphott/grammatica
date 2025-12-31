@@ -97,7 +97,10 @@ class JSONStringLiteral(JSONComponent):
         self.ensure_ascii: bool = ensure_ascii
 
     def attrs_dict(self) -> dict[str, Any]:
-        return {"value": self.value} | super().attrs_dict()
+        return {
+            "value": self.value,
+            "ensure_ascii": self.ensure_ascii,
+        } | super().attrs_dict()
 
     def grammar(self) -> String:
         serialized_str = json.dumps(self.value, ensure_ascii=self.ensure_ascii)
