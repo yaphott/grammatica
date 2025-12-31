@@ -35,3 +35,16 @@ def test_json_null_literal_attrs_dict():
             f"Actual: {fmt_result(actual)!s}",
         )
     )
+
+
+def test_json_null_literal_as_string():
+    component = JSONNullLiteral()
+    expected = "JSONNullLiteral()"
+    actual = repr(component)
+    assert actual == expected, "\n".join(
+        (
+            f"Component: {fmt_result(component)!s}",
+            f"Expected: {expected!s}",
+            f"Actual: {actual!s}",
+        )
+    )
