@@ -103,5 +103,7 @@ class JSONStringLiteral(JSONComponent):
         } | super().attrs_dict()
 
     def grammar(self) -> String:
+        if not self.value:
+            return String('""')
         serialized_str = json.dumps(self.value, ensure_ascii=self.ensure_ascii)
         return String(serialized_str)
