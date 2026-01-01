@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import json
 from typing import TYPE_CHECKING
 
 from grammatica.builder.json_.base import JSONComponent
+from grammatica.builder.json_.constants import CHAR_ENCODE_MAP, PRINTABLE_CHARS
 from grammatica.builder.json_.group.base import GroupJSONComponent
 from grammatica.grammar.base import Grammar
 from grammatica.grammar.char_range import CharRange
@@ -13,6 +13,7 @@ from grammatica.grammar.string import String
 
 if TYPE_CHECKING:
     from typing import Any
+
 
 _HEX_CHAR_RANGE: CharRange = CharRange([("0", "9"), ("A", "F"), ("a", "f")])
 _ESCAPED_CHAR: Or = Or(
@@ -90,6 +91,21 @@ class JSONString(GroupJSONComponent):
 
 # TODO: Add support for character ranges.
 class JSONStringLiteral(JSONComponent):
+    """Component that matches a JSON string literal.
+
+    Args:
+        value (Iterable[str]): Characters of the string to match exactly.
+        ensure_ascii (bool, optional): Whether to encode ASCII characters. Defaults to True.
+
+    Examples:
+        >>> from grammatica.builder.json_ import JSONStringLiteral
+        >>> component = JSONStringLiteral("gandalf", ensure_ascii=False)
+        >>> g = component.grammar()
+        >>> g
+        String(value='"gandalf"')
+    """
+
+    # TODO: Allow support for either escaped or non-escaped mix by providing `ensure_ascii=None`
     def __init__(self, value: str, ensure_ascii: bool = True) -> None:
         super().__init__()
 
@@ -102,8 +118,48 @@ class JSONStringLiteral(JSONComponent):
             "ensure_ascii": self.ensure_ascii,
         } | super().attrs_dict()
 
+    @staticmethod
+    def _encode_ascii(char: str) -> str:
+        """Encode an ASCII-only JSON representation of a character.
+
+        Args:
+            text (str): Character to encode.
+
+        Returns:
+            str: Encoded character.
+        """
+        if char in PRINTABLE_CHARS:
+            return char
+        if char in CHAR_ENCODE_MAP:
+            return CHAR_ENCODE_MAP[char]
+        n = ord(char)
+        if n < 0x10000:
+            return f"\\u{n:04x}"
+        n -= 0x10000
+        s1 = 0xD800 | ((n >> 10) & 0x3FF)
+        s2 = 0xDC00 | (n & 0x3FF)
+        return f"\\u{s1:04x}\\u{s2:04x}"
+
+    @staticmethod
+    def _encode(char: str) -> str:
+        """Encode a JSON representation of a character.
+
+        Args:
+            char (str): Character to encode.
+
+        Returns:
+            str: Encoded string.
+        """
+        if char in CHAR_ENCODE_MAP:
+            return CHAR_ENCODE_MAP[char]
+        return char
+
     def grammar(self) -> String:
         if not self.value:
             return String('""')
-        serialized_str = json.dumps(self.value, ensure_ascii=self.ensure_ascii)
-        return String(serialized_str)
+        encoded: str
+        if self.ensure_ascii:
+            encoded = "".join(map(self._encode_ascii, self.value))
+        else:
+            encoded = "".join(map(self._encode, self.value))
+        return String('"' + encoded + '"')
