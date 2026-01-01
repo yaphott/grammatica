@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from grammatica.grammar.base import Grammar
 
 
-class JSONObjectLiteral(GroupJSONComponent):
+class JSONObject(GroupJSONComponent):
     """Matches the keys and values of a JSON object having a known size."""
 
     def __init__(

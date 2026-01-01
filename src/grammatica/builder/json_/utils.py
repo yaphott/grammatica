@@ -19,9 +19,9 @@ def build_json_grammar(
     # from grammatica.builder.json.float_ import JSONFloatLiteral
     from grammatica.builder.json_.base import JSONComponent
     from grammatica.builder.json_.boolean import JSONBooleanLiteral
-    from grammatica.builder.json_.group.array_ import JSONListLiteral
+    from grammatica.builder.json_.group.array_ import JSONArrayLiteral
     from grammatica.builder.json_.group.base import GroupJSONComponent
-    from grammatica.builder.json_.group.object_ import JSONObjectLiteral
+    from grammatica.builder.json_.group.object_ import JSONObject
     from grammatica.builder.json_.integer import JSONIntegerLiteral
     from grammatica.builder.json_.null import JSONNullLiteral
     from grammatica.builder.json_.string import JSONStringLiteral
@@ -55,9 +55,9 @@ def build_json_grammar(
         # TODO: Add variations in string characters, like single quotes, backticks, etc.
         g = JSONStringLiteral(value).grammar()
     elif isinstance(value, list):
-        g = JSONListLiteral(value, item_ws=item_ws, key_ws=key_ws).grammar()
+        g = JSONArrayLiteral(value, item_ws=item_ws, key_ws=key_ws).grammar()
     elif isinstance(value, dict):
-        g = JSONObjectLiteral(value, item_ws=item_ws, key_ws=key_ws).grammar()
+        g = JSONObject(value, item_ws=item_ws, key_ws=key_ws).grammar()
     else:
         raise ValueError(f"Invalid value type: {value!r}")
     return g

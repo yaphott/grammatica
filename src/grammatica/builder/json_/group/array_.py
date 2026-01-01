@@ -15,10 +15,7 @@ if TYPE_CHECKING:
     from grammatica.grammar.base import Grammar
 
 
-# TODO: JSONListLiteral should match on individual values, where a fixed size would be the most common case, but a range could be used in subexprs later down the land as its own class, like `JSONListArgs` that could be expanded anywhere in the `JSONListLiteral` values.
-# TODO: Consider adding `grammar()` method to `Grammar` and implementing it here.
-#       Coming from a place of, at the time of writing this, this class really aligns more as a subclass of `Grammar` than `Grammar`.
-class JSONList(GroupJSONComponent):
+class JSONArray(GroupJSONComponent):
     """Matches a grammar zero or more times in a JSON array."""
 
     def __init__(
@@ -81,8 +78,14 @@ class JSONList(GroupJSONComponent):
         return And([String("["), *subexprs, String("]")])
 
 
-class JSONListLiteral(GroupJSONComponent):
-    """Matches the values of a JSON array having a known size."""
+class JSONArrayLiteral(GroupJSONComponent):
+    """Matches a JSON array having a known size.
+
+    Args:
+        values (Iterable[bool | int | float | str | None | Grammar | JSONComponent]): Values in the JSON array.
+        item_ws (Grammar | None): Whitespace grammar between items.
+        key_ws (Grammar | None): Whitespace grammar between keys and values.
+    """
 
     def __init__(
         self,
