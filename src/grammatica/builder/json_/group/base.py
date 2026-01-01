@@ -1,3 +1,8 @@
+"""Base component classes for handling grouped JSON grammar components.
+
+Provides abstractions for building grouped JSON grammar components and constructing grammars.
+"""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -12,6 +17,19 @@ if TYPE_CHECKING:
 
 
 class GroupJSONComponent(JSONComponent, ABC):
+    """Base class for grouped JSON components.
+
+    Args:
+        item_ws (Grammar | None): Whitespace grammar between items.
+        key_ws (Grammar | None): Whitespace grammar between keys and values.
+        n (int | tuple[int, int | None]): Minimum and maximum repetitions the grammar must match.
+
+    Raises:
+        ValueError: Range lower bound is negative.
+        ValueError: Range upper bound is not positive or None (infinity).
+        ValueError: Range lower bound is greater than range upper bound.
+    """
+
     def __init__(
         self,
         *,
