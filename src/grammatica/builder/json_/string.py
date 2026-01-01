@@ -51,12 +51,6 @@ _ESCAPED_CHAR: Or = Or(
                                 And([_HEX_CHAR_RANGE.copy()], quantifier=(4, 4)),
                             ]
                         ),
-                        # Or(
-                        #     [
-                        #         And([String("u"), HEX_CHAR_RANGE], length_range=4),
-                        #         And([String("U"), HEX_CHAR_RANGE], length_range=8),
-                        #     ],
-                        # ),
                     ],
                 ),
             ]
@@ -65,7 +59,6 @@ _ESCAPED_CHAR: Or = Or(
 )
 
 
-# TODO: Add support for character ranges.
 class JSONString(GroupJSONComponent):
     def __init__(self, n: int | tuple[int, int | None] = (0, None)) -> None:
         super().__init__(
@@ -80,9 +73,6 @@ class JSONString(GroupJSONComponent):
     def grammar(self) -> Grammar:
         return And(
             [
-                # self.quote,
-                # Grammar([self.escaped_char], length_range=self.length_range),
-                # self.quote,
                 String('"'),
                 And([_ESCAPED_CHAR.copy()], quantifier=self.n),
                 String('"'),
@@ -90,7 +80,6 @@ class JSONString(GroupJSONComponent):
         )
 
 
-# TODO: Add support for character ranges.
 class JSONStringLiteral(JSONComponent):
     """Component that matches a JSON string literal.
 
