@@ -1,3 +1,7 @@
+"""
+Classes and utilities for building JSON integer grammar components.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

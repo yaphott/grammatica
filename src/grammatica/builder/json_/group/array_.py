@@ -1,3 +1,7 @@
+"""
+Classes and utilities for building JSON array grammar components.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -16,7 +20,20 @@ if TYPE_CHECKING:
 
 
 class JSONArray(GroupJSONComponent):
-    """Matches a grammar zero or more times in a JSON array."""
+    """Component that matches a JSON array of values that conform to the provided grammar.
+
+    Note:
+        If the value of `value` is not an instance of ``Grammar`` or ``Component`` then it will be coerced into an instance of the appropriate corresponding JSON component.
+
+    Args:
+        value (bool | int | float | str | None | Grammar | Component): Grammar or value to match for each item in the JSON array.
+        item_ws (Grammar | None): Whitespace grammar between items.
+        key_ws (Grammar | None): Whitespace grammar between keys and values.
+        n (int | tuple[int, int | None]): Minimum and maximum number of items in the array.
+
+    See Also:
+        :class:`grammatica.builder.json_.JSONArrayLiteral`: JSON array component with fixed size.
+    """
 
     def __init__(
         self,
@@ -79,12 +96,18 @@ class JSONArray(GroupJSONComponent):
 
 
 class JSONArrayLiteral(GroupJSONComponent):
-    """Matches a JSON array having a known size.
+    """Component that matches a sized JSON array of values that conform to the provided grammars.
+
+    Note:
+        All values in `values` that are not an instance of ``Grammar`` or ``Component`` are coerced into an instance of the appropriate corresponding JSON component.
 
     Args:
-        values (Iterable[bool | int | float | str | None | Grammar | JSONComponent]): Values in the JSON array.
+        values (Iterable[bool | int | float | str | None | Grammar | Component]): Values in the JSON array.
         item_ws (Grammar | None): Whitespace grammar between items.
         key_ws (Grammar | None): Whitespace grammar between keys and values.
+
+    See Also:
+        :class:`grammatica.builder.json_.JSONArray`: JSON array component with flexible size.
     """
 
     def __init__(
@@ -109,7 +132,6 @@ class JSONArrayLiteral(GroupJSONComponent):
     def grammar(self) -> Grammar:
         if self.n[1] == 0:
             return String("[]")
-
         grammars: list[Grammar] = []
         grammars.append(String("["))
         for i, value in enumerate(self.values):

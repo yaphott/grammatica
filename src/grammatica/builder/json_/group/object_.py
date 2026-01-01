@@ -1,3 +1,7 @@
+"""
+Classes and utilities for building JSON object grammar components.
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -16,7 +20,13 @@ if TYPE_CHECKING:
 
 
 class JSONObject(GroupJSONComponent):
-    """Matches the keys and values of a JSON object having a known size."""
+    """Component that matches a JSON object with specified key-value pairs.
+
+    Args:
+        value (Mapping[bool | int | float | str | None | Grammar | Component, bool | int | float | str | None | Grammar | Component]): Key-value pairs in the JSON object.
+        item_ws (Grammar | None): Whitespace grammar between items.
+        key_ws (Grammar | None): Whitespace grammar between keys and values.
+    """
 
     def __init__(
         self,
