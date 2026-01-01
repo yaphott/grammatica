@@ -91,11 +91,13 @@ class JSONStringLiteral(JSONComponent):
         value (Iterable[str]): Characters of the string to match exactly.
         ensure_ascii (bool, optional): Whether to encode ASCII characters. Defaults to True.
 
+    See Also:
+        :class:`grammatica.builder.json_.JSONString`: JSON string component that matches a string  (of a specified length...) TODO: finish this
+
     Examples:
         >>> from grammatica.builder.json_ import JSONStringLiteral
         >>> component = JSONStringLiteral("gandalf", ensure_ascii=False)
-        >>> g = component.grammar()
-        >>> g
+        >>> component.grammar()
         String(value='"gandalf"')
     """
 

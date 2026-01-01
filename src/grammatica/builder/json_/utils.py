@@ -8,14 +8,14 @@ import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from grammatica.builder.json_.base import JSONComponent
+    from grammatica.builder.base import Component
     from grammatica.grammar.base import Grammar
 
 logger: logging.Logger = logging.getLogger(__name__)
 
 
 def build_json_grammar(
-    value: bool | int | float | str | list | dict | None | Grammar | JSONComponent,
+    value: bool | int | float | str | list | dict | None | Grammar | Component,
     item_ws: Grammar | None,
     key_ws: Grammar | None,
 ) -> Grammar:
@@ -34,18 +34,6 @@ def build_json_grammar(
     g: Grammar
     if value is None:
         g = JSONNullLiteral().grammar()
-    elif isinstance(value, Grammar):
-        g = value
-    elif isinstance(value, GroupJSONComponent):
-        if value.item_ws != item_ws:
-            # print(f"Updating item_ws: {value.item_ws} -> {item_ws}")
-            logger.warning("Updating item_ws: %r -> %r", value.item_ws, item_ws)
-            value.item_ws = item_ws
-        if value.key_ws != key_ws:
-            # print(f"Updating key_ws: {value.key_ws} -> {key_ws}")
-            logger.warning("Updating key_ws: %r -> %r", value.key_ws, key_ws)
-            value.key_ws = key_ws
-        g = value.grammar()
     elif isinstance(value, JSONComponent):
         g = value.grammar()
     elif isinstance(value, bool):
@@ -62,6 +50,21 @@ def build_json_grammar(
         g = JSONArrayLiteral(value, item_ws=item_ws, key_ws=key_ws).grammar()
     elif isinstance(value, dict):
         g = JSONObject(value, item_ws=item_ws, key_ws=key_ws).grammar()
+    elif isinstance(value, Grammar):
+        g = value.copy()
+    elif isinstance(value, GroupJSONComponent):
+        if value.item_ws != item_ws:
+            logger.warning("Updating item_ws: %r -> %r", value.item_ws, item_ws)
+            value.item_ws = item_ws
+        if value.key_ws != key_ws:
+            logger.warning("Updating key_ws: %r -> %r", value.key_ws, key_ws)
+            value.key_ws = key_ws
+        g = value.grammar()
+    # NOTE: Commented out as it is redundant due to the subsequent check for Component.
+    # elif isinstance(value, JSONComponent):
+    #     g = value.grammar()
+    elif isinstance(value, Component):
+        g = value.grammar()
     else:
         raise ValueError(f"Invalid value type: {value!r}")
     return g

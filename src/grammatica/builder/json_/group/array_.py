@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from grammatica.builder.json_.base import JSONComponent
+from grammatica.builder.base import Component
 from grammatica.builder.json_.group.base import GroupJSONComponent
 from grammatica.builder.json_.utils import build_json_grammar
 from grammatica.grammar.group.and_ import And
@@ -37,7 +37,7 @@ class JSONArray(GroupJSONComponent):
 
     def __init__(
         self,
-        value: bool | int | float | str | None | Grammar | JSONComponent,
+        value: bool | int | float | str | None | Grammar | Component,
         *,
         item_ws: Grammar | None = None,
         key_ws: Grammar | None = None,
@@ -49,7 +49,7 @@ class JSONArray(GroupJSONComponent):
             n=n,
         )
 
-        self.value: bool | int | float | str | None | Grammar | JSONComponent = value
+        self.value: bool | int | float | str | None | Grammar | Component = value
 
     def attrs_dict(self) -> dict[str, Any]:
         return {"value": self.value} | super().attrs_dict()
@@ -112,7 +112,7 @@ class JSONArrayLiteral(GroupJSONComponent):
 
     def __init__(
         self,
-        values: Iterable[bool | int | float | str | None | Grammar | JSONComponent],
+        values: Iterable[bool | int | float | str | None | Grammar | Component],
         item_ws: Grammar | None = None,
         key_ws: Grammar | None = None,
     ) -> None:
@@ -122,7 +122,7 @@ class JSONArrayLiteral(GroupJSONComponent):
             n=(1, 1),
         )
 
-        self.values: list[bool | int | float | str | None | Grammar | JSONComponent] = (
+        self.values: list[bool | int | float | str | None | Grammar | Component] = (
             list(values)
         )
 

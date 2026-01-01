@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
     from typing import Any
 
-    from grammatica.builder.json_.base import JSONComponent
+    from grammatica.builder.base import Component
     from grammatica.grammar.base import Grammar
 
 
@@ -31,8 +31,8 @@ class JSONObject(GroupJSONComponent):
     def __init__(
         self,
         value: Mapping[
-            bool | int | float | str | None | Grammar | JSONComponent,
-            bool | int | float | str | None | Grammar | JSONComponent,
+            bool | int | float | str | None | Grammar | Component,
+            bool | int | float | str | None | Grammar | Component,
         ],
         item_ws: Grammar | None = None,
         key_ws: Grammar | None = None,
@@ -44,8 +44,8 @@ class JSONObject(GroupJSONComponent):
         )
 
         self.value: dict[
-            bool | int | float | str | None | Grammar | JSONComponent,
-            bool | int | float | str | None | Grammar | JSONComponent,
+            bool | int | float | str | None | Grammar | Component,
+            bool | int | float | str | None | Grammar | Component,
         ] = dict(value)
 
     def attrs_dict(self) -> dict[str, Any]:
