@@ -12,6 +12,7 @@ from grammatica.grammar.group.or_ import Or
 from grammatica.grammar.string import String
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from typing import Any
 
 
@@ -106,10 +107,10 @@ class JSONStringLiteral(JSONComponent):
     """
 
     # TODO: Allow support for either escaped or non-escaped mix by providing `ensure_ascii=None`
-    def __init__(self, value: str, ensure_ascii: bool = True) -> None:
+    def __init__(self, value: Iterable[str], ensure_ascii: bool = True) -> None:
         super().__init__()
 
-        self.value: str = value
+        self.value: str = "".join(value)
         self.ensure_ascii: bool = ensure_ascii
 
     def attrs_dict(self) -> dict[str, Any]:
