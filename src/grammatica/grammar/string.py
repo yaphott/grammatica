@@ -43,7 +43,7 @@ class String(Grammar):
     def __init__(self, value: Iterable[str]) -> None:
         super().__init__()
 
-        self.value: str = str(value)
+        self.value: str = "".join(value)
         """String to match exactly."""
 
     def render(self, **kwargs) -> str | None:
