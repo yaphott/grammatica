@@ -21,8 +21,8 @@ The following subpackages are public.
 
 .. toctree::
 
-    group/and_
-    group/or_
-    char_range
-    string
-    derivation_rule
+    grammar/group/and_
+    grammar/group/or_
+    grammar/char_range
+    grammar/string
+    grammar/derivation_rule
