@@ -1,3 +1,8 @@
+"""Base component classes for handling JSON grammar components.
+
+Provides abstractions for building JSON grammar components and constructing grammars.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -20,6 +25,8 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 class JSONComponent(Component, ABC):
+    """Base class for JSON grammar components."""
+
     @abstractmethod
     def attrs_dict(self) -> dict[str, Any]:
         return super().attrs_dict()
