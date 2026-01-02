@@ -315,4 +315,4 @@ class CharRange(Grammar):
         return {
             "char_ranges": self.char_ranges,
             "negate": self.negate,
-        }
+        } | super().attrs_dict()

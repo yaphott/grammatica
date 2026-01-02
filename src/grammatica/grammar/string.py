@@ -137,7 +137,7 @@ class String(Grammar):
         return char_to_hex(char)
 
     def attrs_dict(self) -> dict[str, Any]:
-        return {"value": self.value}
+        return {"value": self.value} | super().attrs_dict()
 
 
 def merge_adjacent_string_grammars(subexprs: list[Grammar], n: int) -> int:

@@ -165,7 +165,10 @@ class DerivationRule(Grammar):
         return DerivationRule(self._symbol, simplified)
 
     def attrs_dict(self) -> dict[str, Any]:
-        return {"symbol": self._symbol, "value": self.value}
+        return {
+            "symbol": self._symbol,
+            "value": self.value,
+        } | super().attrs_dict()
 
     @override
     def as_string(self, indent: int | None = None, **kwargs) -> str:

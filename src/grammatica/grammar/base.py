@@ -19,6 +19,9 @@ class Grammar(Component, ABC):
 
     # __slots__: tuple[str, ...] = ()
 
+    def __init__(self) -> None:  # pylint: disable=W0246
+        super().__init__()
+
     @abstractmethod
     def render(self, **kwargs) -> str | None:
         """Render the grammar as a regular expression.
@@ -47,12 +50,7 @@ class Grammar(Component, ABC):
 
     @abstractmethod
     def attrs_dict(self) -> dict[str, Any]:
-        """Return instance attributes of the grammar.
-
-        Returns:
-            dict[str, Any]: Dictionary of instance attributes.
-        """
-        return {}
+        return super().attrs_dict()
 
     def copy(self) -> Grammar:
         """Create a copy of the grammar.
