@@ -1,6 +1,5 @@
-"""Base component classes for handling grouped JSON grammar components.
-
-Provides abstractions for building grouped JSON grammar components and constructing grammars.
+"""
+Base grouped composition and rule builder classes that construct a grammar to match JSON object types.
 """
 
 from __future__ import annotations
@@ -8,7 +7,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from grammatica.builder.json_.base import JSONComponent
+from grammatica.builder.json_.base import JSONComposition
 
 if TYPE_CHECKING:
     from typing import Any
@@ -16,8 +15,8 @@ if TYPE_CHECKING:
     from grammatica.grammar.base import Grammar
 
 
-class GroupJSONComponent(JSONComponent, ABC):
-    """Base class for grouped JSON components.
+class GroupJSONComposition(JSONComposition, ABC):
+    """Base class for grouped JSON compositions.
 
     Args:
         item_ws (Grammar | None): Whitespace grammar between items.
@@ -29,6 +28,8 @@ class GroupJSONComponent(JSONComponent, ABC):
         ValueError: Range upper bound is not positive or None (infinity).
         ValueError: Range lower bound is greater than range upper bound.
     """
+
+    __slots__: tuple[str, ...] = ("item_ws", "key_ws", "n")
 
     def __init__(
         self,

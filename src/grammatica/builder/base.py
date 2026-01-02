@@ -1,4 +1,4 @@
-"""Base grammar component and rule builder classes for building grammars.
+"""Base composition and rule builder classes.
 
 Provides abstractions for building grammars.
 """
@@ -6,9 +6,9 @@ Provides abstractions for building grammars.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from grammatica.utils import value_to_string
+from grammatica.base import Component
 
 if TYPE_CHECKING:
     from typing import Any
@@ -17,64 +17,42 @@ if TYPE_CHECKING:
     from grammatica.grammar.derivation_rule import DerivationRule
 
 
-class Component(ABC):
-    """Base class for grammar components."""
+class Composition(Component, ABC):
+    """Base class for compositions that build grammars."""
 
-    def __init__(self) -> None:
-        pass
+    # __slots__: tuple[str, ...] = ()
 
-    @abstractmethod
-    def attrs_dict(self) -> dict[str, Any]:
-        """Return instance attributes of the component.
-
-        Returns:
-            dict[str, Any]: Dictionary of instance attributes.
-        """
-        return {}
+    def __init__(self) -> None:  # pylint: disable=W0246
+        super().__init__()
 
     @abstractmethod
     def grammar(self) -> Grammar:
-        """Construct a grammar for the component.
+        """Construct a grammar for the composition.
 
         Returns:
-            Grammar: Grammar for the component.
+            Grammar: Grammar for the composition.
         """
 
-    def as_string(self, **kwargs) -> str:
-        """Return a string representation of the grammar.
+    @abstractmethod
+    def attrs_dict(self) -> dict[str, Any]:
+        return super().attrs_dict()
 
-        Args:
-            **kwargs: Keyword arguments for the current context.
+    def copy(self) -> Composition:
+        """Create a copy of the composition.
 
         Returns:
-            str: String representation of the grammar.
-
-        Raises:
-            ValueError: Attribute type is not supported.
+            Composition: Copy of the composition.
         """
-        attrs = self.attrs_dict()
-        kwargs["indent"] = None
-        msg = f"{type(self).__name__}("
-        for j, (name, value) in enumerate(attrs.items()):
-            if j > 0:
-                msg += ", "
-            msg += f"{name}="
-            msg += value_to_string(value, **kwargs)
-        msg += ")"
-        return msg
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-    def __str__(self) -> str:
-        return self.as_string(indent=None)
+        return cast(Composition, super().copy())
 
 
-class RuleBuilder(ABC):
+class RuleBuilder(Component, ABC):
     """Base class for rule builders."""
 
-    def __init__(self) -> None:
-        pass
+    # __slots__: tuple[str, ...] = ()
+
+    def __init__(self) -> None:  # pylint: disable=W0246
+        super().__init__()
 
     @abstractmethod
     def build(self, value: Any, **kwargs) -> list[DerivationRule]:
@@ -90,7 +68,7 @@ class RuleBuilder(ABC):
 
     def render(
         self,
-        value: Any | Grammar | Component,
+        value: Any | Grammar | Composition,
     ) -> str:
         """Build the grammar and render it as a regular expression.
 
@@ -98,7 +76,7 @@ class RuleBuilder(ABC):
             Returns empty :py:class:`str` if all rules render to None.
 
         Args:
-            value (Any | Grammar | Component): Value used to build the grammar.
+            value (Any | Grammar | Composition): Value used to build the grammar.
 
         Returns:
             str: Rendered expression.
@@ -120,31 +98,10 @@ class RuleBuilder(ABC):
         """
         return {}
 
-    def as_string(self, **kwargs) -> str:
-        """Return a string representation of the grammar builder.
-
-        Args:
-            **kwargs: Keyword arguments for the current context.
+    def copy(self) -> RuleBuilder:
+        """Create a copy of the grammar builder.
 
         Returns:
-            str: String representation of the grammar builder.
-
-        Raises:
-            ValueError: Attribute type is not supported.
+            RuleBuilder: Copy of the grammar builder.
         """
-        attrs = self.attrs_dict()
-        kwargs["indent"] = None
-        msg = f"{type(self).__name__}("
-        for j, (name, value) in enumerate(attrs.items()):
-            if j > 0:
-                msg += ", "
-            msg += f"{name}="
-            msg += value_to_string(value, **kwargs)
-        msg += ")"
-        return msg
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-    def __str__(self) -> str:
-        return self.as_string(indent=None)
+        return cast(RuleBuilder, super().copy())

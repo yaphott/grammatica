@@ -1,4 +1,4 @@
-from grammatica.builder.json_.base import JSONComponent, JSONRuleBuilder
+from grammatica.builder.json_.base import JSONComposition, JSONRuleBuilder
 from grammatica.builder.json_.boolean import JSONBoolean, JSONBooleanLiteral
 from grammatica.builder.json_.group import (
     JSONArray,
@@ -13,7 +13,7 @@ from grammatica.builder.json_.string import JSONString, JSONStringLiteral
 
 # TODO: Finish adding all JSON components
 __all__ = [
-    "JSONComponent",
+    "JSONComposition",
     "JSONRuleBuilder",
     "JSONBoolean",
     "JSONBooleanLiteral",

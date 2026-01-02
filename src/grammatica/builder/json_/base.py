@@ -1,6 +1,5 @@
-"""Base component classes for handling JSON grammar components.
-
-Provides abstractions for building JSON grammar components and constructing grammars.
+"""
+Base composition and rule builder classes that build grammars to match JSON values.
 """
 
 from __future__ import annotations
@@ -9,7 +8,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from grammatica.builder.base import Component, RuleBuilder
+from grammatica.builder.base import Composition, RuleBuilder
 from grammatica.builder.json_.utils import build_json_grammar
 from grammatica.grammar.base import Grammar
 from grammatica.grammar.derivation_rule import DerivationRule
@@ -24,8 +23,13 @@ if TYPE_CHECKING:
 logger: logging.Logger = logging.getLogger(__name__)
 
 
-class JSONComponent(Component, ABC):
-    """Base class for JSON grammar components."""
+class JSONComposition(Composition, ABC):
+    """Base class for JSON compositions."""
+
+    # __slots__: tuple[str, ...] = ()
+
+    def __init__(self) -> None:  # pylint: disable=W0246
+        super().__init__()
 
     @abstractmethod
     def attrs_dict(self) -> dict[str, Any]:
@@ -202,7 +206,9 @@ class JSONRuleBuilder(RuleBuilder):
 
     def build(
         self,
-        value: bool | int | float | str | list | dict | None | Grammar | JSONComponent,
+        value: (
+            bool | int | float | str | list | dict | None | Grammar | JSONComposition
+        ),
         **kwargs,
     ) -> list[DerivationRule]:
         rules = []
@@ -238,11 +244,3 @@ class JSONRuleBuilder(RuleBuilder):
         )
         rules.append(root_rule)
         return rules
-
-    # def render(
-    #     self,
-    #     value: (
-    #         bool | int | float | str | list | dict | None | Grammar | JSONComponent
-    #     ),
-    # ) -> str:
-    #     return super().render(value)

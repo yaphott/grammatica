@@ -1,12 +1,12 @@
 """
-Classes and utilities for building JSON object grammar components.
+Classes and utilities for grouped compositions that construct a grammar to match a JSON object.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from grammatica.builder.json_.group.base import GroupJSONComponent
+from grammatica.builder.json_.group.base import GroupJSONComposition
 from grammatica.builder.json_.utils import build_json_grammar
 from grammatica.grammar.group.and_ import And
 from grammatica.grammar.string import String
@@ -15,24 +15,59 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
     from typing import Any
 
-    from grammatica.builder.base import Component
+    from grammatica.builder.base import Composition
     from grammatica.grammar.base import Grammar
 
 
-class JSONObject(GroupJSONComponent):
-    """Component that matches a JSON object with specified key-value pairs.
+class JSONObject(GroupJSONComposition):
+    """Composition that matches a JSON object with specified key-value pairs.
 
     Args:
-        value (Mapping[bool | int | float | str | None | Grammar | Component, bool | int | float | str | None | Grammar | Component]): Key-value pairs in the JSON object.
+        value (Mapping[bool | int | float | str | None | Grammar | Composition, bool | int | float | str | None | Grammar | Composition]): Key-value pairs in the JSON object.
         item_ws (Grammar | None): Whitespace grammar between items.
         key_ws (Grammar | None): Whitespace grammar between keys and values.
+
+    Raises:
+        ValueError: Range lower bound is negative.
+        ValueError: Range upper bound is not positive or None (infinity).
+        ValueError: Range lower bound is greater than range upper bound.
+
+    Examples:
+        >>> from grammatica.builder.json_ import JSONObject
+        >>> comp = JSONObject({
+        ...     "name": "Samwise Gamgee",
+        ...     "age": 38,
+        ...     "is_hobbit": True,
+        ... })
+        >>> comp
+        JSONObject(value={'name': 'Samwise Gamgee', 'age': 38, 'is_hobbit': True}, n=(1, 1), item_ws=None, key_ws=None)
+        >>> g = comp.grammar()
+        >>> print(g.as_string(indent=4))
+        And(
+            subexprs=[
+                String(value='{'),
+                String(value='"name"'),
+                String(value=':'),
+                String(value='"Samwise Gamgee"'),
+                String(value=','),
+                String(value='"age"'),
+                String(value=':'),
+                String(value='38'),
+                String(value=','),
+                String(value='"is_hobbit"'),
+                String(value=':'),
+                String(value='true'),
+                String(value='}')
+            ],
+            quantifier=(1, 1)
+        )
     """
 
     def __init__(
         self,
         value: Mapping[
-            bool | int | float | str | None | Grammar | Component,
-            bool | int | float | str | None | Grammar | Component,
+            bool | int | float | str | None | Grammar | Composition,
+            bool | int | float | str | None | Grammar | Composition,
         ],
         item_ws: Grammar | None = None,
         key_ws: Grammar | None = None,
@@ -44,12 +79,13 @@ class JSONObject(GroupJSONComponent):
         )
 
         self.value: dict[
-            bool | int | float | str | None | Grammar | Component,
-            bool | int | float | str | None | Grammar | Component,
+            bool | int | float | str | None | Grammar | Composition,
+            bool | int | float | str | None | Grammar | Composition,
         ] = dict(value)
+        """Key-value pairs in the JSON object."""
 
     def attrs_dict(self) -> dict[str, Any]:
-        return super().attrs_dict() | {"value": self.value}
+        return {"value": self.value} | super().attrs_dict()
 
     def grammar(self) -> Grammar:
         if self.n[1] == 0:

@@ -1,12 +1,12 @@
 """
-Classes and utilities for building JSON integer grammar components.
+Classes and utilities for compositions that construct a grammar to match a JSON integer.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from grammatica.builder.json_.base import JSONComponent
+from grammatica.builder.json_.base import JSONComposition
 from grammatica.grammar.base import Grammar
 from grammatica.grammar.char_range import CharRange
 from grammatica.grammar.group.and_ import And
@@ -17,7 +17,41 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-class JSONInteger(JSONComponent):
+class JSONInteger(JSONComposition):
+    """Composition that constructs a grammar that matches a JSON integer.
+
+    Args:
+        minval (int | None): Minimum value to match (inclusive), or None if unbounded.
+        maxval (int | None): Maximum value to match (inclusive), or None if unbounded.
+
+    Raises:
+        ValueError: Minimum value is greater than maximum value.
+
+    Examples:
+        >>> from grammatica.builder.json_ import JSONInteger
+        >>> comp = JSONInteger(minval=-5, maxval=5)
+        >>> comp
+        JSONInteger(minval=-5, maxval=5)
+        >>> g = comp.grammar()
+        >>> print(g.as_string(indent=4))
+        Or(
+            subexprs=[
+                And(
+                    subexprs=[
+                        String(value='-'),
+                        CharRange(char_ranges=[('1', '5')], negate=False)
+                    ],
+                    quantifier=(1, 1)
+                ),
+                CharRange(char_ranges=[('1', '5')], negate=False),
+                String(value='0')
+            ],
+            quantifier=(1, 1)
+        )
+    """
+
+    __slots__: tuple[str, ...] = ("minval", "maxval")
+
     def __init__(
         self,
         minval: int | None = None,
@@ -25,11 +59,12 @@ class JSONInteger(JSONComponent):
     ) -> None:
         super().__init__()
 
-        if (minval is not None) and (maxval is not None):
-            if minval > maxval:
-                raise ValueError(f"Invalid range: {minval!r} > {maxval!r}")
+        if (minval is not None) and (maxval is not None) and (minval > maxval):
+            raise ValueError(f"Invalid range: {minval!r} > {maxval!r}")
         self.minval: int | None = minval
+        """Minimum value to match (inclusive), or None if unbounded."""
         self.maxval: int | None = maxval
+        """Maximum value to match (inclusive), or None if unbounded."""
 
     def attrs_dict(self) -> dict[str, Any]:
         return {
@@ -38,6 +73,31 @@ class JSONInteger(JSONComponent):
         } | super().attrs_dict()
 
     def grammar(self) -> Grammar:
+        """Construct a grammar for the composition.
+
+        Returns:
+            Grammar: Grammar for the composition.
+
+        Examples:
+            >>> from grammatica.builder.json_ import JSONInteger
+            >>> comp = JSONInteger(minval=-5, maxval=5)
+            >>> g = comp.grammar()
+            >>> print(g.as_string(indent=4))
+            Or(
+                subexprs=[
+                    And(
+                        subexprs=[
+                            String(value='-'),
+                            CharRange(char_ranges=[('1', '5')], negate=False)
+                        ],
+                        quantifier=(1, 1)
+                    ),
+                    CharRange(char_ranges=[('1', '5')], negate=False),
+                    String(value='0')
+                ],
+                quantifier=(1, 1)
+            )
+        """
         if (self.minval is None) and (self.maxval is None):
             # Unbounded
             return Or(
@@ -324,14 +384,43 @@ class JSONInteger(JSONComponent):
         return Or(subexprs[::-1])
 
 
-class JSONIntegerLiteral(JSONComponent):
+class JSONIntegerLiteral(JSONComposition):
+    """Composition that constructs a grammar that matches a JSON integer literal.
+
+    Args:
+        value (int): Integer value to match.
+
+    Examples:
+        >>> from grammatica.builder.json_ import JSONIntegerLiteral
+        >>> comp = JSONIntegerLiteral(value=42)
+        >>> comp
+        JSONIntegerLiteral(value=42)
+        >>> comp.grammar()
+        String(value='42')
+    """
+
+    __slots__: tuple[str, ...] = ("value",)
+
     def __init__(self, value: int) -> None:
         super().__init__()
 
         self.value: int = value
+        """Integer value to match."""
 
     def attrs_dict(self) -> dict[str, Any]:
         return {"value": self.value} | super().attrs_dict()
 
     def grammar(self) -> String:
+        """Construct a grammar for the composition.
+
+        Returns:
+            Grammar: Grammar for the composition.
+
+        Examples:
+            >>> from grammatica.builder.json_ import JSONIntegerLiteral
+            >>> comp = JSONIntegerLiteral(value=42)
+            >>> g = comp.grammar()
+            >>> g
+            String(value='42')
+        """
         return String(str(self.value))

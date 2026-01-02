@@ -1,29 +1,31 @@
 """
-Classes and utilities for building JSON null literal grammar components.
+Classes and utilities for compositions that construct a grammar to match a JSON null.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from grammatica.builder.json_.base import JSONComponent
+from grammatica.builder.json_.base import JSONComposition
 from grammatica.grammar.string import String
 
 if TYPE_CHECKING:
     from typing import Any
 
 
-class JSONNullLiteral(JSONComponent):
-    """Component that matches a JSON null literal.
+class JSONNullLiteral(JSONComposition):
+    """Composition that constructs a grammar that matches a JSON null literal.
 
     Examples:
         >>> from grammatica.builder.json_ import JSONNullLiteral
-        >>> component = JSONNullLiteral()
-        >>> component
+        >>> comp = JSONNullLiteral()
+        >>> comp
         JSONNullLiteral()
-        >>> component.grammar()
+        >>> comp.grammar()
         String(value='null')
     """
+
+    # __slots__: tuple[str, ...] = ()
 
     def __init__(self) -> None:  # pylint: disable=W0246
         super().__init__()
@@ -32,17 +34,17 @@ class JSONNullLiteral(JSONComponent):
         return super().attrs_dict()
 
     def grammar(self) -> String:
-        """Construct a grammar for the component.
+        """Construct a grammar for the composition.
 
         Returns:
-            Grammar: Grammar for the component.
+            Grammar: Grammar for the composition.
 
         Examples:
             Grammar that matches the JSON-encoded value of :py:obj:`None`
 
             >>> from grammatica.builder.json_ import JSONNullLiteral
-            >>> component = JSONNullLiteral()
-            >>> g = component.grammar()
+            >>> comp = JSONNullLiteral()
+            >>> g = composition.grammar()
             >>> g
             String(value='null')
         """

@@ -1,14 +1,14 @@
 """
-Classes and utilities for building JSON string grammar components.
+Classes and utilities for compositions that construct a grammar to match a JSON string.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from grammatica.builder.json_.base import JSONComponent
+from grammatica.builder.json_.base import JSONComposition
 from grammatica.builder.json_.constants import CHAR_ENCODE_MAP, PRINTABLE_CHARS
-from grammatica.builder.json_.group.base import GroupJSONComponent
+from grammatica.builder.json_.group.base import GroupJSONComposition
 from grammatica.grammar.base import Grammar
 from grammatica.grammar.char_range import CharRange
 from grammatica.grammar.group.and_ import And
@@ -63,7 +63,30 @@ _ESCAPED_CHAR: Or = Or(
 )
 
 
-class JSONString(GroupJSONComponent):
+class JSONString(GroupJSONComposition):
+    """Composition that constructs a grammar that matches a JSON string.
+
+    Args:
+        n (int | tuple[int, int | None]): Minimum and maximum number of characters in
+            the string (excluding quotes).
+
+    See Also:
+        :class:`grammatica.builder.json_.JSONStringLiteral`: JSON string composition with fixed content
+
+    Examples:
+        Non-empty string
+
+        >>> from grammatica.builder.json_ import JSONString
+        >>> comp = JSONString(n=(1, None))
+        >>> comp
+        JSONString(item_ws=None, key_ws=None, n=(1, None))
+        >>> g = comp.grammar()
+        >>> print(g.as_string(indent=4))
+        And(
+            ...
+        )
+    """
+
     def __init__(self, n: int | tuple[int, int | None] = (0, None)) -> None:
         super().__init__(
             item_ws=None,
@@ -75,8 +98,64 @@ class JSONString(GroupJSONComponent):
         return super().attrs_dict()
 
     def grammar(self) -> Grammar:
+        """Construct a grammar for the composition.
+
+        Returns:
+            Grammar: Grammar for the composition.
+
+        Examples:
+            >>> from grammatica.builder.json_ import JSONString
+            >>> comp = JSONString(n=(1, 3))
+            >>> g = comp.grammar()
+            >>> print(comp.as_string(indent=4))
+            And(
+                subexprs=[
+                    String(value='"'),
+                    And(
+                        subexprs=[
+                            Or(
+                                subexprs=[
+                                    CharRange(char_ranges=[('\\x00', '\\x1f'), ('"', '"'), ('\\\\', '\\\\'), ('\\x7f', '\\x7f')], negate=True),
+                                    And(
+                                        subexprs=[
+                                            String(value='\\\\'),
+                                            Or(
+                                                subexprs=[
+                                                    CharRange(char_ranges=[('"', '"'), ('/', '/'), ('\\\\', '\\\\'), ('b', 'b'), ('f', 'f'), ('n', 'n'), ('r', 'r'), ('t', 't')], negate=False),
+                                                    And(
+                                                        subexprs=[
+                                                            String(value='u'),
+                                                            And(
+                                                                subexprs=[
+                                                                    CharRange(char_ranges=[('0', '9'), ('A', 'F'), ('a', 'f')], negate=False)
+                                                                ],
+                                                                quantifier=(4, 4)
+                                                            )
+                                                        ],
+                                                        quantifier=(1, 1)
+                                                    )
+                                                ],
+                                                quantifier=(1, 1)
+                                            )
+                                        ],
+                                        quantifier=(1, 1)
+                                    )
+                                ],
+                                quantifier=(1, 1)
+                            )
+                        ],
+                        quantifier=(1, None)
+                    ),
+                    String(value='"')
+                ],
+                quantifier=(1, 1)
+            )
+        """
         return And(
             [
+                # self.quote,
+                # Grammar([self.escaped_char], length_range=self.length_range),
+                # self.quote,
                 String('"'),
                 And([_ESCAPED_CHAR.copy()], quantifier=self.n),
                 String('"'),
@@ -84,22 +163,26 @@ class JSONString(GroupJSONComponent):
         )
 
 
-class JSONStringLiteral(JSONComponent):
-    """Component that matches a JSON string literal.
+class JSONStringLiteral(JSONComposition):
+    """Composition that constructs a grammar that matches a JSON string literal.
 
     Args:
         value (Iterable[str]): Characters of the string to match exactly.
         ensure_ascii (bool, optional): Whether to encode ASCII characters. Defaults to True.
 
     See Also:
-        :class:`grammatica.builder.json_.JSONString`: JSON string component that matches a string  (of a specified length...) TODO: finish this
+        :class:`grammatica.builder.json_.JSONString`: JSON string composition with flexible content.
 
     Examples:
         >>> from grammatica.builder.json_ import JSONStringLiteral
-        >>> component = JSONStringLiteral("gandalf", ensure_ascii=False)
-        >>> component.grammar()
+        >>> comp = JSONStringLiteral("gandalf", ensure_ascii=False)
+        >>> comp
+        JSONStringLiteral(value='gandalf', ensure_ascii=False)
+        >>> comp.grammar()
         String(value='"gandalf"')
     """
+
+    __slots__: tuple[str, ...] = ("value", "ensure_ascii")
 
     # TODO: Allow support for either escaped or non-escaped mix by providing `ensure_ascii=None`
     def __init__(self, value: Iterable[str], ensure_ascii: bool = True) -> None:
@@ -151,6 +234,18 @@ class JSONStringLiteral(JSONComponent):
         return char
 
     def grammar(self) -> String:
+        """Construct a grammar for the composition.
+
+        Returns:
+            Grammar: Grammar for the composition.
+
+        Examples:
+            >>> from grammatica.builder.json_ import JSONStringLiteral
+            >>> comp = JSONStringLiteral("gandalf", ensure_ascii=False)
+            >>> g = comp.grammar()
+            >>> g
+            String(value='"gandalf"')
+        """
         if not self.value:
             return String('""')
         encoded: str

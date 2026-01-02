@@ -1,5 +1,5 @@
 """
-Utility functions for building JSON grammar components.
+Utility functions for JSON compositions and building grammars to match JSON values.
 """
 
 from __future__ import annotations
@@ -8,23 +8,23 @@ import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from grammatica.builder.base import Component
+    from grammatica.builder.base import Composition
     from grammatica.grammar.base import Grammar
 
 logger: logging.Logger = logging.getLogger(__name__)
 
 
 def build_json_grammar(
-    value: bool | int | float | str | list | dict | None | Grammar | Component,
+    value: bool | int | float | str | list | dict | None | Grammar | Composition,
     item_ws: Grammar | None,
     key_ws: Grammar | None,
 ) -> Grammar:
     # TODO: Refactor and avoid circular imports.
     # from grammatica.builder.json.float_ import JSONFloatLiteral
-    from grammatica.builder.json_.base import JSONComponent
+    from grammatica.builder.json_.base import JSONComposition
     from grammatica.builder.json_.boolean import JSONBooleanLiteral
     from grammatica.builder.json_.group.array_ import JSONArrayLiteral
-    from grammatica.builder.json_.group.base import GroupJSONComponent
+    from grammatica.builder.json_.group.base import GroupJSONComposition
     from grammatica.builder.json_.group.object_ import JSONObject
     from grammatica.builder.json_.integer import JSONIntegerLiteral
     from grammatica.builder.json_.null import JSONNullLiteral
@@ -34,7 +34,7 @@ def build_json_grammar(
     g: Grammar
     if value is None:
         g = JSONNullLiteral().grammar()
-    elif isinstance(value, JSONComponent):
+    elif isinstance(value, JSONComposition):
         g = value.grammar()
     elif isinstance(value, bool):
         g = JSONBooleanLiteral(value).grammar()
@@ -52,7 +52,7 @@ def build_json_grammar(
         g = JSONObject(value, item_ws=item_ws, key_ws=key_ws).grammar()
     elif isinstance(value, Grammar):
         g = value.copy()
-    elif isinstance(value, GroupJSONComponent):
+    elif isinstance(value, GroupJSONComposition):
         if value.item_ws != item_ws:
             logger.warning("Updating item_ws: %r -> %r", value.item_ws, item_ws)
             value.item_ws = item_ws
@@ -60,10 +60,10 @@ def build_json_grammar(
             logger.warning("Updating key_ws: %r -> %r", value.key_ws, key_ws)
             value.key_ws = key_ws
         g = value.grammar()
-    # NOTE: Commented out as it is redundant due to the subsequent check for Component.
-    # elif isinstance(value, JSONComponent):
+    # NOTE: Commented out as it is redundant due to the subsequent check for Composition.
+    # elif isinstance(value, JSONComposition):
     #     g = value.grammar()
-    elif isinstance(value, Component):
+    elif isinstance(value, Composition):
         g = value.grammar()
     else:
         raise ValueError(f"Invalid value type: {value!r}")
