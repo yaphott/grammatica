@@ -6,10 +6,26 @@ if [ -z "$(which inotifywait)" ]; then
     exit 1
 fi
 
-REL_EXCLUDED_FILES=()
-N_REL_EXCLUDED_FILES="${#REL_EXCLUDED_FILES[@]}"
+PROJECT_DIR="$(dirname "$(dirname "$(realpath "$0")")")"
+cd "$PROJECT_DIR"
 
-ALWAYS_EXCLUDED_FILES=(
+[[ -z "$DEBOUNCE_SECONDS" ]] && export DEBOUNCE_SECONDS=1.0
+
+TARGET_REL_DIRS=(
+    "src"
+    "docs"
+)
+TARGET_DIRS=()
+for rel_dir in "${TARGET_REL_DIRS[@]}"; do
+    TARGET_DIRS+=("$PROJECT_DIR/$rel_dir")
+done
+
+EXCLUDE_REL_FILES=()
+EXCLUDE_FILES=()
+for rel_file in "${EXCLUDE_REL_FILES[@]}"; do
+    EXCLUDE_FILES+=("$PROJECT_DIR/$rel_file")
+done
+EXCLUDE_FILE_NAMES=(
     "README.md"
     "CHANGELOG.md"
     "LICENSE"
@@ -27,17 +43,17 @@ ALWAYS_EXCLUDED_FILES=(
     ".gitignore"
     ".DS_Store"
 )
-N_ALWAYS_EXCLUDED_FILES="${#ALWAYS_EXCLUDED_FILES[@]}"
-
-REL_EXCLUDED_DIRS=(
+EXCLUDE_REL_DIRS=(
     "scripts"
     "ci"
     "docs/build"
     "docs/source/api_reference/api"
 )
-N_REL_EXCLUDED_DIRS="${#REL_EXCLUDED_DIRS[@]}"
-
-ALWAYS_EXCLUDED_DIRS=(
+EXCLUDE_DIRS=()
+for rel_dir in "${EXCLUDE_REL_DIRS[@]}"; do
+    EXCLUDE_DIRS+=("$PROJECT_DIR/$rel_dir")
+done
+EXCLUDE_DIR_NAMES=(
     ".github"
     ".git"
     ".venv"
@@ -47,12 +63,6 @@ ALWAYS_EXCLUDED_DIRS=(
     ".vscode"
     "__pycache__"
 )
-N_ALWAYS_EXCLUDED_DIRS="${#ALWAYS_EXCLUDED_DIRS[@]}"
-
-PROJECT_DIR="$(dirname "$(dirname "$(realpath "$0")")")"
-cd "$PROJECT_DIR"
-
-[[ -z "$DEBOUNCE_SECONDS" ]] && export DEBOUNCE_SECONDS=1.0
 
 function kill_pid() {
     local target_pid="$1"
@@ -63,113 +73,56 @@ function kill_pid() {
     fi
 }
 
-cd docs
-make clean && make html
-cd ..
-
-python3 ./scripts/serve_locally.py &
-server_pid="$!"
-echo "Server started with PID ${server_pid}"
-trap 'kill_pid "$server_pid" || true' EXIT
-
-rel_excluded_files_pattern=''
-if [[ "$N_REL_EXCLUDED_FILES" -gt 0 ]]; then
-    rel_excluded_files_pattern+='(^|\./)'
-    if [[ "$N_REL_EXCLUDED_FILES" -ge 2 ]]; then
-        rel_excluded_files_pattern+='('
-    fi
-    for i in "${!REL_EXCLUDED_FILES[@]}"; do
-        if [[ "$i" -gt 0 ]]; then
-            rel_excluded_files_pattern+="|"
+function path_pattern() {
+    local is_full_path="$1"
+    local is_dir="$2"
+    shift 2
+    local paths=("$@")
+    local n="${#paths[@]}"
+    local pattern=''
+    if [[ "$n" -gt 0 ]]; then
+        pattern+="^"
+        if [[ "$is_full_path" != 'true' ]]; then
+            pattern+='/([^/]+/)*'
         fi
-        original_path="${REL_EXCLUDED_FILES[$i]}"
-        escaped_path="$(echo "$original_path" | sed -E 's/([\.\?\*\+\|\{\(\[\}\)]|\])/\\\1/g')"
-        rel_excluded_files_pattern+="$escaped_path"
-    done
-    if [[ "$N_REL_EXCLUDED_FILES" -ge 2 ]]; then
-        rel_excluded_files_pattern+=')'
-    fi
-    rel_excluded_files_pattern+='$'
-fi
-echo "rel_excluded_files_pattern=${rel_excluded_files_pattern}"
-
-always_excluded_files_pattern=''
-if [[ "$N_ALWAYS_EXCLUDED_FILES" -gt 0 ]]; then
-    always_excluded_files_pattern+='(^|/)'
-    if [[ "$N_ALWAYS_EXCLUDED_FILES" -ge 2 ]]; then
-        always_excluded_files_pattern+='('
-    fi
-    for i in "${!ALWAYS_EXCLUDED_FILES[@]}"; do
-        if [[ "$i" -gt 0 ]]; then
-            always_excluded_files_pattern+="|"
+        if [[ "$n" -ge 2 ]]; then
+            pattern+='('
         fi
-        original_path="${ALWAYS_EXCLUDED_FILES[$i]}"
-        escaped_path="$(echo "$original_path" | sed -E 's/([\.\?\*\+\|\{\(\[\}\)]|\])/\\\1/g')"
-        always_excluded_files_pattern+="$escaped_path"
-    done
-    if [[ "$N_ALWAYS_EXCLUDED_FILES" -ge 2 ]]; then
-        always_excluded_files_pattern+=')'
-    fi
-    always_excluded_files_pattern+='$'
-fi
-echo "always_excluded_files_pattern=${always_excluded_files_pattern}"
-
-rel_excluded_dirs_pattern=''
-if [[ "$N_REL_EXCLUDED_DIRS" -gt 0 ]]; then
-    rel_excluded_dirs_pattern+='(^|\./)'
-    if [[ "$N_REL_EXCLUDED_DIRS" -ge 2 ]]; then
-        rel_excluded_dirs_pattern+='('
-    fi
-    for i in "${!REL_EXCLUDED_DIRS[@]}"; do
-        if [[ "$i" -gt 0 ]]; then
-            rel_excluded_dirs_pattern+="|"
+        for i in "${!paths[@]}"; do
+            if [[ "$i" -gt 0 ]]; then
+                pattern+="|"
+            fi
+            escaped_path="$(echo "${paths[$i]}" | sed -E 's/([\.\?\*\+\|\{\(\[\}\)]|\])/\\\1/g')"
+            pattern+="$escaped_path"
+        done
+        if [[ "$n" -ge 2 ]]; then
+            pattern+=')'
         fi
-        original_path="${REL_EXCLUDED_DIRS[$i]}"
-        escaped_path="$(echo "$original_path" | sed -E 's/([\.\?\*\+\|\{\(\[\}\)]|\])/\\\1/g')"
-        rel_excluded_dirs_pattern+="$escaped_path"
-    done
-    if [[ "$N_REL_EXCLUDED_DIRS" -ge 2 ]]; then
-        rel_excluded_dirs_pattern+=')'
-    fi
-    rel_excluded_dirs_pattern+='(/|$)'
-fi
-echo "rel_excluded_dirs_pattern=${rel_excluded_dirs_pattern}"
-
-always_excluded_dirs_pattern=''
-if [[ "$N_ALWAYS_EXCLUDED_DIRS" -gt 0 ]]; then
-    always_excluded_dirs_pattern+='(^|/)'
-    if [[ "$N_ALWAYS_EXCLUDED_DIRS" -ge 2 ]]; then
-        always_excluded_dirs_pattern+='('
-    fi
-    for i in "${!ALWAYS_EXCLUDED_DIRS[@]}"; do
-        if [[ "$i" -gt 0 ]]; then
-            always_excluded_dirs_pattern+="|"
+        if [[ "$is_dir" == 'true' ]]; then
+            pattern+='(/[^/]+)*'
         fi
-        original_path="${ALWAYS_EXCLUDED_DIRS[$i]}"
-        escaped_path="$(echo "$original_path" | sed -E 's/([\.\?\*\+\|\{\(\[\}\)]|\])/\\\1/g')"
-        always_excluded_dirs_pattern+="$escaped_path"
-    done
-    if [[ "$N_ALWAYS_EXCLUDED_DIRS" -ge 2 ]]; then
-        always_excluded_dirs_pattern+=')'
+        pattern+='$'
     fi
-    always_excluded_dirs_pattern+='(/|$)'
-fi
-echo "always_excluded_dirs_pattern=${always_excluded_dirs_pattern}"
+    echo "$pattern"
+}
 
+exclude_files_pattern="$(path_pattern true false "${EXCLUDE_FILES[@]}")"
+echo "exclude_files_pattern=${exclude_files_pattern}"
+exclude_file_names_pattern="$(path_pattern false false "${EXCLUDE_FILE_NAMES[@]}")"
+echo "exclude_file_names_pattern=${exclude_file_names_pattern}"
+exclude_dirs_pattern="$(path_pattern true true "${EXCLUDE_DIRS[@]}")"
+echo "exclude_dirs_pattern=${exclude_dirs_pattern}"
+exclude_dir_names_pattern="$(path_pattern false true "${EXCLUDE_DIR_NAMES[@]}")"
+echo "exclude_dir_names_pattern=${exclude_dir_names_pattern}"
+excluded_pattern=''
 patterns=(
-    "$rel_excluded_files_pattern"
-    "$always_excluded_files_pattern"
-    "$rel_excluded_dirs_pattern"
-    "$always_excluded_dirs_pattern"
+    "$exclude_files_pattern"
+    "$exclude_file_names_pattern"
+    "$exclude_dirs_pattern"
+    "$exclude_dir_names_pattern"
 )
 n_patterns="${#patterns[@]}"
-
-excluded_pattern=''
-for pattern in \
-    "$rel_excluded_files_pattern" \
-    "$always_excluded_files_pattern" \
-    "$rel_excluded_dirs_pattern" \
-    "$always_excluded_dirs_pattern"; do
+for pattern in "${patterns[@]}"; do
     if [[ -n "$pattern" ]]; then
         if [[ -n "$excluded_pattern" ]]; then
             excluded_pattern+="|"
@@ -185,26 +138,48 @@ for pattern in \
 done
 echo "excluded_pattern=${excluded_pattern}"
 
+server_pid=''
+cd docs
+if make clean && make html; then
+    python3 ../scripts/serve_locally.py &
+    server_pid="$!"
+    echo "Server started (PID: ${server_pid})"
+    trap 'kill_pid "$server_pid" || true' EXIT
+else
+    echo 'Failed to build documentation'
+fi
+cd ..
+
+FORMATTED_TARGET_DIRS=()
+for directory in "${TARGET_DIRS[@]}"; do
+    FORMATTED_TARGET_DIRS+=("${directory}/")
+done
 inotifywait --recursive \
     --monitor \
     --format '%e %w%f' \
-    --event create,delete,modify,move ./docs/ \
+    --event create,delete,modify,move "${FORMATTED_TARGET_DIRS[@]}" \
     --exclude "$excluded_pattern" \
  | while read -r changed; do
     echo "$changed"
     while read -t "$DEBOUNCE_SECONDS" -r changed; do
         echo "$changed"
     done
-    echo "No more changes detected"
-    kill_pid "$server_pid"
+    echo "No additional changes detected"
+
+    if [[ -n "$server_pid" ]]; then
+        kill_pid "$server_pid"
+        server_pid=''
+    fi
     trap - EXIT
 
     cd docs
-    make clean && make html
+    if make clean && make html; then
+        python3 ../scripts/serve_locally.py &
+        server_pid="$!"
+        echo "Server started (PID: ${server_pid})"
+        trap 'kill_pid "$server_pid" || true' EXIT
+    else
+        echo 'Failed to build documentation'
+    fi
     cd ..
-
-    python3 ./scripts/serve_locally.py &
-    server_pid="$!"
-    echo "Server started (PID: ${server_pid})"
-    trap 'kill_pid "$server_pid" || true' EXIT
 done
