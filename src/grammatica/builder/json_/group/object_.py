@@ -16,14 +16,18 @@ if TYPE_CHECKING:
     from typing import Any
 
     from grammatica.builder.base import Composition
+    from grammatica.builder.json_.type_aliases import JSONValue
     from grammatica.grammar.base import Grammar
 
 
 class JSONObject(GroupJSONComposition):
-    """Composition that matches a JSON object with specified key-value pairs.
+    """Composition that constructs a grammar to match a JSON object with specified key-value pairs.
+
+    Note:
+        Each key and value to match is coerced to a JSON composition if it is not already an instance of ``Grammar`` or ``Composition``.
 
     Args:
-        value (Mapping[bool | int | float | str | None | Grammar | Composition, bool | int | float | str | None | Grammar | Composition]): Key-value pairs in the JSON object.
+        value (Mapping[JSONValue | Grammar | Composition, JSONValue | Grammar | Composition]): Key-value pairs to match in the JSON object.
         item_ws (Grammar | None): Whitespace grammar between items.
         key_ws (Grammar | None): Whitespace grammar between keys and values.
 
@@ -31,63 +35,72 @@ class JSONObject(GroupJSONComposition):
         ValueError: Range lower bound is negative.
         ValueError: Range upper bound is not positive or None (infinity).
         ValueError: Range lower bound is greater than range upper bound.
-
-    Examples:
-        >>> from grammatica.builder.json_ import JSONObject
-        >>> comp = JSONObject({
-        ...     "name": "Samwise Gamgee",
-        ...     "age": 38,
-        ...     "is_hobbit": True,
-        ... })
-        >>> comp
-        JSONObject(value={'name': 'Samwise Gamgee', 'age': 38, 'is_hobbit': True}, n=(1, 1), item_ws=None, key_ws=None)
-        >>> g = comp.grammar()
-        >>> print(g.as_string(indent=4))
-        And(
-            subexprs=[
-                String(value='{'),
-                String(value='"name"'),
-                String(value=':'),
-                String(value='"Samwise Gamgee"'),
-                String(value=','),
-                String(value='"age"'),
-                String(value=':'),
-                String(value='38'),
-                String(value=','),
-                String(value='"is_hobbit"'),
-                String(value=':'),
-                String(value='true'),
-                String(value='}')
-            ],
-            quantifier=(1, 1)
-        )
     """
+
+    __slots__: tuple[str, ...] = ("value", "n", "item_ws", "key_ws")
 
     def __init__(
         self,
         value: Mapping[
-            bool | int | float | str | None | Grammar | Composition,
-            bool | int | float | str | None | Grammar | Composition,
+            JSONValue | Grammar | Composition,
+            JSONValue | Grammar | Composition,
         ],
         item_ws: Grammar | None = None,
         key_ws: Grammar | None = None,
     ) -> None:
         super().__init__(
+            n=(1, 1),
             item_ws=item_ws,
             key_ws=key_ws,
-            n=(1, 1),
         )
 
         self.value: dict[
-            bool | int | float | str | None | Grammar | Composition,
-            bool | int | float | str | None | Grammar | Composition,
+            JSONValue | Grammar | Composition,
+            JSONValue | Grammar | Composition,
         ] = dict(value)
-        """Key-value pairs in the JSON object."""
+        """Key-value pairs to match in the JSON object."""
 
     def attrs_dict(self) -> dict[str, Any]:
         return {"value": self.value} | super().attrs_dict()
 
     def grammar(self) -> Grammar:
+        """Construct a grammar for the composition.
+
+        Returns:
+            Grammar: Grammar for the composition.
+
+        Examples:
+            Create a composition and construct a grammar that matches a JSON object with specified key-value pairs
+
+            >>> from grammatica.builder.json_ import JSONObject
+            >>> comp = JSONObject({
+            ...     "name": "Samwise Gamgee",
+            ...     "age": 38,
+            ...     "is_hobbit": True,
+            ... })
+            >>> comp
+            JSONObject(value={'name': 'Samwise Gamgee', 'age': 38, 'is_hobbit': True}, n=(1, 1), item_ws=None, key_ws=None)
+            >>> g = comp.grammar()
+            >>> print(g.as_string(indent=4))
+            And(
+                subexprs=[
+                    String(value='{'),
+                    String(value='"name"'),
+                    String(value=':'),
+                    String(value='"Samwise Gamgee"'),
+                    String(value=','),
+                    String(value='"age"'),
+                    String(value=':'),
+                    String(value='38'),
+                    String(value=','),
+                    String(value='"is_hobbit"'),
+                    String(value=':'),
+                    String(value='true'),
+                    String(value='}')
+                ],
+                quantifier=(1, 1)
+            )
+        """
         if self.n[1] == 0:
             return String("{}")
 

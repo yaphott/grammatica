@@ -64,34 +64,20 @@ _ESCAPED_CHAR: Or = Or(
 
 
 class JSONString(GroupJSONComposition):
-    """Composition that constructs a grammar that matches a JSON string.
+    """Composition that constructs a grammar to match a JSON string.
 
     Args:
-        n (int | tuple[int, int | None]): Minimum and maximum number of characters in
-            the string (excluding quotes).
+        n (int | tuple[int, int | None]): Minimum and maximum number of characters in the string (excluding quotes).
 
     See Also:
         :class:`grammatica.builder.json_.JSONStringLiteral`: JSON string composition with fixed content
-
-    Examples:
-        Non-empty string
-
-        >>> from grammatica.builder.json_ import JSONString
-        >>> comp = JSONString(n=(1, None))
-        >>> comp
-        JSONString(item_ws=None, key_ws=None, n=(1, None))
-        >>> g = comp.grammar()
-        >>> print(g.as_string(indent=4))
-        And(
-            ...
-        )
     """
 
     def __init__(self, n: int | tuple[int, int | None] = (0, None)) -> None:
         super().__init__(
+            n=n,
             item_ws=None,
             key_ws=None,
-            n=n,
         )
 
     def attrs_dict(self) -> dict[str, Any]:  # pylint: disable=W0246
@@ -104,8 +90,10 @@ class JSONString(GroupJSONComposition):
             Grammar: Grammar for the composition.
 
         Examples:
+            Create a composition and construct a grammar that matches a JSON string containing **one or more** characters
+
             >>> from grammatica.builder.json_ import JSONString
-            >>> comp = JSONString(n=(1, 3))
+            >>> comp = JSONString(n=(1, None))
             >>> g = comp.grammar()
             >>> print(comp.as_string(indent=4))
             And(
@@ -164,22 +152,14 @@ class JSONString(GroupJSONComposition):
 
 
 class JSONStringLiteral(JSONComposition):
-    """Composition that constructs a grammar that matches a JSON string literal.
+    """Composition that constructs a grammar to match a JSON string literal.
 
     Args:
-        value (Iterable[str]): Characters of the string to match exactly.
-        ensure_ascii (bool, optional): Whether to encode ASCII characters. Defaults to True.
+        value (Iterable[str]): String value to match.
+        ensure_ascii (bool, optional): Whether non-ASCII (non-printable) characters must match their Unicode-escaped representation in the constructed grammar, otherwise they must match their literal representation. Defaults to True.
 
     See Also:
         :class:`grammatica.builder.json_.JSONString`: JSON string composition with flexible content.
-
-    Examples:
-        >>> from grammatica.builder.json_ import JSONStringLiteral
-        >>> comp = JSONStringLiteral("gandalf", ensure_ascii=False)
-        >>> comp
-        JSONStringLiteral(value='gandalf', ensure_ascii=False)
-        >>> comp.grammar()
-        String(value='"gandalf"')
     """
 
     __slots__: tuple[str, ...] = ("value", "ensure_ascii")
@@ -189,7 +169,9 @@ class JSONStringLiteral(JSONComposition):
         super().__init__()
 
         self.value: str = "".join(value)
+        """String value to match."""
         self.ensure_ascii: bool = ensure_ascii
+        """Whether non-ASCII (non-printable) characters must match their Unicode-escaped representation in the constructed grammar, otherwise they must match their literal representation."""
 
     def attrs_dict(self) -> dict[str, Any]:
         return {
@@ -214,6 +196,7 @@ class JSONStringLiteral(JSONComposition):
         n = ord(char)
         if n < 0x10000:
             return f"\\u{n:04x}"
+        # Surrogate pair
         n -= 0x10000
         s1 = 0xD800 | ((n >> 10) & 0x3FF)
         s2 = 0xDC00 | (n & 0x3FF)
@@ -240,6 +223,8 @@ class JSONStringLiteral(JSONComposition):
             Grammar: Grammar for the composition.
 
         Examples:
+            Create a composition and construct a grammar that matches the JSON string value ``"gandalf"``
+
             >>> from grammatica.builder.json_ import JSONStringLiteral
             >>> comp = JSONStringLiteral("gandalf", ensure_ascii=False)
             >>> g = comp.grammar()

@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 class JSONInteger(JSONComposition):
-    """Composition that constructs a grammar that matches a JSON integer.
+    """Composition that constructs a grammar to match a JSON integer.
 
     Args:
         minval (int | None): Minimum value to match (inclusive), or None if unbounded.
@@ -26,28 +26,6 @@ class JSONInteger(JSONComposition):
 
     Raises:
         ValueError: Minimum value is greater than maximum value.
-
-    Examples:
-        >>> from grammatica.builder.json_ import JSONInteger
-        >>> comp = JSONInteger(minval=-5, maxval=5)
-        >>> comp
-        JSONInteger(minval=-5, maxval=5)
-        >>> g = comp.grammar()
-        >>> print(g.as_string(indent=4))
-        Or(
-            subexprs=[
-                And(
-                    subexprs=[
-                        String(value='-'),
-                        CharRange(char_ranges=[('1', '5')], negate=False)
-                    ],
-                    quantifier=(1, 1)
-                ),
-                CharRange(char_ranges=[('1', '5')], negate=False),
-                String(value='0')
-            ],
-            quantifier=(1, 1)
-        )
     """
 
     __slots__: tuple[str, ...] = ("minval", "maxval")
@@ -79,6 +57,8 @@ class JSONInteger(JSONComposition):
             Grammar: Grammar for the composition.
 
         Examples:
+            Create a composition and construct a grammar that matches a JSON integer value ``-5 <= x <= 5``
+
             >>> from grammatica.builder.json_ import JSONInteger
             >>> comp = JSONInteger(minval=-5, maxval=5)
             >>> g = comp.grammar()
@@ -385,18 +365,10 @@ class JSONInteger(JSONComposition):
 
 
 class JSONIntegerLiteral(JSONComposition):
-    """Composition that constructs a grammar that matches a JSON integer literal.
+    """Composition that constructs a grammar to match a JSON integer literal.
 
     Args:
         value (int): Integer value to match.
-
-    Examples:
-        >>> from grammatica.builder.json_ import JSONIntegerLiteral
-        >>> comp = JSONIntegerLiteral(value=42)
-        >>> comp
-        JSONIntegerLiteral(value=42)
-        >>> comp.grammar()
-        String(value='42')
     """
 
     __slots__: tuple[str, ...] = ("value",)
@@ -417,6 +389,8 @@ class JSONIntegerLiteral(JSONComposition):
             Grammar: Grammar for the composition.
 
         Examples:
+            Create a composition and construct a grammar that matches the JSON integer value ``42``
+
             >>> from grammatica.builder.json_ import JSONIntegerLiteral
             >>> comp = JSONIntegerLiteral(value=42)
             >>> g = comp.grammar()

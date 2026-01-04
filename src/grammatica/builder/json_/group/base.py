@@ -19,9 +19,9 @@ class GroupJSONComposition(JSONComposition, ABC):
     """Base class for grouped JSON compositions.
 
     Args:
+        n (int | tuple[int, int | None]): Minimum and maximum repetitions the grammar must match.
         item_ws (Grammar | None): Whitespace grammar between items.
         key_ws (Grammar | None): Whitespace grammar between keys and values.
-        n (int | tuple[int, int | None]): Minimum and maximum repetitions the grammar must match.
 
     Raises:
         ValueError: Range lower bound is negative.
@@ -34,9 +34,9 @@ class GroupJSONComposition(JSONComposition, ABC):
     def __init__(
         self,
         *,
+        n: int | tuple[int, int | None],
         item_ws: Grammar | None,
         key_ws: Grammar | None,
-        n: int | tuple[int, int | None],
     ) -> None:
         lower: int
         upper: int | None

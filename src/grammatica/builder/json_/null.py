@@ -14,16 +14,7 @@ if TYPE_CHECKING:
 
 
 class JSONNullLiteral(JSONComposition):
-    """Composition that constructs a grammar that matches a JSON null literal.
-
-    Examples:
-        >>> from grammatica.builder.json_ import JSONNullLiteral
-        >>> comp = JSONNullLiteral()
-        >>> comp
-        JSONNullLiteral()
-        >>> comp.grammar()
-        String(value='null')
-    """
+    """Composition that constructs a grammar to match a JSON null literal."""
 
     # __slots__: tuple[str, ...] = ()
 
@@ -40,11 +31,11 @@ class JSONNullLiteral(JSONComposition):
             Grammar: Grammar for the composition.
 
         Examples:
-            Grammar that matches the JSON-encoded value of :py:obj:`None`
+            Create a composition and construct a grammar that matches a JSON ``null`` value
 
             >>> from grammatica.builder.json_ import JSONNullLiteral
             >>> comp = JSONNullLiteral()
-            >>> g = composition.grammar()
+            >>> g = comp.grammar()
             >>> g
             String(value='null')
         """

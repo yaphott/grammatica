@@ -17,20 +17,10 @@ if TYPE_CHECKING:
 
 
 class JSONBoolean(JSONComposition):
-    """Composition that constructs a grammar that matches a JSON boolean value (``true`` or ``false``).
+    """Composition that constructs a grammar to match a JSON boolean value (``true`` or ``false``).
 
     See Also:
-        :class:`grammatica.builder.json_.JSONBooleanLiteral`: JSON boolean composition that matches a specific value.
-
-    Examples:
-        Grammar that matches either JSON-encoded :py:obj:`True` or :py:obj:`False`
-
-        >>> from grammatica.builder.json_ import JSONBoolean
-        >>> comp = JSONBoolean()
-        >>> comp
-        JSONBoolean()
-        >>> comp.grammar()
-        Or(items=[String(value='true'), String(value='false')])
+        :class:`grammatica.builder.json_.JSONBooleanLiteral`: JSON boolean composition that constructs a grammar to match a specific boolean value.
     """
 
     # __slots__: tuple[str, ...] = ()
@@ -48,7 +38,7 @@ class JSONBoolean(JSONComposition):
             Grammar: Grammar for the composition.
 
         Examples:
-            Grammar that matches either JSON-encoded value of :py:obj:`True` or :py:obj:`False`
+            Create a composition and construct a grammar that matches a JSON boolean value (``true`` or ``false``)
 
             >>> from grammatica.builder.json_ import JSONBoolean
             >>> comp = JSONBoolean()
@@ -60,32 +50,13 @@ class JSONBoolean(JSONComposition):
 
 
 class JSONBooleanLiteral(JSONComposition):
-    """Composition that constructs a grammar that matches a JSON boolean literal.
+    """Composition that constructs a grammar to match a JSON boolean literal.
 
     Args:
         value (bool): Boolean value to match.
 
     See Also:
-        :class:`grammatica.builder.json_.JSONBoolean`: JSON boolean composition that matches either ``true`` or ``false``.
-
-    Examples:
-        Component that constructs a grammar that matches the JSON value ``false``
-
-        >>> from grammatica.builder.json_ import JSONBooleanLiteral
-        >>> comp = JSONBooleanLiteral(False)
-        >>> comp
-        JSONBooleanLiteral(value=False)
-        >>> comp.grammar()
-        String(value='false')
-
-        Component that constructs a grammar that matches the JSON value ``true``
-
-        >>> from grammatica.builder.json_ import JSONBooleanLiteral
-        >>> comp = JSONBooleanLiteral(True)
-        >>> comp
-        JSONBooleanLiteral(value=True)
-        >>> comp.grammar()
-        String(value='true')
+        :class:`grammatica.builder.json_.JSONBoolean`: JSON boolean composition that constructs a grammar to match any boolean value.
     """
 
     __slots__: tuple[str, ...] = ("value",)
@@ -94,6 +65,7 @@ class JSONBooleanLiteral(JSONComposition):
         super().__init__()
 
         self.value: bool = value
+        """Boolean value to match."""
 
     def attrs_dict(self) -> dict[str, Any]:
         return {"value": self.value} | super().attrs_dict()
@@ -105,7 +77,7 @@ class JSONBooleanLiteral(JSONComposition):
             Grammar: Grammar for the composition.
 
         Examples:
-            Component that constructs a grammar that matches the JSON value ``false``
+            Create a composition and construct a grammar that matches the JSON boolean value ``false``
 
             >>> from grammatica.builder.json_ import JSONBooleanLiteral
             >>> comp = JSONBooleanLiteral(False)
@@ -113,7 +85,7 @@ class JSONBooleanLiteral(JSONComposition):
             >>> g
             String(value='false')
 
-            Component that constructs a grammar that matches the JSON value ``true``
+            Create a composition and construct a grammar that matches the JSON boolean value ``true``
 
             >>> from grammatica.builder.json_ import JSONBooleanLiteral
             >>> comp = JSONBooleanLiteral(True)

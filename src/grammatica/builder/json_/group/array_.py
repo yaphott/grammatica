@@ -16,20 +16,18 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import Any
 
+    from grammatica.builder.json_.type_aliases import JSONValue
     from grammatica.grammar.base import Grammar
 
 
 class JSONArray(GroupJSONComposition):
-    """Composition that constructs a grammar that matches a JSON array with values
-        conforming to the provided grammar.
+    """Composition that constructs a grammar to match a JSON array with values conforming to the provided grammar.
 
     Note:
-        If the value of `value` is not an instance of ``Grammar`` or ``Composition``
-            then it will be coerced into an instance of the appropriate corresponding
-            JSON composition.
+        The value to match is coerced to a JSON composition if it is not already an instance of ``Grammar`` or ``Composition``.
 
     Args:
-        value (bool | int | float | str | None | Grammar | Composition): Grammar or value to match for each item in the JSON array.
+        value (JSONValue | Grammar | Composition): Grammar or value to match for each item in the JSON array.
         item_ws (Grammar | None): Whitespace grammar between items.
         key_ws (Grammar | None): Whitespace grammar between keys and values.
         n (int | tuple[int, int | None]): Minimum and maximum number of items in the array.
@@ -40,72 +38,70 @@ class JSONArray(GroupJSONComposition):
         ValueError: Range lower bound is greater than range upper bound.
 
     See Also:
-        :class:`grammatica.builder.json_.JSONArrayLiteral`: JSON array composition with fixed size.
-
-    Examples:
-        >>> from grammatica.builder.json_ import JSONArray
-        >>> from grammatica.grammar import CharRange
-        >>> composition = JSONArray(
-        ...     CharRange([]),
-        ...     n=(2, 5),
-        ... )
-        >>> print(composition.as_string(indent=4))
-        JSONArray(
-            item_ws=None,
-            key_ws=None,
-            n=(2, 5),
-        )
-        >>> grammar = composition.grammar()
-        >>> print(grammar.as_string(indent=4))
-        And(
-            items=[
-                String(value='['),
-                And(
-                    items=[
-                        And(
-                            items=[
-                                CharRange(ranges=[('0', '9'), ('A', 'Z'), ('a', 'z')]),
-                            ],
-                        ),
-                        And(
-                            items=[
-                                String(value=','),
-                                And(
-                                    items=[
-                                        CharRange(ranges=[('0', '9'), ('A', 'Z'), ('a', 'z')]),
-                                    ],
-                                ),
-                            ],
-                            quantifier=(1, 4),
-                        ),
-                    ],
-                ),
-                String(value=']'),
-            ],
-        )
-        >>> composition.grammar()
+        :class:`grammatica.builder.json_.JSONArrayLiteral`: JSON array composition that constructs a grammar to match a JSON array with a variable length.
     """
+
+    __slots__: tuple[str, ...] = ("value", "n", "item_ws", "key_ws")
 
     def __init__(
         self,
-        value: bool | int | float | str | None | Grammar | Composition,
+        value: JSONValue | Grammar | Composition,
         *,
         item_ws: Grammar | None = None,
         key_ws: Grammar | None = None,
         n: int | tuple[int, int | None] = (0, None),
     ) -> None:
         super().__init__(
+            n=n,
             item_ws=item_ws,
             key_ws=key_ws,
-            n=n,
         )
 
-        self.value: bool | int | float | str | None | Grammar | Composition = value
+        self.value: JSONValue | Grammar | Composition = value
+        """Grammar or value to match for each item in the JSON array."""
 
     def attrs_dict(self) -> dict[str, Any]:
         return {"value": self.value} | super().attrs_dict()
 
     def grammar(self) -> Grammar:
+        """Construct a grammar for the composition.
+
+        Returns:
+            Grammar: Grammar for the composition.
+
+        Examples:
+            Create a composition and construct a grammar that matches a JSON array
+            containing two to five alphanumeric strings
+
+            >>> from grammatica.builder.json_ import JSONArray
+            >>> from grammatica.grammar import CharRange
+            >>> alphanum = CharRange([("0", "9"), ("A", "Z"), ("a", "z")])
+            >>> comp = JSONArray(alphanum, n=(2, 5))
+            >>> comp
+            JSONArray(value=CharRange(ranges=[('0', '9'), ('A', 'Z'), ('a', 'z')]), item_ws=None, key_ws=None, n=(2, 5))
+            >>> g = comp.grammar()
+            >>> print(g.as_string(indent=4))
+            And(
+                subexprs=[
+                    String(value='['),
+                    And(
+                        subexprs=[
+                            CharRange(char_ranges=[('0', '9'), ('A', 'Z'), ('a', 'z')], negate=False)
+                        ],
+                        quantifier=(1, 1)
+                    ),
+                    And(
+                        subexprs=[
+                            String(value=','),
+                            CharRange(char_ranges=[('0', '9'), ('A', 'Z'), ('a', 'z')], negate=False)
+                        ],
+                        quantifier=(1, 4)
+                    ),
+                    String(value=']')
+                ],
+                quantifier=(1, 1)
+            )
+        """
         # If the range is (0, 0), return an empty array
         if self.n[1] == 0:
             return String("[]")
@@ -147,14 +143,14 @@ class JSONArray(GroupJSONComposition):
 
 
 class JSONArrayLiteral(GroupJSONComposition):
-    """Composition that constructs a grammar that matches a JSON array with each
+    """Composition that constructs a grammar to match a JSON array with each
         value conforming to the corresponding grammar provided.
 
     Note:
-        All values in `values` that are not an instance of ``Grammar`` or ``Composition`` are coerced into an instance of the appropriate corresponding JSON composition.
+        Each value to match is coerced to JSON composition if it is not already an instance of ``Grammar`` or ``Composition``.
 
     Args:
-        values (Iterable[bool | int | float | str | None | Grammar | Composition]): Values in the JSON array.
+        values (Iterable[JSONValue | Grammar | Composition]): Value to match for each item in the JSON array.
         item_ws (Grammar | None): Whitespace grammar between items.
         key_ws (Grammar | None): Whitespace grammar between keys and values.
 
@@ -164,29 +160,57 @@ class JSONArrayLiteral(GroupJSONComposition):
         ValueError: Range lower bound is greater than range upper bound.
 
     See Also:
-        :class:`grammatica.builder.json_.JSONArray`: JSON array composition with flexible size.
+        :class:`grammatica.builder.json_.JSONArrayLiteral`: JSON array composition that constructs a grammar to match a JSON array with v
     """
+
+    __slots__: tuple[str, ...] = ("values", "n", "item_ws", "key_ws")
 
     def __init__(
         self,
-        values: Iterable[bool | int | float | str | None | Grammar | Composition],
+        values: Iterable[JSONValue | Grammar | Composition],
         item_ws: Grammar | None = None,
         key_ws: Grammar | None = None,
     ) -> None:
         super().__init__(
+            n=(1, 1),
             item_ws=item_ws,
             key_ws=key_ws,
-            n=(1, 1),
         )
 
-        self.values: list[bool | int | float | str | None | Grammar | Composition] = (
-            list(values)
-        )
+        self.values: list[JSONValue | Grammar | Composition] = list(values)
+        """Value to match for each item in the JSON array."""
 
     def attrs_dict(self) -> dict[str, Any]:
         return {"values": self.values} | super().attrs_dict()
 
     def grammar(self) -> Grammar:
+        """Construct a grammar for the composition.
+
+        Returns:
+            Grammar: Grammar for the composition.
+
+        Examples:
+            Create a composition and construct a grammar that matches a JSON array containing three string literals
+
+            >>> from grammatica.builder.json_ import JSONArrayLiteral
+            >>> comp = JSONArrayLiteral(["apple", "banana", "cherry"])
+            >>> comp
+            JSONArrayLiteral(values=['apple', 'banana', 'cherry'], n=(1, 1), item_ws=None, key_ws=None)
+            >>> g = comp.grammar()
+            >>> print(g.as_string(indent=4))
+            And(
+                subexprs=[
+                    String(value='['),
+                    String(value='"apple"'),
+                    String(value=','),
+                    String(value='"banana"'),
+                    String(value=','),
+                    String(value='"cherry"'),
+                    String(value=']')
+                ],
+                quantifier=(1, 1)
+            )
+        """
         if self.n[1] == 0:
             return String("[]")
         grammars: list[Grammar] = []
