@@ -71,14 +71,3 @@ class GroupJSONComposition(JSONComposition, ABC):
 
     @abstractmethod
     def grammar(self) -> Grammar: ...
-
-    def _item_ws_subexprs(self) -> list[Grammar]:
-        return [] if self.item_ws is None else [self.item_ws]
-
-    def _key_ws_subexprs(self) -> list[Grammar]:
-        return [] if self.key_ws is None else [self.key_ws]
-
-    def _indent_subexprs(self) -> tuple[list[Grammar], list[Grammar]]:
-        item_ws_subexprs = [] if self.item_ws is None else [self.item_ws]
-        key_ws_subexprs = [] if self.key_ws is None else [self.key_ws]
-        return item_ws_subexprs, key_ws_subexprs
