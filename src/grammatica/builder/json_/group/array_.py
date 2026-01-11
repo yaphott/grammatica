@@ -38,7 +38,7 @@ class JSONArray(GroupJSONComposition):
         ValueError: Range lower bound is greater than range upper bound.
 
     See Also:
-        :class:`grammatica.builder.json_.JSONArrayLiteral`: JSON array composition that constructs a grammar to match a JSON array with a variable length.
+        :class:`grammatica.builder.json_.JSONArrayLiteral`: JSON array composition that constructs a grammar to match a JSON array with a fixed length.
     """
 
     __slots__: tuple[str, ...] = ("value", "n", "item_ws", "key_ws")
@@ -160,7 +160,7 @@ class JSONArrayLiteral(GroupJSONComposition):
         ValueError: Range lower bound is greater than range upper bound.
 
     See Also:
-        :class:`grammatica.builder.json_.JSONArrayLiteral`: JSON array composition that constructs a grammar to match a JSON array with v
+        :class:`grammatica.builder.json_.JSONArray`: JSON array composition that constructs a grammar to match a JSON array with a variable length.
     """
 
     __slots__: tuple[str, ...] = ("values", "n", "item_ws", "key_ws")

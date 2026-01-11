@@ -70,7 +70,7 @@ class JSONString(GroupJSONComposition):
         n (int | tuple[int, int | None]): Minimum and maximum number of characters in the string (excluding quotes).
 
     See Also:
-        :class:`grammatica.builder.json_.JSONStringLiteral`: JSON string composition with fixed content
+        :class:`grammatica.builder.json_.JSONStringLiteral`: JSON string composition with fixed content.
     """
 
     def __init__(self, n: int | tuple[int, int | None] = (0, None)) -> None:
@@ -226,7 +226,7 @@ class JSONStringLiteral(JSONComposition):
             Create a composition and construct a grammar that matches the JSON string value ``"gandalf"``
 
             >>> from grammatica.builder.json_ import JSONStringLiteral
-            >>> comp = JSONStringLiteral("gandalf", ensure_ascii=False)
+            >>> comp = JSONStringLiteral("gandalf")
             >>> g = comp.grammar()
             >>> g
             String(value='"gandalf"')
