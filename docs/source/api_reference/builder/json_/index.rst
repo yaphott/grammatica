@@ -1,17 +1,16 @@
-.. _api:
+.. _api.builder.json_:
 
-=============
-API Reference
-=============
+===============
+JSON components
+===============
 
 This page gives an overview of all public grammatica objects, functions and
 methods. All classes and functions exposed in ``grammatica.*`` namespace are public.
 
 The following subpackages are public.
 
-- ``grammatica.grammar``: Classes and utilities for creating and manipulating grammars.
-- ``grammatica.builder``: Classes and utilities for building grammars.
-- ``grammatica.utils``: Utility functions used throughout the library.
+- ``grammatica.builder.json_``: Classes and utilities for creating and manipulating grammars.
+- ``grammatica.builder.json_.utils``: Utility functions used for building JSON grammar components.
 
 ..
     - ``grammatica.errors``: Custom exception and warnings classes that are raised by grammatica.
@@ -23,5 +22,12 @@ The following subpackages are public.
 .. toctree::
    :maxdepth: 3
 
-   grammar/index
-   builder/json_/index
+   null
+   boolean
+   boolean_literal
+   string
+   string_literal
+   integer
+   integer_literal
+   array_
+   array__literal
