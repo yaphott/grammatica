@@ -1,4 +1,4 @@
-.. _api.char_range:
+.. _api.grammar.char_range:
 
 ================
 Character ranges
@@ -8,7 +8,7 @@ Character ranges
 Constructor
 -----------
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    CharRange
    CharRange.from_chars
@@ -18,7 +18,7 @@ Attributes
 ----------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    CharRange.char_ranges
    CharRange.negate
@@ -27,7 +27,7 @@ Rendering
 ---------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    CharRange.render
    CharRange.as_string
@@ -36,15 +36,15 @@ Simplification
 --------------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    CharRange.simplify
 
 Utility
------------------
+-------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    CharRange.copy
    CharRange.equals
@@ -55,6 +55,6 @@ Metadata
 .. warning:: ``CharRange.attrs_dict`` is considered experimental and may change without warning.
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    CharRange.attrs_dict

@@ -1,4 +1,4 @@
-.. _api.group.and_:
+.. _api.grammar.group.and_:
 
 ===============
 And objects
@@ -8,7 +8,7 @@ And objects
 Constructor
 -----------
 .. autosummary::
-   :toctree: ../api/group/
+   :toctree: ../../api/group/
 
    And
 
@@ -16,7 +16,7 @@ Attributes
 ----------
 
 .. autosummary::
-   :toctree: ../api/group/
+   :toctree: ../../api/group/
 
    And.separator
    And.subexprs
@@ -26,7 +26,7 @@ Rendering
 ---------
 
 .. autosummary::
-   :toctree: ../api/group/
+   :toctree: ../../api/group/
 
    And.render
    And.render_quantifier
@@ -37,16 +37,16 @@ Simplification
 --------------
 
 .. autosummary::
-   :toctree: ../api/group/
+   :toctree: ../../api/group/
 
    And.simplify
    And.simplify_subexprs
 
 Utility
------------------
+-------
 
 .. autosummary::
-   :toctree: ../api/group/
+   :toctree: ../../api/group/
 
    And.copy
    And.equals
@@ -57,6 +57,6 @@ Metadata
 .. warning:: ``And.attrs_dict`` is considered experimental and may change without warning.
 
 .. autosummary::
-   :toctree: ../api/group/
+   :toctree: ../../api/group/
 
    And.attrs_dict

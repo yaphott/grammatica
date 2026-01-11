@@ -1,4 +1,4 @@
-.. _api.string:
+.. _api.grammar.string:
 
 ===============
 String literals
@@ -8,7 +8,7 @@ String literals
 Constructor
 -----------
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    String
 
@@ -16,7 +16,7 @@ Attributes
 ----------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    String.value
 
@@ -24,7 +24,7 @@ Rendering
 ---------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    String.render
    String.as_string
@@ -33,15 +33,15 @@ Simplification
 --------------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    String.simplify
 
 Utility
------------------
+-------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    String.copy
    String.equals
@@ -52,6 +52,6 @@ Metadata
 .. warning:: ``String.attrs_dict`` is considered experimental and may change without warning.
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    String.attrs_dict

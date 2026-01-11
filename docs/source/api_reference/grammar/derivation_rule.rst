@@ -1,4 +1,4 @@
-.. _api.derivation_rule:
+.. _api.grammar.derivation_rule:
 
 ================
 Derivation rules
@@ -8,7 +8,7 @@ Derivation rules
 Constructor
 -----------
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    DerivationRule
 
@@ -16,7 +16,7 @@ Attributes
 ----------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    DerivationRule.symbol
    DerivationRule.value
@@ -25,7 +25,7 @@ Rendering
 ---------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    DerivationRule.render
    DerivationRule.as_string
@@ -34,15 +34,15 @@ Simplification
 --------------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    DerivationRule.simplify
 
 Utility
------------------
+-------
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    DerivationRule.copy
    DerivationRule.equals
@@ -53,6 +53,6 @@ Metadata
 .. warning:: ``DerivationRule.attrs_dict`` is considered experimental and may change without warning.
 
 .. autosummary::
-   :toctree: api/
+   :toctree: ../api/
 
    DerivationRule.attrs_dict

@@ -1,4 +1,4 @@
-.. _api.group.or_:
+.. _api.grammar.group.or_:
 
 ==========
 Or objects
@@ -8,7 +8,7 @@ Or objects
 Constructor
 -----------
 .. autosummary::
-   :toctree: ../api/group/
+   :toctree: ../../api/group/
 
    Or
 
@@ -16,7 +16,7 @@ Attributes
 ----------
 
 .. autosummary::
-   :toctree: ../api/group/
+   :toctree: ../../api/group/
 
    Or.separator
    Or.subexprs
@@ -26,7 +26,7 @@ Rendering
 ---------
 
 .. autosummary::
-   :toctree: ../api/group/
+   :toctree: ../../api/group/
 
    Or.render
    Or.render_quantifier
@@ -37,16 +37,16 @@ Simplification
 --------------
 
 .. autosummary::
-   :toctree: ../api/group/
+   :toctree: ../../api/group/
 
    Or.simplify
    Or.simplify_subexprs
 
 Utility
------------------
+-------
 
 .. autosummary::
-   :toctree: ../api/group/
+   :toctree: ../../api/group/
 
    Or.copy
    Or.equals
@@ -57,6 +57,6 @@ Metadata
 .. warning:: ``Or.attrs_dict`` is considered experimental and may change without warning.
 
 .. autosummary::
-   :toctree: ../api/group/
+   :toctree: ../../api/group/
 
    Or.attrs_dict
