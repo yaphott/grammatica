@@ -4,7 +4,6 @@ Classes and utilities for character range expressions that define sets of allowe
 
 from __future__ import annotations
 
-import sys
 from typing import TYPE_CHECKING
 
 from grammatica.constants import (
@@ -15,11 +14,6 @@ from grammatica.constants import (
 from grammatica.grammar.base import Grammar
 from grammatica.grammar.string import String
 from grammatica.utils import char_to_hex
-
-if sys.version_info >= (3, 12):  # pragma: no cover
-    from typing import override
-else:  # pragma: no cover
-    from typing_extensions import override
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator

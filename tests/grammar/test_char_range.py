@@ -181,7 +181,8 @@ def test_char_range_render(test_case):
 
 def test_char_range_as_string():
     grammar = CharRange([("a", "z")])
-    assert grammar.as_string(indent=None) == grammar.as_string(indent=2) == "CharRange(char_ranges=[('a', 'z')], negate=False)"
+    assert grammar.as_string(indent=None) == "CharRange(char_ranges=[('a', 'z')], negate=False)"
+    assert grammar.as_string(indent=2) == "CharRange(\n  char_ranges=[\n    ('a', 'z')\n  ],\n  negate=False\n)"
 
 
 def test_char_range_attrs_dict():

@@ -105,13 +105,13 @@ def test_string_simplify(test_case):
 
 
 def test_string_attrs_dict():
-    string = String("test")
-    assert string.attrs_dict() == {"value": "test"}
+    grammar = String("test")
+    assert grammar.attrs_dict() == {"value": "test"}
 
 
 def test_string_as_string():
-    string = String("test")
-    assert string.as_string(indent=None) == string.as_string(indent=2) == "String(value='test')"
+    grammar = String("test")
+    assert grammar.as_string(indent=None) == grammar.as_string(indent=2) == "String(value='test')"
 
 
 @pytest.mark.parametrize(

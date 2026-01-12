@@ -41,26 +41,39 @@ class Component(ABC):
         component = cls(**kwargs)
         return component
 
-    def as_string(self, **kwargs) -> str:
+    def as_string(self, indent: int | None = None) -> str:
         """Return a string representation of the component.
 
         Args:
-            **kwargs: Keyword arguments for the current context.
+            indent (int, optional): Number of spaces to indent each level. Defaults to None.
 
         Returns:
-            str: String representation of the grammar.
+            str: String representation of the component.
 
         Raises:
             ValueError: Attribute type is not supported.
         """
         attrs = self.attrs_dict()
-        kwargs["indent"] = None
+        n = len(attrs)
         msg = f"{type(self).__name__}("
-        for j, (name, value) in enumerate(attrs.items()):
-            if j > 0:
-                msg += ", "
+        for i, (name, value) in enumerate(attrs.items()):
+            if indent is None:
+                if i > 0:
+                    msg += ", "
+            else:
+                if i > 0:
+                    msg += ","
+                msg += "\n" + (" " * indent)
             msg += f"{name}="
-            msg += value_to_string(value, **kwargs)
+            if indent is None:
+                msg += value_to_string(value, indent=indent)
+            else:
+                msg += value_to_string(value, indent=indent).replace(
+                    "\n",
+                    "\n" + (" " * indent),
+                )
+                if i == n - 1:
+                    msg += "\n"
         msg += ")"
         return msg
 

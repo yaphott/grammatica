@@ -4,7 +4,6 @@ General utility functions.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -151,6 +150,8 @@ def value_to_string(value: Any, indent: int | None) -> str:
     Raises:
         ValueError: Value type is unsupported.
     """
+    from grammatica.base import Component
+
     if value is None:
         return "None"
     if isinstance(value, bool):
@@ -163,6 +164,6 @@ def value_to_string(value: Any, indent: int | None) -> str:
         return _collection_to_string(value, indent=indent)
     if isinstance(value, dict):
         return _mapping_to_string(value, indent=indent)
-    if hasattr(value, "as_string") and isinstance(value.as_string, Callable):
+    if isinstance(value, Component):
         return value.as_string(indent=indent)
     raise ValueError(f"Unsupported value type: {type(value).__name__}")

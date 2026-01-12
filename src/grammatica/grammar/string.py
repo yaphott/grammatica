@@ -139,6 +139,10 @@ class String(Grammar):
     def attrs_dict(self) -> dict[str, Any]:
         return {"value": self.value} | super().attrs_dict()
 
+    @override
+    def as_string(self, indent: int | None = None) -> str:
+        return super().as_string(indent=None)
+
 
 def merge_adjacent_string_grammars(subexprs: list[Grammar], n: int) -> int:
     """Merge adjacent String grammars in-place.
