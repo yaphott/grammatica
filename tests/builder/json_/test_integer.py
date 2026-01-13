@@ -156,13 +156,9 @@ def test_json_integer_literal_as_string(test_case):
                             Or(
                                 [
                                     And([CharRange([("1", "9")]), And([CharRange([("0", "9")])], quantifier=(2, None))]),
-                                    Or(
-                                        [
-                                            And([String("9"), CharRange([("0", "9")])]),
-                                            And([CharRange([("2", "8")]), CharRange([("0", "9")])]),
-                                            And([String("1"), CharRange([("0", "9")])]),
-                                        ],
-                                    ),
+                                    And([String("9"), CharRange([("0", "9")])]),
+                                    And([CharRange([("2", "8")]), CharRange([("0", "9")])]),
+                                    And([String("1"), CharRange([("0", "9")])]),
                                 ],
                             ),
                         ],
@@ -208,8 +204,8 @@ def test_json_integer_literal_as_string(test_case):
             "component": JSONInteger(minval=5, maxval=None),
             "expected": Or(
                 [
-                    And([CharRange([("1", "9")]), And([CharRange([("0", "9")])], quantifier=(1, None))]),
                     CharRange([("5", "9")]),
+                    And([CharRange([("1", "9")]), And([CharRange([("0", "9")])], quantifier=(1, None))]),
                 ]
             ),
         },
@@ -218,14 +214,10 @@ def test_json_integer_literal_as_string(test_case):
             "component": JSONInteger(minval=10, maxval=None),
             "expected": Or(
                 [
+                    And([String("1"), CharRange([("0", "9")])]),
+                    And([CharRange([("2", "8")]), CharRange([("0", "9")])]),
+                    And([String("9"), CharRange([("0", "9")])]),
                     And([CharRange([("1", "9")]), And([CharRange([("0", "9")])], quantifier=(2, None))]),
-                    Or(
-                        [
-                            And([String("9"), CharRange([("0", "9")])]),
-                            And([CharRange([("2", "8")]), CharRange([("0", "9")])]),
-                            And([String("1"), CharRange([("0", "9")])]),
-                        ],
-                    ),
                 ],
             ),
         },
@@ -234,8 +226,8 @@ def test_json_integer_literal_as_string(test_case):
             "component": JSONInteger(minval=5, maxval=None),
             "expected": Or(
                 [
-                    And([CharRange([("1", "9")]), And([CharRange([("0", "9")])], quantifier=(1, None))]),
                     CharRange([("5", "9")]),
+                    And([CharRange([("1", "9")]), And([CharRange([("0", "9")])], quantifier=(1, None))]),
                 ]
             ),
         },
@@ -244,14 +236,10 @@ def test_json_integer_literal_as_string(test_case):
             "component": JSONInteger(minval=10, maxval=None),
             "expected": Or(
                 [
+                    And([String("1"), CharRange([("0", "9")])]),
+                    And([CharRange([("2", "8")]), CharRange([("0", "9")])]),
+                    And([String("9"), CharRange([("0", "9")])]),
                     And([CharRange([("1", "9")]), And([CharRange([("0", "9")])], quantifier=(2, None))]),
-                    Or(
-                        [
-                            And([String("9"), CharRange([("0", "9")])]),
-                            And([CharRange([("2", "8")]), CharRange([("0", "9")])]),
-                            And([String("1"), CharRange([("0", "9")])]),
-                        ],
-                    ),
                 ],
             ),
         },
@@ -264,13 +252,9 @@ def test_json_integer_literal_as_string(test_case):
                     Or(
                         [
                             And([CharRange([("1", "9")]), And([CharRange([("0", "9")])], quantifier=(2, None))]),
-                            Or(
-                                [
-                                    And([String("9"), CharRange([("0", "9")])]),
-                                    And([CharRange([("2", "8")]), CharRange([("0", "9")])]),
-                                    And([String("1"), CharRange([("0", "9")])]),
-                                ],
-                            ),
+                            And([String("9"), CharRange([("0", "9")])]),
+                            And([CharRange([("2", "8")]), CharRange([("0", "9")])]),
+                            And([String("1"), CharRange([("0", "9")])]),
                         ],
                     ),
                 ],
@@ -307,8 +291,7 @@ def test_json_integer_literal_as_string(test_case):
             "expected": Or(
                 [
                     And([String("-"), CharRange([("1", "9")]), And([CharRange([("0", "9")])], quantifier=(0, None))]),
-                    String("0"),
-                    CharRange([("1", "5")]),
+                    CharRange([("0", "5")]),
                 ]
             ),
         },
@@ -318,8 +301,8 @@ def test_json_integer_literal_as_string(test_case):
             "expected": Or(
                 [
                     And([String("-"), CharRange([("1", "9")]), And([CharRange([("0", "9")])], quantifier=(0, None))]),
-                    String("0"),
-                    Or([String("10"), CharRange([("1", "9")])]),
+                    CharRange([("0", "9")]),
+                    String("10"),
                 ],
             ),
         },
@@ -339,8 +322,7 @@ def test_json_integer_literal_as_string(test_case):
             "expected": Or(
                 [
                     And([String("-"), CharRange([("1", "5")])]),
-                    String("0"),
-                    CharRange([("1", "5")]),
+                    CharRange([("0", "5")]),
                 ]
             ),
         },
@@ -382,8 +364,7 @@ def test_json_integer_literal_as_string(test_case):
                             ),
                         ]
                     ),
-                    String("0"),
-                    CharRange([("1", "5")]),
+                    CharRange([("0", "5")]),
                 ]
             ),
         },
@@ -393,14 +374,9 @@ def test_json_integer_literal_as_string(test_case):
             "expected": Or(
                 [
                     And([String("-"), CharRange([("1", "5")])]),
-                    String("0"),
-                    Or(
-                        [
-                            String("100"),
-                            And([CharRange([("1", "9")]), CharRange([("0", "9")])]),
-                            CharRange([("1", "9")]),
-                        ]
-                    ),
+                    CharRange([("0", "9")]),
+                    And([CharRange([("1", "9")]), CharRange([("0", "9")])]),
+                    String("100"),
                 ]
             ),
         },
@@ -409,10 +385,9 @@ def test_json_integer_literal_as_string(test_case):
             "component": JSONInteger(minval=0, maxval=100),
             "expected": Or(
                 [
-                    String("100"),
+                    CharRange([("0", "9")]),
                     And([CharRange([("1", "9")]), CharRange([("0", "9")])]),
-                    CharRange([("1", "9")]),
-                    String("0"),
+                    String("100"),
                 ]
             ),
         },
@@ -429,13 +404,9 @@ def test_json_integer_literal_as_string(test_case):
                     String("-"),
                     Or(
                         [
-                            Or(
-                                [
-                                    And([String("4"), CharRange([("0", "2")])]),
-                                    And([CharRange([("2", "3")]), CharRange([("0", "9")])]),
-                                    And([String("1"), CharRange([("0", "9")])]),
-                                ],
-                            ),
+                            And([String("4"), CharRange([("0", "2")])]),
+                            And([CharRange([("2", "3")]), CharRange([("0", "9")])]),
+                            And([String("1"), CharRange([("0", "9")])]),
                             CharRange([("5", "9")]),
                         ],
                     ),
@@ -457,14 +428,10 @@ def test_json_integer_literal_as_string(test_case):
             "component": JSONInteger(minval=5, maxval=42),
             "expected": Or(
                 [
-                    Or(
-                        [
-                            And([String("4"), CharRange([("0", "2")])]),
-                            And([CharRange([("2", "3")]), CharRange([("0", "9")])]),
-                            And([String("1"), CharRange([("0", "9")])]),
-                        ]
-                    ),
                     CharRange([("5", "9")]),
+                    And([String("1"), CharRange([("0", "9")])]),
+                    And([CharRange([("2", "3")]), CharRange([("0", "9")])]),
+                    And([String("4"), CharRange([("0", "2")])]),
                 ]
             ),
         },
@@ -473,10 +440,9 @@ def test_json_integer_literal_as_string(test_case):
             "component": JSONInteger(minval=0, maxval=100),
             "expected": Or(
                 [
-                    String("100"),
+                    CharRange([("0", "9")]),
                     And([CharRange([("1", "9")]), CharRange([("0", "9")])]),
-                    CharRange([("1", "9")]),
-                    String("0"),
+                    String("100"),
                 ],
             ),
         },
@@ -485,9 +451,9 @@ def test_json_integer_literal_as_string(test_case):
             "component": JSONInteger(minval=1, maxval=100),
             "expected": Or(
                 [
-                    String("100"),
-                    And([CharRange([("1", "9")]), CharRange([("0", "9")])]),
                     CharRange([("1", "9")]),
+                    And([CharRange([("1", "9")]), CharRange([("0", "9")])]),
+                    String("100"),
                 ],
             ),
         },

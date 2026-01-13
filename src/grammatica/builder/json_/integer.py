@@ -107,7 +107,12 @@ class JSONInteger(JSONComposition):
                 return Or(
                     [
                         # Negative: (-infinity, minval] where minval < 0
-                        And([String("-"), self._unbounded_above_expr(abs_lo)]),
+                        And(
+                            [
+                                String("-"),
+                                self._unbounded_above_expr(abs_lo, reverse=True),
+                            ]
+                        ),
                         # Zero: [0, 0]
                         String("0"),
                         # Positive: [1, infinity)
@@ -165,8 +170,7 @@ class JSONInteger(JSONComposition):
                 return And(
                     [
                         String("-"),
-                        # self._unbounded_above_expr(1) if abs_hi == 1 else self._nonnegative_range_expr(1, abs_hi),
-                        self._unbounded_above_expr(abs_hi),
+                        self._unbounded_above_expr(abs_hi, reverse=True),
                     ],
                 )
             if self.maxval == 0:
@@ -189,61 +193,80 @@ class JSONInteger(JSONComposition):
                 )
             # No lower bound and upper bound is positive:
             #   (-infinity, maxval] where maxval > 0
-            return Or(
-                [
-                    # Negative: (-infinity, -1]
-                    And(
-                        [
-                            String("-"),
-                            CharRange([("1", "9")]),
-                            And(
-                                [CharRange([("0", "9")])],
-                                quantifier=(0, None),
-                            ),
-                        ],
-                    ),
-                    # Zero: [0, 0]
-                    String("0"),
-                    # Positive: [1, maxval]
-                    self._nonnegative_range_expr(1, self.maxval),
-                ],
-            )
+            subexprs: list[Grammar] = [
+                # Negative: (-infinity, -1]
+                And(
+                    [
+                        String("-"),
+                        CharRange([("1", "9")]),
+                        And(
+                            [CharRange([("0", "9")])],
+                            quantifier=(0, None),
+                        ),
+                    ],
+                ),
+            ]
+            # Non-negative: [0, maxval]
+            nonneg_subexpr = self._nonnegative_range_expr(0, self.maxval)
+            if isinstance(nonneg_subexpr, Or) and (nonneg_subexpr.quantifier == (1, 1)):
+                # Flatten nested Or
+                subexprs.extend(nonneg_subexpr.subexprs)
+            else:
+                subexprs.append(nonneg_subexpr)
+            return Or(subexprs)
 
         if self.maxval < 0:
             # Lower and upper bounds are negative:
             #   [minval, maxval] where minval < 0 and maxval < 0
             abs_lo = abs(self.maxval)
             abs_hi = abs(self.minval)
-            return And(
-                [
-                    String("-"),
-                    self._nonnegative_range_expr(abs_lo, abs_hi),
-                ]
-            )
+            subexprs: list[Grammar] = [String("-")]
+            range_subexpr = self._nonnegative_range_expr(abs_lo, abs_hi, reverse=True)
+            if isinstance(range_subexpr, And) and (range_subexpr.quantifier == (1, 1)):
+                # Flatten nested And
+                subexprs.extend(range_subexpr.subexprs)
+            else:
+                subexprs.append(range_subexpr)
+            return And(subexprs)
 
         if self.minval < 0 <= self.maxval:
             # Lower bound is negative and upper bound is non-negative:
             #   [minval, maxval] where minval < 0 <= maxval
-            subexprs: list[Grammar] = []
+            subexprs = []
             subexprs_n = 0
             abs_neg_lo = 1
             abs_neg_hi = abs(self.minval)
             if abs_neg_hi >= abs_neg_lo:
-                neg_subexpr = And(
-                    [
-                        String("-"),
-                        self._nonnegative_range_expr(abs_neg_lo, abs_neg_hi),
-                    ]
+                range_subexpr = self._nonnegative_range_expr(
+                    abs_neg_lo,
+                    abs_neg_hi,
+                    reverse=True,
                 )
+                neg_subexpr: Grammar
+                if isinstance(range_subexpr, And) and (range_subexpr.quantifier == (1, 1)):
+                    # Flatten nested And
+                    neg_subexpr = And(
+                        [String("-")] + range_subexpr.subexprs
+                    )
+                else:
+                    neg_subexpr = And([String("-"), range_subexpr])
                 subexprs.append(neg_subexpr)
                 subexprs_n += 1
-            if self.minval <= 0 <= self.maxval:
-                zero_subexpr = String("0")
-                subexprs.append(zero_subexpr)
-                subexprs_n += 1
+            incl_zero = self.minval <= 0 <= self.maxval
             if self.maxval > 0:
-                pos_subexpr = self._nonnegative_range_expr(1, self.maxval)
-                subexprs.append(pos_subexpr)
+                pos_subexpr = self._nonnegative_range_expr(
+                    0 if incl_zero else 1,
+                    self.maxval,
+                )
+                if isinstance(pos_subexpr, Or) and (pos_subexpr.quantifier == (1, 1)):
+                    # Flatten nested Or
+                    subexprs.extend(pos_subexpr.subexprs)
+                    subexprs_n += len(pos_subexpr.subexprs)
+                else:
+                    subexprs.append(pos_subexpr)
+                    subexprs_n += 1
+            elif incl_zero:
+                subexprs.append(String("0"))
                 subexprs_n += 1
             return Or(subexprs) if subexprs_n > 1 else subexprs[0]
 
@@ -251,7 +274,12 @@ class JSONInteger(JSONComposition):
         #   [minval, maxval] where 0 <= minval <= maxval
         return self._nonnegative_range_expr(self.minval, self.maxval)
 
-    def _nonnegative_range_expr(self, minval: int, maxval: int) -> Grammar:
+    def _nonnegative_range_expr(
+        self,
+        minval: int,
+        maxval: int,
+        reverse: bool = False,
+    ) -> Grammar:
         """Build an expression that matches all integers in [minval..maxval], assuming 0 <= minval <= maxval.
 
         - No leading zeros, unless the integer is "0".
@@ -259,6 +287,7 @@ class JSONInteger(JSONComposition):
         Args:
             minval (int): Lower bound of the range.
             maxval (int): Upper bound of the range.
+            reverse (bool, optional): Whether to reverse the order of sub-expressions. Defaults to False.
 
         Returns:
             Grammar: Expression that matches all integers in the range.
@@ -268,25 +297,13 @@ class JSONInteger(JSONComposition):
         if minval == maxval:
             return String(str(minval))
 
-        subexprs: list[Grammar] = []
-        # Explicitly handle when 0 is in range
-        if minval <= 0 <= maxval:
-            # zero_subexpr = String("0")
-            # if 1 > maxval:  # If that was the entire range, done
-            #     return zero_subexpr
-            subexprs.append(String("0"))
-            # new_min = 1
-            minval = 1
-        # else:
-        #     new_min = minval
-
-        # smin, smax = str(new_min), str(maxval)
+        subexprs = []
+        subexprs_n = 0
         smin, smax = str(minval), str(maxval)
         len_min, len_max = len(smin), len(smax)
         for length in range(len_min, len_max + 1):
             block_lo = (10 ** (length - 1)) if length > 1 else 0
             block_hi = ((10**length) - 1) if length > 1 else 9
-            # this_lo = max(block_lo, new_min)
             this_lo = max(block_lo, minval)
             this_hi = min(block_hi, maxval)
             if this_lo > this_hi:
@@ -294,18 +311,28 @@ class JSONInteger(JSONComposition):
             if (this_lo == block_lo) and (this_hi == block_hi):
                 # Covers entire block of length
                 subexprs.append(self._digits_expr(length))
+                subexprs_n += 1
             else:
-                subexprs.append(self._same_quantifier_expr(str(this_lo), str(this_hi)))
+                part_subexpr = self._same_quantifier_expr(str(this_lo), str(this_hi))
+                if isinstance(part_subexpr, Or) and (part_subexpr.quantifier == (1, 1)):
+                    # Flatten nested Or
+                    subexprs.extend(part_subexpr.subexprs)
+                    subexprs_n += len(part_subexpr.subexprs)
+                else:
+                    subexprs.append(part_subexpr)
+                    subexprs_n += 1
+        if subexprs_n < 2:
+            return subexprs[0]
+        return Or(subexprs[::-1]) if reverse else Or(subexprs)
 
-        return Or(subexprs[::-1]) if len(subexprs) > 1 else subexprs[0]
-
-    def _unbounded_above_expr(self, minval: int) -> Grammar:
+    def _unbounded_above_expr(self, minval: int, reverse: bool = False) -> Grammar:
         """Build an expression that matches all integers >= minval (for minval >= 1).
 
         Matches [minval, infinity) with no leading zeros.
 
         Args:
             minval (int): Lower bound of the range (must be >= 1).
+            reverse (bool, optional): Whether to reverse the order of sub-expressions. Defaults to False.
 
         Returns:
             Grammar: Expression that matches all integers >= minval.
@@ -314,21 +341,32 @@ class JSONInteger(JSONComposition):
         smin = str(minval)
         len_min = len(smin)
         subexprs = []
+        subexprs_n = 0
         # 1. Match numbers from minval to 10^len_min - 1 (same digit length as minval)
         block_hi = (10**len_min) - 1
         if minval <= block_hi:
-            subexprs.append(self._same_quantifier_expr(smin, str(block_hi)))
+            block_subexpr = self._same_quantifier_expr(smin, str(block_hi))
+            if isinstance(block_subexpr, Or) and (block_subexpr.quantifier == (1, 1)):
+                # Flatten nested Or
+                subexprs.extend(block_subexpr.subexprs)
+                subexprs_n += len(block_subexpr.subexprs)
+            else:
+                subexprs.append(block_subexpr)
+                subexprs_n += 1
         # 2. Match all numbers with len_min + 1 or more digits: [10^len_min, infinity)
         # This is: first digit [1-9], followed by len_min or more digits [0-9]
         # Pattern: [1-9][0-9]{len_min,}
-        unbounded_part = And(
+        unbounded_subexpr = And(
             [
                 CharRange([("1", "9")]),
                 And([CharRange([("0", "9")])], quantifier=(len_min, None)),
             ],
         )
-        subexprs.append(unbounded_part)
-        return Or(subexprs[::-1])
+        subexprs.append(unbounded_subexpr)
+        subexprs_n += 1
+        if subexprs_n < 2:
+            return subexprs[0]
+        return Or(subexprs[::-1]) if reverse else Or(subexprs)
 
     @staticmethod
     def _digits_expr(k: int) -> Grammar:
@@ -373,35 +411,40 @@ class JSONInteger(JSONComposition):
         """
         if not (0 < len(lo_str) == len(hi_str)) or not (lo_str <= hi_str):
             raise ValueError(f"Invalid range: {lo_str!r} <= {hi_str!r}")
+
         # Single value
         if lo_str == hi_str:
             return String(lo_str)
+
         # Single-digit
         if len(lo_str) == 1:
             return CharRange([(lo_str, hi_str)])
+
+        subexprs: list[Grammar] = []
+
         # Compare first digits
         first_lo, first_hi = lo_str[0], hi_str[0]
         rest_lo, rest_hi = lo_str[1:], hi_str[1:]
         if first_lo == first_hi:
-            return And(
-                [
-                    String(first_lo),
-                    self._same_quantifier_expr(rest_lo, rest_hi),
-                ]
-            )
-        subexprs = []
+            subexprs.append(String(first_lo))
+            rest_expr = self._same_quantifier_expr(rest_lo, rest_hi)
+            if isinstance(rest_expr, And) and (rest_expr.quantifier == (1, 1)):
+                # Flatten nested And
+                subexprs.extend(rest_expr.subexprs)
+            else:
+                subexprs.append(rest_expr)
+            return And(subexprs)
+
         lo_digit = int(first_lo)
         hi_digit = int(first_hi)
         length = len(rest_lo)
         # 1. From first_lo + [rest_lo.."9"*length]
-        subexprs.append(
-            And(
-                [
-                    String(first_lo),
-                    self._same_quantifier_expr(rest_lo, "9" * length),
-                ],
-            )
-        )
+        rest_lo_subexpr = self._same_quantifier_expr(rest_lo, "9" * length)
+        if isinstance(rest_lo_subexpr, Or) and (rest_lo_subexpr.quantifier == (1, 1)):
+            # Flatten nested And
+            subexprs.append(And([String(first_lo)] + rest_lo_subexpr.subexprs))
+        else:
+            subexprs.append(And([String(first_lo), rest_lo_subexpr]))
         # 2. Middle digits if there's a gap of >= 2
         if hi_digit >= lo_digit + 2:
             if length == 1:
@@ -423,15 +466,13 @@ class JSONInteger(JSONComposition):
                     )
                 )
         # 3. From first_hi + ["0"*length..rest_hi]
-        subexprs.append(
-            And(
-                [
-                    String(first_hi),
-                    self._same_quantifier_expr("0" * length, rest_hi),
-                ],
-            )
-        )
-        return Or(subexprs[::-1])
+        rest_hi_subexpr = self._same_quantifier_expr("0" * length, rest_hi)
+        if isinstance(rest_hi_subexpr, And) and (rest_hi_subexpr.quantifier == (1, 1)):
+            # Flatten nested And
+            subexprs.append(And([String(first_hi)] + rest_hi_subexpr.subexprs))
+        else:
+            subexprs.append(And([String(first_hi), rest_hi_subexpr]))
+        return Or(subexprs)
 
 
 class JSONIntegerLiteral(JSONComposition):
