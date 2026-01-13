@@ -4,7 +4,7 @@ Classes and utilities for compositions that construct a grammar to match a JSON 
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from grammatica.builder.json_.base import JSONComposition
 from grammatica.grammar.base import Grammar
@@ -79,36 +79,41 @@ class JSONInteger(JSONComposition):
             )
         """
         if (self.minval is None) and (self.maxval is None):
-            # Unbounded
+            # Boundless:
+            #   (-infinity, infinity)
             return Or(
                 [
-                    # Zero
-                    String("0"),
-                    # Non-zero
+                    # Non-zero: (-infinity, -1] U [1, infinity)
                     And(
                         [
-                            # Optional negative sign
                             And([String("-")], quantifier=(0, 1)),
-                            # First digit
                             CharRange([("1", "9")]),
-                            # Optional subsequent digits
-                            And([CharRange([("0", "9")])], quantifier=(0, None)),
+                            And(
+                                [CharRange([("0", "9")])],
+                                quantifier=(0, None),
+                            ),
                         ],
                     ),
+                    # Zero: [0, 0]
+                    String("0"),
                 ]
             )
-        if self.maxval is None:
-            if self.minval == 0:
+        elif self.maxval is None:
+            self.minval = cast(int, self.minval)
+            if self.minval < 0:
+                # Lower bound is negative and no upper bound:
+                #   [minval, infinity) where minval < 0
+                abs_lo = abs(self.minval)
                 return Or(
                     [
-                        # Zero
+                        # Negative: (-infinity, minval] where minval < 0
+                        And([String("-"), self._unbounded_above_expr(abs_lo)]),
+                        # Zero: [0, 0]
                         String("0"),
-                        # Positive
+                        # Positive: [1, infinity)
                         And(
                             [
-                                # First digit
                                 CharRange([("1", "9")]),
-                                # Optional subsequent digits
                                 And(
                                     [CharRange([("0", "9")])],
                                     quantifier=(0, None),
@@ -117,91 +122,136 @@ class JSONInteger(JSONComposition):
                         ),
                     ]
                 )
-            elif self.minval == 1:
-                return And(
-                    [
-                        # First digit
-                        CharRange([("1", "9")]),
-                        # Optional subsequent digits
-                        And([CharRange([("0", "9")])], quantifier=(0, None)),
-                    ],
-                )
-            raise ValueError(
-                "Feature not yet implemented: unbounded range with single non-zero bound"
-            )
-        if self.minval is None:
-            if self.maxval == 0:
+            if self.minval == 0:
+                # Lower bound is zero and no upper bound:
+                #   [0, infinity)
                 return Or(
-                    (
-                        # Zero
+                    [
+                        # Zero: [0, 0]
                         String("0"),
-                        # Negative
+                        # Positive: [1, infinity)
                         And(
-                            (
-                                String("-"),
-                                # First digit
+                            [
                                 CharRange([("1", "9")]),
-                                # Optional subsequent digits
                                 And(
                                     [CharRange([("0", "9")])],
                                     quantifier=(0, None),
                                 ),
-                            ),
+                            ],
                         ),
-                    )
+                    ]
                 )
-            raise ValueError(
-                "Feature not yet implemented: unbounded range with single non-zero bound"
+            if self.minval == 1:
+                # Lower bound is one and no upper bound:
+                #   [1, infinity)
+                return And(
+                    [
+                        CharRange([("1", "9")]),
+                        And(
+                            [CharRange([("0", "9")])],
+                            quantifier=(0, None),
+                        ),
+                    ],
+                )
+            # Lower bound is greater than one and no upper bound:
+            #   [minval, infinity) where minval > 1
+            return self._unbounded_above_expr(self.minval)
+        elif self.minval is None:
+            self.maxval = cast(int, self.maxval)
+            if self.maxval < 0:
+                # No lower bound and upper bound is negative:
+                #   (-infinity, maxval] where maxval < 0
+                abs_hi = abs(self.maxval)
+                return And(
+                    [
+                        String("-"),
+                        # self._unbounded_above_expr(1) if abs_hi == 1 else self._nonnegative_range_expr(1, abs_hi),
+                        self._unbounded_above_expr(abs_hi),
+                    ],
+                )
+            if self.maxval == 0:
+                # No lower bound and upper bound is zero:
+                #   (-infinity, 0]
+                return Or(
+                    [
+                        And(
+                            [
+                                String("-"),
+                                CharRange([("1", "9")]),
+                                And(
+                                    [CharRange([("0", "9")])],
+                                    quantifier=(0, None),
+                                ),
+                            ],
+                        ),
+                        String("0"),
+                    ]
+                )
+            # No lower bound and upper bound is positive:
+            #   (-infinity, maxval] where maxval > 0
+            return Or(
+                [
+                    # Negative: (-infinity, -1]
+                    And(
+                        [
+                            String("-"),
+                            CharRange([("1", "9")]),
+                            And(
+                                [CharRange([("0", "9")])],
+                                quantifier=(0, None),
+                            ),
+                        ],
+                    ),
+                    # Zero: [0, 0]
+                    String("0"),
+                    # Positive: [1, maxval]
+                    self._nonnegative_range_expr(1, self.maxval),
+                ],
             )
 
-        # Lower and upper bounds are negative
         if self.maxval < 0:
-            # minval <= maxval < 0 => abs(minval) >= abs(maxval)
+            # Lower and upper bounds are negative:
+            #   [minval, maxval] where minval < 0 and maxval < 0
             abs_lo = abs(self.maxval)
             abs_hi = abs(self.minval)
-            # e.g. neg_body could be "(?:2|3|...)" or just "5"
-            # prefix with "-"
-            neg_body = self._nonnegative_range_expr(abs_lo, abs_hi)
-            if neg_body is None:
-                raise ValueError(f"Invalid range: {self.minval!r} <= {self.maxval!r}")
-            return And([String("-"), neg_body])
+            return And(
+                [
+                    String("-"),
+                    self._nonnegative_range_expr(abs_lo, abs_hi),
+                ]
+            )
 
-        # Lower bound is negative, upper bound is non-negative
         if self.minval < 0 <= self.maxval:
+            # Lower bound is negative and upper bound is non-negative:
+            #   [minval, maxval] where minval < 0 <= maxval
             subexprs: list[Grammar] = []
-
-            # Negative
+            subexprs_n = 0
             abs_neg_lo = 1
             abs_neg_hi = abs(self.minval)
             if abs_neg_hi >= abs_neg_lo:
-                neg_body = self._nonnegative_range_expr(abs_neg_lo, abs_neg_hi)
-                if neg_body is not None:
-                    neg_subexpr = And([String("-"), neg_body])
-                    subexprs.append(neg_subexpr)
-
-            # Positive
-            if self.maxval > 0:
-                pos_subexpr = self._nonnegative_range_expr(1, self.maxval)
-                if pos_subexpr is not None:
-                    subexprs.append(pos_subexpr)
-
-            # Zero
+                neg_subexpr = And(
+                    [
+                        String("-"),
+                        self._nonnegative_range_expr(abs_neg_lo, abs_neg_hi),
+                    ]
+                )
+                subexprs.append(neg_subexpr)
+                subexprs_n += 1
             if self.minval <= 0 <= self.maxval:
                 zero_subexpr = String("0")
                 subexprs.append(zero_subexpr)
+                subexprs_n += 1
+            if self.maxval > 0:
+                pos_subexpr = self._nonnegative_range_expr(1, self.maxval)
+                subexprs.append(pos_subexpr)
+                subexprs_n += 1
+            return Or(subexprs) if subexprs_n > 1 else subexprs[0]
 
-            # Combine
-            if not subexprs:
-                raise ValueError(f"Invalid range: {self.minval!r} <= {self.maxval!r}")
-            return Or(subexprs) if len(subexprs) > 1 else subexprs[0]
+        # Lower amd upper bounds are non-negative:
+        #   [minval, maxval] where 0 <= minval <= maxval
+        return self._nonnegative_range_expr(self.minval, self.maxval)
 
-        # Entirely non-negative
-        nonneg_expr = self._nonnegative_range_expr(self.minval, self.maxval)
-        if nonneg_expr is None:
-            raise ValueError(f"Invalid range: {self.minval!r} <= {self.maxval!r}")
-        return nonneg_expr
-
-    def _nonnegative_range_expr(self, minval: int, maxval: int) -> Grammar | None:
+    def _nonnegative_range_expr(self, minval: int, maxval: int) -> Grammar:
         """Build an expression that matches all integers in [minval..maxval], assuming 0 <= minval <= maxval.
 
         - No leading zeros, unless the integer is "0".
@@ -211,39 +261,36 @@ class JSONInteger(JSONComposition):
             maxval (int): Upper bound of the range.
 
         Returns:
-            Grammar | None: Expression that matches all integers in the range.
+            Grammar: Expression that matches all integers in the range.
         """
         assert 0 <= minval <= maxval
 
         if minval == maxval:
             return String(str(minval))
 
-        appended_zero = False
         subexprs: list[Grammar] = []
-        # If 0 is in range, handle '0' explicitly
+        # Explicitly handle when 0 is in range
         if minval <= 0 <= maxval:
+            # zero_subexpr = String("0")
+            # if 1 > maxval:  # If that was the entire range, done
+            #     return zero_subexpr
             subexprs.append(String("0"))
-            appended_zero = True
-            new_min = 1
-        else:
-            new_min = minval
+            # new_min = 1
+            minval = 1
+        # else:
+        #     new_min = minval
 
-        # If that was the entire range, done
-        if new_min > maxval:
-            return String("0") if appended_zero else None
-
-        smin, smax = str(new_min), str(maxval)
+        # smin, smax = str(new_min), str(maxval)
+        smin, smax = str(minval), str(maxval)
         len_min, len_max = len(smin), len(smax)
-
         for length in range(len_min, len_max + 1):
             block_lo = (10 ** (length - 1)) if length > 1 else 0
             block_hi = ((10**length) - 1) if length > 1 else 9
-
-            this_lo = max(block_lo, new_min)
+            # this_lo = max(block_lo, new_min)
+            this_lo = max(block_lo, minval)
             this_hi = min(block_hi, maxval)
             if this_lo > this_hi:
                 continue
-
             if (this_lo == block_lo) and (this_hi == block_hi):
                 # Covers entire block of length
                 subexprs.append(self._digits_expr(length))
@@ -251,6 +298,37 @@ class JSONInteger(JSONComposition):
                 subexprs.append(self._same_quantifier_expr(str(this_lo), str(this_hi)))
 
         return Or(subexprs[::-1]) if len(subexprs) > 1 else subexprs[0]
+
+    def _unbounded_above_expr(self, minval: int) -> Grammar:
+        """Build an expression that matches all integers >= minval (for minval >= 1).
+
+        Matches [minval, infinity) with no leading zeros.
+
+        Args:
+            minval (int): Lower bound of the range (must be >= 1).
+
+        Returns:
+            Grammar: Expression that matches all integers >= minval.
+        """
+        assert minval >= 1
+        smin = str(minval)
+        len_min = len(smin)
+        subexprs = []
+        # 1. Match numbers from minval to 10^len_min - 1 (same digit length as minval)
+        block_hi = (10**len_min) - 1
+        if minval <= block_hi:
+            subexprs.append(self._same_quantifier_expr(smin, str(block_hi)))
+        # 2. Match all numbers with len_min + 1 or more digits: [10^len_min, infinity)
+        # This is: first digit [1-9], followed by len_min or more digits [0-9]
+        # Pattern: [1-9][0-9]{len_min,}
+        unbounded_part = And(
+            [
+                CharRange([("1", "9")]),
+                And([CharRange([("0", "9")])], quantifier=(len_min, None)),
+            ],
+        )
+        subexprs.append(unbounded_part)
+        return Or(subexprs[::-1])
 
     @staticmethod
     def _digits_expr(k: int) -> Grammar:
@@ -272,10 +350,10 @@ class JSONInteger(JSONComposition):
             return And([CharRange([("1", "9")]), CharRange([("0", "9")])])
         # 100..999, 1000..9999, etc.
         return And(
-            (
+            [
                 CharRange([("1", "9")]),
                 CharRange([("0", "9")]),
-            ),
+            ],
             quantifier=(k - 1, k - 1),
         )
 
@@ -295,15 +373,12 @@ class JSONInteger(JSONComposition):
         """
         if not (0 < len(lo_str) == len(hi_str)) or not (lo_str <= hi_str):
             raise ValueError(f"Invalid range: {lo_str!r} <= {hi_str!r}")
-
         # Single value
         if lo_str == hi_str:
             return String(lo_str)
-
         # Single-digit
         if len(lo_str) == 1:
             return CharRange([(lo_str, hi_str)])
-
         # Compare first digits
         first_lo, first_hi = lo_str[0], hi_str[0]
         rest_lo, rest_hi = lo_str[1:], hi_str[1:]
@@ -314,12 +389,10 @@ class JSONInteger(JSONComposition):
                     self._same_quantifier_expr(rest_lo, rest_hi),
                 ]
             )
-
         subexprs = []
         lo_digit = int(first_lo)
         hi_digit = int(first_hi)
         length = len(rest_lo)
-
         # 1. From first_lo + [rest_lo.."9"*length]
         subexprs.append(
             And(
@@ -329,7 +402,6 @@ class JSONInteger(JSONComposition):
                 ],
             )
         )
-
         # 2. Middle digits if there's a gap of >= 2
         if hi_digit >= lo_digit + 2:
             if length == 1:
@@ -350,7 +422,6 @@ class JSONInteger(JSONComposition):
                         ],
                     )
                 )
-
         # 3. From first_hi + ["0"*length..rest_hi]
         subexprs.append(
             And(
@@ -360,7 +431,6 @@ class JSONInteger(JSONComposition):
                 ],
             )
         )
-
         return Or(subexprs[::-1])
 
 
